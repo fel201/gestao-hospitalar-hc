@@ -1,25 +1,8 @@
 # Modelo de Dados e Dicionário
 
 ## 1. Modelo Entidade-Relacionamento
-```mermaid
-erDiagram
-    PACIENTE ||--o{ PRONTUARIO : possui
-    PACIENTE {
-        string nome
-        string cpf
-        string cns
-        date data_nascimento
-    }
-    PRONTUARIO ||--|{ EVOLUCAO : contem
-    PRONTUARIO {
-        int id
-        datetime data_criacao
-    }
-    EVOLUCAO {
-        string descricao
-        string responsavel_crm
-    }
-```
+
+<img width="991" height="1122" alt="Arquitetura de Software drawio" src="https://github.com/user-attachments/assets/d9b2ab32-adef-491f-b419-041957b488f7" />
 
 ## 2. Dicionário de Dados
 * Tabela PACIENTES, PRONTUARIOS, etc.
