@@ -35,8 +35,14 @@ class ConsultasCsvProvider:
                         'profissional_atendeu': row.get('profissional_atendeu', ''),
                         'prontuario': row.get('Prontuario', ''),
                         'especialidade': row.get('especialidade', ''),
+                        'cid': row.get('CID', ''),
                         'data_hora_consulta': row.get('Data/Hora da Consulta', ''),
-                        'situação': row.get('Situação da Consulta', ''),
+                        'data_hora_fim': row.get('Data/Hora de Fim', ''),
+                        'justificativa': row.get('Justificativa', ''),
+                        'justificativa_falta': row.get('Justificativa da Falta', ''),
+                        'tipo': row.get('tipo', ''),
+                        'data_procedimento': row.get('data_procedimento', ''),
+                        'retorno': row.get('Retorno', ''),
                         'paciente_id': row.get('ID do Paciente', ''),
                     })
         except Exception as e:
@@ -61,8 +67,14 @@ class ConsultasCsvProvider:
                             'profissional_atendeu': row.get('profissional_atendeu', ''),
                             'prontuario': row.get('Prontuario', ''),
                             'especialidade': row.get('especialidade', ''),
+                            'cid': row.get('CID', ''),
                             'data_hora_consulta': row.get('Data/Hora da Consulta', ''),
-                            'situação': row.get('Situação da Consulta', ''),
+                            'data_hora_fim': row.get('Data/Hora de Fim', ''),
+                            'justificativa': row.get('Justificativa', ''),
+                            'justificativa_falta': row.get('Justificativa da Falta', ''),
+                            'tipo': row.get('tipo', ''),
+                            'data_procedimento': row.get('data_procedimento', ''),
+                            'retorno': row.get('Retorno', ''),
                             'paciente_id': row.get('ID do Paciente', ''),
                         }
         except Exception as e:
