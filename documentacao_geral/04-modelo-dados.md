@@ -3,21 +3,53 @@
 ## 1. Modelo Entidade-Relacionamento
 ```mermaid
 erDiagram
-    PACIENTE ||--o{ PRONTUARIO : possui
+
+    PACIENTE ||--o{ CONSULTA : realiza
+    PACIENTE ||--o{ EXAME : possui
+    PACIENTE ||--o{ INTERNACAO : realiza
+
     PACIENTE {
+        int pac_id PK
+        string prontuario
         string nome
-        string cpf
-        string cns
-        date data_nascimento
     }
-    PRONTUARIO ||--|{ EVOLUCAO : contem
-    PRONTUARIO {
-        int id
-        datetime data_criacao
+
+    CONSULTA {
+        int consulta_id PK
+        int pac_id FK
+        string cid
+        datetime data_hora_consulta
+        datetime data_hora_fim
+        string justificativa
+        string justificativa_falta
+        string tipo_consulta
+        string especialidade
+        string procedimento
+        datetime data_procedimento
+        boolean indica_retorno
     }
-    EVOLUCAO {
-        string descricao
-        string responsavel_crm
+
+    EXAME {
+        int exame_id PK
+        int pac_id FK
+        int atendimento
+        string nome_exame
+        string tipo_exame
+        string situacao_exame
+        string especialidade_solicitante_nome
+        int unidade_executora
+    }
+
+    INTERNACAO {
+        int internacao_id PK
+        int pac_id FK
+        int atendimento
+        datetime dthr_inicio
+        datetime dthr_fim
+        int tempo_permanencia_dias
+        string situacao_sumario_alta
+        string descricao_origem_evento
+        string descricao_tipo_alta_medica
     }
 ```
 
