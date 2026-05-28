@@ -6,6 +6,7 @@ import Admin from '../views/Admin.vue';
 
 import Exemplos from '../views/Exemplos.vue';
 import Pacientes from '../views/Pacientes.vue';
+import PacienteDetalhe from '../views/PacienteDetalhe.vue';
 
 const routes = [
   {
@@ -35,6 +36,12 @@ const routes = [
     path: '/pacientes',
     name: 'Pacientes',
     component: Pacientes,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/pacientes/:codigo',
+    name: 'PacienteDetalhe',
+    component: PacienteDetalhe,
     meta: { requiresAuth: true },
   },
 ];
