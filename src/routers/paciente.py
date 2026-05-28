@@ -36,3 +36,7 @@ async def obter_paciente(
 ):
     """Obtém um paciente pelo código a partir da fonte de dados configurada no roteador."""
     return await paciente_controller.obter_paciente_por_codigo(codigo, provider)
+
+@router.get("/{codigo}/jornada", response_model=dict)
+async def retornar_jornada_paciente():
+    return 

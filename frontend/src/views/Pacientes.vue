@@ -22,12 +22,18 @@
       </template>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
         <div><span class="font-medium">Código:</span> {{ pacienteDetalhe.codigo }}</div>
+        <div><span class="font-medium">Prontuário:</span> {{ pacienteDetalhe.prontuario }}</div>
         <div><span class="font-medium">Nome:</span> {{ pacienteDetalhe.nome }}</div>
-        <div><span class="font-medium">Data de Nascimento:</span> {{ pacienteDetalhe.dt_nascimento }}</div>
-        <div><span class="font-medium">Nome da Mãe:</span> {{ pacienteDetalhe.nome_mae }}</div>
+        <div><span class="font-medium">Idade:</span> {{ pacienteDetalhe.idade }}</div>
         <div><span class="font-medium">Sexo:</span> {{ pacienteDetalhe.sexo }}</div>
+        <div><span class="font-medium">Estado Civil:</span> {{ pacienteDetalhe.estado_civil }}</div>
         <div><span class="font-medium">Cor:</span> {{ pacienteDetalhe.cor }}</div>
+        <div><span class="font-medium">Nome da Mãe:</span> {{ pacienteDetalhe.nome_mae }}</div>
         <div v-if="pacienteDetalhe.nome_pai"><span class="font-medium">Nome do Pai:</span> {{ pacienteDetalhe.nome_pai }}</div>
+        <div><span class="font-medium">Nacionalidade:</span> {{ pacienteDetalhe.nacionalidade }}</div>
+        <div><span class="font-medium">Naturalidade:</span> {{ pacienteDetalhe.naturalidade }}</div>
+        <div><span class="font-medium">Cidade:</span> {{ pacienteDetalhe.cidade }}</div>
+        <div><span class="font-medium">UF:</span> {{ pacienteDetalhe.uf }}</div>
       </div>
     </Card>
 
@@ -73,10 +79,12 @@ const loadingPaciente = ref(false);
 const pacienteDetalhe = ref<any | null>(null);
 
 const headers = ref([
-  { text: 'Prontuário', value: 'codigo' },
+  { text: 'Código', value: 'codigo' },
+  { text: 'Prontuário', value: 'prontuario' },
   { text: 'Nome', value: 'nome' },
-  { text: 'Data de Nascimento', value: 'dt_nascimento' },
-  { text: 'Nome da Mãe', value: 'nome_mae' },
+  { text: 'Idade', value: 'idade' },
+  { text: 'Sexo', value: 'sexo' },
+  { text: 'Cidade', value: 'cidade' },
 ]);
 
 const pacientes = ref([]);
