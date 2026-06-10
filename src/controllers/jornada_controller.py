@@ -8,6 +8,8 @@ from ..providers.interfaces.paciente_provider_interface import PacienteProviderI
 
 class JornadaController:
     @staticmethod
+    # essa função remove tudo que não for número dos IDS 
+    # para compatibilidade entre as tabelas
     def _normalize_id(value: Any) -> str:
         return ''.join(ch for ch in str(value) if ch.isdigit())
 
@@ -76,7 +78,8 @@ class JornadaController:
                 'descricao_origem_evento': item.get('descricao_origem_evento'),
                 'descricao_tipo_alta_medica': item.get('descricao_tipo_alta_medica'),
             })
-
+        print("Consultas:")
+        print(consultas)
         return {
             'paciente': {
                 'pac_id': paciente.get('codigo'),
