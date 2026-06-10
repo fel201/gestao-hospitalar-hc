@@ -151,3 +151,18 @@ Sistema apresenta:
 
 * **Evaluation**:
 Validar precisão dos cálculos utilizando conjuntos de dados controlados.
+
+---
+
+## UC006 - Consultar Métricas
+
+* **Ator**: Gestor, Analista.
+* **Fluxo**:
+Selecionar filtros (período, unidade, tipo de métrica) → Requisitar `GET /api/metricas` → Exibir indicadores e permitir exportação.
+
+### [CARE-UC006] Implementação da Consulta de Métricas
+
+* **Context**: Métricas derivadas previamente persistidas na tabela `METRICA`.
+* **Action**: Implementar endpoint `GET /api/metricas` que aceita filtros e retorna agregações pré-computadas.
+* **Result**: Dashboard e relatórios são alimentados por valores que não expõem PII.
+* **Evaluation**: Verificar consistência das agregações com dados de origem e que nenhum PII aparece nas respostas.

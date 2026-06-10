@@ -23,3 +23,4 @@ Para manter a integridade sistêmica, os assistentes de IA devem aderir às segu
 - **No Hard Deletes**: Proibido o uso de `DELETE` SQL. Utilizar coluna `deleted_at`.
 - **No Secrets in Code**: Proibido salvar chaves de API ou senhas no código; utilizar `.env`.
 - **No Refactoring Unasked**: Não alterar arquivos de infraestrutura ou configuração global sem instrução explícita no `SPEC.md`.
+- **No AD Dependency for Dev**: Não bloquear o desenvolvimento por falta de configuração LDAP/AD; a autenticação deve funcionar com o provedor mock quando `AD_URL` não estiver disponível.

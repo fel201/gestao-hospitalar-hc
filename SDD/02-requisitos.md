@@ -3,13 +3,14 @@
 ## 1. Requisitos Funcionais (RF)
 | ID | Título | Descrição | Prioridade |
 | :--- | :--- | :--- | :--- |
-| RF001 | Autenticação | Login via LDAP/AD do hospital. | Baixa |
+| RF001 | Autenticação | Autenticação básica com JWT e fallback mock; LDAP/AD opcional quando disponível. | Baixa |
 | RF002 | Reconstrução Cronológica | Visualização da linha do tempo do paciente. | Essencial |
 | RF003 | Visualização da Jornada | Exibição da jornada em formato cronológico | Essencial |
 | RF004 | Visualização de Eventos | Exibição mais detalhada de um certo evento | Essencial |
 | RF005 | Identificação de recorrências | Identificação de certos padrões em pacientes | Essencial |
 | RF006 | Cálculo do tempo entre eventos | Registro do tempo levado por cada evento | Essencial |
 | RF007 | Identificação de Gargalos | Detecção de irregularidades nos eventos | Essencial |
+| RF008 | Armazenamento de Métricas | Persistir apenas métricas derivadas e metadados; evitar armazenamento de PII. | Essencial |
 
 ## 2. Requisitos Não Funcionais (RNF)
 | ID | Categoria | Descrição |
@@ -21,15 +22,22 @@
 | RNF005 | Disponibilidade | Sistema operando 24 horas por dia. |
 | RNF006 | Usabilidade | Sistema intuitivo e padronizado. |
 | RNF007 | Portabilidade | Sistema portável para as tecnologias usadas no HC. |
+| RNF008 | Privacidade | Não persistir PII; armazenar somente métricas derivadas e identificadores pseudonimizados. |
 
 ## 3. Detalhamento SDD (CARE)
 Para cada requisito, a implementação deve seguir o padrão:
 
-### [CARE-RF001] Autenticação LDAP
-* **Context (Contexto)**: Servidor LDAP configurado e credenciais de serviço disponíveis.
-* **Action (Ação)**: Criar middleware de autenticação que consulte o AD.
-* **Result (Resultado)**: Token JWT gerado após sucesso; Código 401 em falha.
-* **Evaluation (Avaliação)**: Executar `npm test tests/auth.spec.ts` (deve passar com 100% de sucesso).
+### [CARE-RF001] Autenticação com JWT + modo mock
+* **Context (Contexto)**: Aplicação em desenvolvimento ou ambiente sem AD disponível.
+* **Action (Ação)**: Implementar autenticação com JWT e permitir fallback para `MockAuthProvider` quando não houver variáveis de ambiente de AD configuradas.
+* **Result (Resultado)**: Usuário consegue efetuar login via credenciais mock no desenvolvimento; em produção, o sistema ativa LDAP/AD apenas quando `AD_URL` estiver presente.
+* **Evaluation (Avaliação)**: Validar que o endpoint de login retorna `access_token` e que o login mock funciona com `admin/admin`; verificar também que o AD só é utilizado quando as variáveis de ambiente estão configuradas.
+
+### [CARE-RF008] Armazenamento de Métricas
+* **Context (Contexto)**: A plataforma recebe eventos e dados do AGHU, mas não deve persistir descrições clínicas ou identificadores sensíveis.
+* **Action (Ação)**: Gerar e persistir apenas métricas e metadados essenciais (ex.: tempo entre eventos, tipo de evento, unidade executora, flags de recorrência) em uma tabela `METRICA` ou equivalente.
+* **Result (Resultado)**: Dashboards e endpoints (`/api/metricas`, `/api/pacientes/:id_paciente/jornada`) são abastecidos por métricas derivadas que não contêm PII sensível.
+* **Evaluation (Avaliação)**: Auditoria do banco de dados garantindo ausência de PII e testes que validam que apenas campos definidos nos schemas de métricas foram persistidos.
 
 ### [CARE-RF002] Visualização da Linha do Tempo
 * **Context (Contexto)**: Esquema de banco de dados 'PACIENTE' criado.

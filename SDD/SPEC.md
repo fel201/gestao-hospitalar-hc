@@ -23,11 +23,13 @@ As definições detalhadas estão distribuídas nos seguintes documentos:
 - Seguir rigorosamente o Modelo de Dados definido em `04-modelo-dados.md`.
 - Implementar testes unitários para cada funcionalidade nova.
 - Utilizar criptografia AES-256 para dados sensíveis.
+- Tratar como contrato de ingestão apenas as colunas explícitas de `Paciente`, `Consulta`, `Exame` e `Internacao` descritas em `04-modelo-dados.md`.
 
 **A IA NÃO DEVE:**
 - Criar dependências externas não documentadas em `06-arquitetura.md`.
 - Implementar exclusão física de registros (usar Soft Delete).
 - Burlar o sistema de RBAC (Role-Based Access Control).
+- Exigir LDAP/AD para que a aplicação seja executada em ambiente de desenvolvimento.
 
 ## 4. Task Breakdown (Plano de Implementação)
 ### Fase 1: Infraestrutura e Dados
@@ -42,3 +44,22 @@ As definições detalhadas estão distribuídas nos seguintes documentos:
 - [ ] 100% de cobertura em rotas de autenticação.
 - [ ] Zero vulnerabilidades críticas no lint de segurança.
 - [ ] Conformidade total com os esquemas JSON/OpenAPI.
+
+## 6. Política de Armazenamento (Metrics-First)
+
+Este projeto NÃO armazenará os dados clínicos brutos ou PII dos pacientes como fonte primária.
+Em vez disso armazenaremos apenas métricas derivadas e metadados necessários para alimentar dashboards e análises.
+
+- Dados sensíveis (e.g., CPF, CNS, descrições textuais clínicas) não devem ser persistidos pela plataforma.
+- O identificador usado internamente para associação é `pac_codigo` (não CPF). Quando necessário, armazene apenas um `pac_codigo` pseudonimizado.
+
+## 7. API Endpoints Principais
+
+Os endpoints atualmente disponíveis e pretendidos são:
+
+- `GET /api/pacientes/:id_paciente/jornada` — Retorna a linha do tempo do paciente (eventos agregados e métricas derivadas) para exibição no dashboard. `:id_paciente` refere-se a `pac_codigo` do AGHU.
+- `GET /api/pacientes/:id_paciente` — Retorna dados triviais não sensíveis de um paciente para uso contextual no UI (ex.: `nome` reduzido, `idade`, `sexo`), quando estritamente necessário.
+- `GET /api/pacientes` — Lista paginada de pacientes (por padrão primeiros 50), apenas metadados e identificadores não sensíveis.
+- `GET /api/metricas` — Retorna métricas armazenadas e agregadas para relatórios e KPIs.
+
+Todos os endpoints devem seguir os guardrails de privacidade definidos em `06-arquitetura.md` e validar schemas JSON descritos em `04-modelo-dados.md`.
