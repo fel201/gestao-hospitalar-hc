@@ -3,7 +3,7 @@
 ## 1. Stack Técnica
 * Front-end: Vue + TypeScript
 * Back-end: Python + FastAPI
-* Banco de Dados: SQLAlchemy 
+* Banco de Dados: SQLite + SQLAlchemy como ORM
 
 ## 2. Conformidade LGPD
 * Anonimização e gestão de consentimento (TCLE).

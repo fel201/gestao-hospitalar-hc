@@ -3,14 +3,13 @@
 ## 1. Requisitos Funcionais (RF)
 | ID | Título | Descrição | Prioridade |
 | :--- | :--- | :--- | :--- |
-| RF001 | Autenticação | Login via LDAP/AD do hospital. | Essencial |
-| RF002 | Cadastro | Registro de pacientes com CNS/CPF. | Essencial |
-| RF003 | Reconstrução Cronológica | Registro da linha do tempo do paciente. | Essencial |
-| RF004 | Visualização da Jornada | Exibição da jornada em formato cronológico | Essencial |
-| RF005 | Visualização de Eventos | Exibição mais detalhada de um certo evento | Essencial |
-| RF006 | Identificação de recorrências | Identificação de certos padrões em pacientes | Essencial |
-| RF007 | Cálculo do tempo entre eventos | Registro do tempo levado por cada evento | Essencial |
-| RF008 | Identificação de Gargalos | Detecção de irregularidades nos eventos | Essencial |
+| RF001 | Autenticação | Login via LDAP/AD do hospital. | Baixa |
+| RF002 | Reconstrução Cronológica | Visualização da linha do tempo do paciente. | Essencial |
+| RF003 | Visualização da Jornada | Exibição da jornada em formato cronológico | Essencial |
+| RF004 | Visualização de Eventos | Exibição mais detalhada de um certo evento | Essencial |
+| RF005 | Identificação de recorrências | Identificação de certos padrões em pacientes | Essencial |
+| RF006 | Cálculo do tempo entre eventos | Registro do tempo levado por cada evento | Essencial |
+| RF007 | Identificação de Gargalos | Detecção de irregularidades nos eventos | Essencial |
 
 ## 2. Requisitos Não Funcionais (RNF)
 | ID | Categoria | Descrição |
@@ -32,9 +31,9 @@ Para cada requisito, a implementação deve seguir o padrão:
 * **Result (Resultado)**: Token JWT gerado após sucesso; Código 401 em falha.
 * **Evaluation (Avaliação)**: Executar `npm test tests/auth.spec.ts` (deve passar com 100% de sucesso).
 
-### [CARE-RF002] Cadastro de Pacientes
+### [CARE-RF002] Visualização da Linha do Tempo
 * **Context (Contexto)**: Esquema de banco de dados 'PACIENTE' criado.
-* **Action (Ação)**: Criar endpoint POST `/api/pacientes` com validação de CPF e CNS.
+* **Action (Ação)**: Criar endpoint GET `/api/pacientes/jornada` para obter informações da jornada do paciente
 * **Result (Resultado)**: Registro persistido no banco; Log de auditoria criado.
 * **Evaluation (Avaliação)**: Validar contra JSON Schema definido em `04-modelo-dados.md`.
 
