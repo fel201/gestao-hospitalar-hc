@@ -9,7 +9,7 @@ from ..providers.interfaces.paciente_provider_interface import PacienteProviderI
 class JornadaController:
     @staticmethod
     # essa função remove tudo que não for número dos IDS 
-    # para compatibilidade entre as tabelas
+    # para melhorar compatibilidade entre as tabelas
     def _normalize_id(value: Any) -> str:
         return ''.join(ch for ch in str(value) if ch.isdigit())
 
@@ -57,6 +57,9 @@ class JornadaController:
                 'atendimento_id': item.get('atendimento_id'),
                 'nome_exame': item.get('nome_exame'),
                 'tipo_exame': item.get('tipo_exame'),
+                'data_hora_solicitacao': item.get('data_hora_solicitacao'),
+                'data_hora_realizacao': item.get('data_hora_realizacao'),
+                'data_hora_liberacao': item.get('data_hora_liberacao'),
                 'situacao_exame': item.get('situacao', item.get('situacao_exame', '')),
                 'especialidade_solicitante_nome': item.get('especialidade_solicitante_nome'),
                 'unidade_executora_id': item.get('unidade_executora_id'),
@@ -77,9 +80,14 @@ class JornadaController:
                 'situacao_sumario_alta': item.get('Indica situação do sumário de alta', item.get('situacao_sumario_alta', '')),
                 'descricao_origem_evento': item.get('descricao_origem_evento'),
                 'descricao_tipo_alta_medica': item.get('descricao_tipo_alta_medica'),
+                'especialidade': item.get('esp_nome_especialidade')
             })
-        print("Consultas:")
+        print("Consultas: \n")
         print(consultas)
+        print("Exames: \n")
+        print(exames)
+        print("Internacoes: \n")
+        print(internacoes)
         return {
             'paciente': {
                 'pac_id': paciente.get('codigo'),
