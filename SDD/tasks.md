@@ -147,11 +147,11 @@ Plano de execução de todas as tarefas necessárias para o Sistema de Gestão d
 ### [TASK-013] Implementar reconstrução cronológica da jornada
 - [x] Criar função `obter_jornada_paciente()` que agrega eventos (consultas, exames, internações)
 - [x] Ordenar eventos por `data_hora` (timestamp)
-- [ ] Validar sequência cronológica para detecção de anomalias
-- [ ] Testes com diferentes cenários de jornada
+- [x] Validar sequência cronológica para detecção de anomalias
+- [x] Testes com diferentes cenários de jornada
 - **Prioridade**: Essencial
 - **Dependências**: TASK-008, TASK-009, TASK-010, TASK-011
-- **Status**: [40%] Em Progresso
+- **Status**: [100%] 
 - **Referência**: `CARE-RF003`
 
 ### [TASK-014] Implementar identificação de recorrências (reinternações)
