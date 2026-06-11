@@ -10,7 +10,7 @@ erDiagram
 
     PACIENTE {
         int pac_id PK
-        string prontuario UNIQUE
+        string prontuario
         string nome
     }
 
@@ -27,37 +27,32 @@ erDiagram
         string procedimento
         datetime data_procedimento
         boolean indica_retorno
-        string situacao_consulta
-        string unidade_funcional
     }
 
     EXAME {
         int exame_id PK
         int pac_id FK
-        int atendimento_id
+        int atendimento
         string nome_exame
         string tipo_exame
-        datetime data_hora_solicitacao
-        datetime data_hora_realizacao
-        datetime data_hora_liberacao
         string situacao_exame
         string especialidade_solicitante_nome
-        int unidade_executora_id
+        int unidade_executora
     }
 
     INTERNACAO {
         int internacao_id PK
         int pac_id FK
-        int atendimento_id
+        int atendimento
         datetime dthr_inicio
         datetime dthr_fim
         int tempo_permanencia_dias
         string situacao_sumario_alta
         string descricao_origem_evento
         string descricao_tipo_alta_medica
-        string especialidade_internacao
     }
 ```
+
 
 ## 2. Dicionário de Dados
 * Tabela PACIENTES, PRONTUARIOS, etc.
