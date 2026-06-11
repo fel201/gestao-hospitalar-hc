@@ -98,6 +98,7 @@ const loadJornada = async () => {
   try {
     const { data } = await api.get('/api/paciente/jornada', { params: { codigo } });
     jornada.value = data;
+    console.log(jornada.value)
   } catch (error) {
     toast.error('Não foi possível carregar a jornada do paciente.');
   }

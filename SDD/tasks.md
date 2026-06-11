@@ -149,7 +149,6 @@ Plano de execução de todas as tarefas necessárias para o Sistema de Gestão d
 - [x] Ordenar eventos por `data_hora` (timestamp)
 - [ ] Validar sequência cronológica para detecção de anomalias
 - [ ] Testes com diferentes cenários de jornada
-- [ ] Otimizar queries para performance (use índices)
 - **Prioridade**: Essencial
 - **Dependências**: TASK-008, TASK-009, TASK-010, TASK-011
 - **Status**: [40%] Em Progresso

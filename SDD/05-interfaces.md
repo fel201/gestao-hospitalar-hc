@@ -14,17 +14,17 @@
 ### [SCHEMA] Interface de Integração (TypeScript)
 ```typescript
 // baseado nos dados que a gente recebeu
-interface AGHUPacienteDTO {
+interface PacienteDTO {
   pac_id: number;
   prontuario: string;
   nome: string;
 }
 
-interface AGHUConsultaDTO {
+interface ConsultaDTO {
   consulta_id: number;
   pac_id: number;
   cid?: string;
-  data_hora_consulta?: string;
+  data_evento?: string;
   data_hora_fim?: string;
   justificativa?: string;
   justificativa_falta?: string;
@@ -37,25 +37,25 @@ interface AGHUConsultaDTO {
   unidade_funcional?: string;
 }
 
-interface AGHUExameDTO {
+interface ExameDTO {
   exame_id: number;
   pac_id: number;
   atendimento_id?: number;
   nome_exame?: string;
   tipo_exame?: string;
   data_hora_solicitacao?: string;
-  data_hora_realizacao?: string;
+  data_evento?: string;
   data_hora_liberacao?: string;
   situacao_exame?: string;
   especialidade_solicitante_nome?: string;
   unidade_executora_id?: number;
 }
 
-interface AGHUInternacaoDTO {
+interface InternacaoDTO {
   internacao_id: number;
   pac_id: number;
   atendimento_id?: number;
-  dthr_inicio: string;
+  data_evento: string;
   dthr_fim?: string;
   tempo_permanencia_dias?: number;
   situacao_sumario_alta?: string;
