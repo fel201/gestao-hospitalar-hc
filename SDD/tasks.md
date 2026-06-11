@@ -223,9 +223,7 @@ Plano de execução de todas as tarefas necessárias para o Sistema de Gestão d
 - [ ] Incluir cálculos de intervalo e tempo entre eventos
 - [ ] Incluir flags de recorrência e gargalos identificados
 - [x] Responder com JSON conforme schema definido
-- [ ] Validar permissões RBAC antes de retornar
 - [ ] Registrar acesso em `AUDIT_LOG`
-- [ ] Otimizar queries para evitar N+1 queries
 - [ ] Testes de performance com jornadas grandes
 - **Prioridade**: Essencial
 - **Dependências**: TASK-004, TASK-013, TASK-014, TASK-015

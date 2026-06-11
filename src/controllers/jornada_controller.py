@@ -25,7 +25,8 @@ class JornadaController:
         paciente = await paciente_provider.obter_paciente_por_codigo(pac_id)
 
         pac_id_normalized = cls._normalize_id(pac_id)
-
+        numero_exames = 0
+        numero_consultas = 0
         eventos = []
         consultas_raw = await consultas_provider.listar_consultas()
         for item in consultas_raw:
@@ -46,6 +47,7 @@ class JornadaController:
                 'data_procedimento': item.get('data_procedimento', ''),
                 'indica_retorno': item.get('Retorno', '') or item.get('indica_retorno', ''),
             })
+            numero_consultas += 1
         exames_raw = await exames_provider.listar_exames()
         for item in exames_raw:
             if cls._normalize_id(item.get('paciente_id')) != pac_id_normalized:
@@ -64,6 +66,7 @@ class JornadaController:
                 'especialidade_solicitante_nome': item.get('especialidade_solicitante_nome'),
                 'unidade_executora_id': item.get('unidade_executora_id'),
             })
+            numero_exames += 1
         internacoes_raw = await internacoes_provider.listar_internacoes()
         for item in internacoes_raw:
             if cls._normalize_id(item.get('codigo_paciente')) != pac_id_normalized:
@@ -83,11 +86,17 @@ class JornadaController:
             })
         # ordenando cronologicamente com base na data de inicio de cada evento
         eventos.sort(key=lambda evento: evento['data_evento'])
+        
         return {
             'paciente': {
                 'pac_id': paciente.get('codigo'),
                 'prontuario': paciente.get('prontuario'),
                 'nome': paciente.get('nome'),
             },
-            'eventos': eventos
+            'eventos': eventos,
+            'metricas': {
+                'numero_eventos': len(eventos),
+                'numero_consultas': numero_consultas,
+                'numero_exames': numero_exames                
+            }
         }
