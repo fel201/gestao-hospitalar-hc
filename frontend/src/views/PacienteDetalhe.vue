@@ -15,50 +15,108 @@
         <h2 class="text-lg font-semibold">Linha do Tempo</h2>
       </template>
 
-      <div v-if="jornada?.eventos?.length" class="space-y-4 text-sm">
-        <div v-for="(item, index) in jornada.eventos" :key="`${item.tipo}-${index}`" class="border rounded p-3">
-          <div class="font-bold mb-2">
-            {{ item.tipo.toUpperCase() }}
+      <div v-if="jornada?.eventos?.length" class="space-y-6">
+        <div v-for="(item, index) in jornada.eventos" :key="`${item.tipo}-${index}`" class="relative">
+          <!-- linha vertical -->
+          <div v-if="index !== jornada.eventos.length - 1" class="absolute left-4 top-12 bottom-0 w-px bg-gray-300">
           </div>
 
-          <div>
-            <span class="font-medium">Data:</span>
-            {{ item.data_evento }}
+          <!-- marcador -->
+          <div class="absolute left-2 top-5 w-4 h-4 rounded-full bg-primary"></div>
+
+          <!-- card do evento (bg-blue-200 ficou ótimo :D)-->
+          <div class="ml-10 border rounded-lg p-4 shadow-sm bg-blue-200">
+            <div class="flex justify-between items-start mb-3">
+              <div>
+                <h3 class="font-semibold text-base">
+                  <template v-if="item.tipo === 'consulta'">
+                    Consulta Médica
+                  </template>
+
+                  <template v-else-if="item.tipo === 'exame'">
+                    {{ item.nome_exame }}
+                  </template>
+
+                  <template v-else-if="item.tipo === 'internacao'">
+                    Internação
+                  </template>
+                </h3>
+
+                <p class="text-sm text-gray-500">
+                  {{ item.data_evento }}
+                </p>
+              </div>
+
+              <span class="text-xs border rounded px-2 py-1 uppercase">
+                {{ item.tipo }}
+              </span>
+            </div>
+
+            <!-- CONSULTA -->
+            <template v-if="item.tipo === 'consulta'">
+              <div class="space-y-1 text-sm">
+                <div>
+                  <strong>Especialidade:</strong>
+                  {{ item.especialidade || 'Não informado' }}
+                </div>
+
+                <div>
+                  <strong>Procedimento:</strong>
+                  {{ item.procedimento || 'Não informado' }}
+                </div>
+
+                <div>
+                  <strong>CID:</strong>
+                  {{ item.cid || 'Não informado' }}
+                </div>
+
+                <div v-if="item.indica_retorno">
+                  <strong>Retorno:</strong>
+                  {{ item.indica_retorno }}
+                </div>
+              </div>
+            </template>
+
+            <!-- EXAME -->
+            <template v-else-if="item.tipo === 'exame'">
+              <div class="space-y-1 text-sm">
+                <div>
+                  <strong>Tipo:</strong>
+                  {{ item.tipo_exame || 'Não informado' }}
+                </div>
+
+                <div>
+                  <strong>Situação:</strong>
+                  {{ item.situacao_exame || 'Não informado' }}
+                </div>
+
+                <div>
+                  <strong>Atendimento:</strong>
+                  {{ item.atendimento_id || 'Não informado' }}
+                </div>
+              </div>
+            </template>
+
+            <!-- INTERNAÇÃO -->
+            <template v-else-if="item.tipo === 'internacao'">
+              <div class="space-y-1 text-sm">
+                <div>
+                  <strong>Especialidade:</strong>
+                  {{ item.especialidade || 'Não informado' }}
+                </div>
+
+                <div>
+                  <strong>Tempo de permanência:</strong>
+                  {{ item.tempo_permanencia_dias + ' dias' || 'Não informado' }}
+                </div>
+
+                <div>
+                  <strong>Alta:</strong>
+                  {{ item.descricao_tipo_alta_medica || 'Não informado' }}
+                </div>
+              </div>
+            </template>
           </div>
-
-          <!-- consulta -->
-          <template v-if="item.tipo === 'consulta'">
-            <div><span class="font-medium">Consulta ID:</span> {{ item.consulta_id }}</div>
-            <div><span class="font-medium">CID:</span> {{ item.cid }}</div>
-            <div><span class="font-medium">Especialidade:</span> {{ item.especialidade }}</div>
-            <div><span class="font-medium">Procedimento:</span> {{ item.procedimento }}</div>
-            <div><span class="font-medium">Tipo:</span> {{ item.tipo_consulta }}</div>
-            <div><span class="font-medium">Retorno:</span> {{ item.indica_retorno }}</div>
-          </template>
-
-          <!-- exame -->
-          <template v-else-if="item.tipo === 'exame'">
-            <div><span class="font-medium">Exame ID:</span> {{ item.exame_id }}</div>
-            <div><span class="font-medium">Nome:</span> {{ item.nome_exame }}</div>
-            <div><span class="font-medium">Tipo:</span> {{ item.tipo_exame }}</div>
-            <div><span class="font-medium">Situação:</span> {{ item.situacao_exame }}</div>
-            <div><span class="font-medium">Atendimento:</span> {{ item.atendimento_id }}</div>
-          </template>
-
-          <!-- INTERNAÇÃO -->
-          <template v-else-if="item.tipo === 'internacao'">
-            <div><span class="font-medium">Internação ID:</span> {{ item.internacao_id }}</div>
-            <div><span class="font-medium">Atendimento:</span> {{ item.atendimento_id }}</div>
-            <div><span class="font-medium">Fim:</span> {{ item.dthr_fim }}</div>
-            <div>
-              <span class="font-medium">Tempo permanência:</span>
-              {{ item.tempo_permanencia_dias }}
-            </div>
-            <div>
-              <span class="font-medium">Tipo alta:</span>
-              {{ item.descricao_tipo_alta_medica }}
-            </div>
-          </template>
         </div>
       </div>
 
