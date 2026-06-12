@@ -24,7 +24,7 @@ async def obter_jornada_paciente(
     consultas_provider = ConsultasCsvProvider()
     exames_provider = ExameCsvProvider()
     internacoes_provider = InternacoesCsvProvider()
-
+    
     return await jornada_controller.JornadaController.obter_jornada_paciente(
         codigo,
         paciente_provider,

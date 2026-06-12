@@ -1,6 +1,6 @@
 from datetime import datetime
 from ..helpers.normalize_id import _normalize_id
-date_format = '%d/%m/%Y %H:%M'
+date_format = '%d/%m/%Y, %H:%M'
 
 
 def juntar_consultas(eventos, consultas_raw, pac_id):

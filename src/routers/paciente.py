@@ -5,7 +5,11 @@ from ..controllers import paciente_controller
 # Alteração: Importamos apenas a FÁBRICA
 from ..dependencies import get_paciente_provider
 from ..providers.interfaces.paciente_provider_interface import PacienteProviderInterface
-
+from ..controllers.jornada_controller import JornadaController as jornada_controller
+from ..providers.implementations.paciente_csv_provider import PacienteCsvProvider
+from ..providers.implementations.internacoes_csv_provider import InternacoesCsvProvider
+from ..providers.implementations.exame_csv_provider import ExameCsvProvider
+from ..providers.implementations.consultas_csv_provider import ConsultasCsvProvider
 from ..auth.auth import auth_handler
 
 # --- PONTO ÚNICO DE CONFIGURAÇÃO PARA ESTE ROTEADOR ---
@@ -27,8 +31,17 @@ async def listar_pacientes(
     provider: PacienteProviderInterface = Depends(get_paciente_provider(STRATEGY))
 ):
     """Lista todos os pacientes da fonte de dados configurada no roteador."""
-    return await paciente_controller.listar_pacientes(provider)
-
+    paciente_provider = PacienteCsvProvider()
+    exames_provider = ExameCsvProvider()
+    consultas_provider = ConsultasCsvProvider()
+    internacoes_provider = InternacoesCsvProvider()
+    return await jornada_controller.listar_pacientes_com_jornada(
+        paciente_provider,
+        consultas_provider,
+        exames_provider,
+        internacoes_provider
+    )
+    
 @router.get("/{codigo}", response_model=dict)
 async def obter_paciente(
     codigo: int,
@@ -36,7 +49,3 @@ async def obter_paciente(
 ):
     """Obtém um paciente pelo código a partir da fonte de dados configurada no roteador."""
     return await paciente_controller.obter_paciente_por_codigo(codigo, provider)
-
-@router.get("/{codigo}/jornada", response_model=dict)
-async def retornar_jornada_paciente():
-    return 
