@@ -95,6 +95,7 @@ onMounted(async () => {
   try {
     const { data } = await api.get('/api/pacientes');
     pacientes.value = data;
+    console.log(pacientes);
   } catch (error) {
     toast.error('Falha ao carregar a lista de pacientes.');
   }

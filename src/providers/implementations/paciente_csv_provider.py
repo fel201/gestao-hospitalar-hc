@@ -22,9 +22,6 @@ class PacienteCsvProvider(PacienteProviderInterface):
             with open(self.csv_path, mode='r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    # Limitar a 50 pacientes para melhor performance
-                    if len(pacientes) >= 50:
-                        break
                     
                     try:
                         # Remover pontos do formato brasileiro (17.774 -> 17774)
