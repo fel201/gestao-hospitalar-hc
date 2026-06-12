@@ -15,6 +15,45 @@
         <h2 class="text-lg font-semibold">Linha do Tempo</h2>
       </template>
 
+      <!-- MÉTRICAS -->
+      <div v-if="jornada?.metricas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card>
+          <div class="text-center">
+            <p class="text-sm text-gray-500">Total de Eventos</p>
+            <p class="text-3xl font-bold">
+              {{ jornada.metricas.numero_eventos }}
+            </p>
+          </div>
+        </Card>
+
+        <Card>
+          <div class="text-center">
+            <p class="text-sm text-gray-500">Consultas</p>
+            <p class="text-3xl font-bold text-blue-600">
+              {{ jornada.metricas.numero_consultas }}
+            </p>
+          </div>
+        </Card>
+
+        <Card>
+          <div class="text-center">
+            <p class="text-sm text-gray-500">Exames</p>
+            <p class="text-3xl font-bold text-green-600">
+              {{ jornada.metricas.numero_exames }}
+            </p>
+          </div>
+        </Card>
+
+        <Card>
+          <div class="text-center">
+            <p class="text-sm text-gray-500">Internações</p>
+            <p class="text-3xl font-bold text-red-600">
+              {{ jornada.metricas.numero_internacoes }}
+            </p>
+          </div>
+        </Card>
+      </div>
+
       <div v-if="jornada?.eventos?.length" class="space-y-6">
         <div v-for="(item, index) in jornada.eventos" :key="`${item.tipo}-${index}`" class="relative">
           <!-- linha vertical -->
