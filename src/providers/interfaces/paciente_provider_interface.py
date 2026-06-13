@@ -13,3 +13,14 @@ class PacienteProviderInterface(ABC):
     async def obter_paciente_por_codigo(self, codigo: int) -> Dict[str, Any]:
         """Deve retornar um único paciente pelo seu código."""
         pass
+
+    # adições para o controller criar paciente
+    @abstractmethod
+    async def obter_paciente_por_prontuario(self, prontuario: str) -> Dict[str, Any]:
+        """Deve retornar um paciente baseado no número do prontuário."""
+        pass
+
+    @abstractmethod
+    async def salvar_paciente(self, dados: Dict[str, Any]) -> Dict[str, Any]:
+        """Deve persistir um novo paciente no banco de dados."""
+        pass
