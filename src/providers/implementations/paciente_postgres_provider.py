@@ -39,3 +39,28 @@ class PacientePostgresProvider(PacienteProviderInterface):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paciente não encontrado")
             
         return dict(paciente)
+    
+    async def obter_paciente_por_prontuario(self, prontuario: str) -> Dict[str, Any]:
+        query_string = get_sql_query("paciente/obter_por_prontuario.sql")
+        query = text(query_string)
+        
+        result = await self.session.execute(query, {"prontuario": prontuario})
+        paciente = result.mappings().first()
+        
+        if not paciente:
+            return {}
+            
+        return dict(paciente)
+
+    async def salvar_paciente(self, dados: Dict[str, Any]) -> Dict[str, Any]:
+        query_string = get_sql_query("paciente/inserir_paciente.sql")
+        query = text(query_string)
+        
+        # O dicionário 'dados' já vem do Controller com 'pac_id', 'prontuario' e 'nome'
+        result = await self.session.execute(query, dados)
+        
+        # Persiste a informação no banco fisicamente
+        await self.session.commit()
+        
+        novo_paciente = result.mappings().first()
+        return dict(novo_paciente)
