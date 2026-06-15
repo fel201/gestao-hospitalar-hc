@@ -189,6 +189,14 @@ Plano de execução de todas as tarefas necessárias para o Sistema de Gestão d
 - **Status**: Não iniciado
 - **Referência**: `CARE-RF007`, `CARE-UC004`
 
+### [TASK-016-2] Implementar filtragem por especificação
+- [ ] Criar função `filter_by_specification()` para filtrar dados por especificação
+- [ ] 
+- **Prioridade**: Essencial
+- **Dependencias**:
+- **Status**: Não iniciado
+- **Referência**: `CARE-RF005`, `CARE-RF004`
+
 ---
 
 ## FASE 5: API Endpoints - Backend
