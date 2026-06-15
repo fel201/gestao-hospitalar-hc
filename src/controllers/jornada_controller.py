@@ -7,6 +7,7 @@ from ..providers.interfaces.paciente_provider_interface import PacienteProviderI
 from ..helpers.juntar_consultas import juntar_consultas
 from ..helpers.juntar_exames import juntar_exames
 from ..helpers.juntar_internacoes import juntar_internacoes
+from ..helpers.jornada_utils import calculate_time_intervals
 from ..helpers.normalize_id import _normalize_id
 
 
@@ -84,6 +85,7 @@ class JornadaController:
         # ordenando cronologicamente com base na data de inicio de cada evento
         
         eventos.sort(key=lambda evento: evento['data_evento'])
+        calculate_time_intervals(eventos)
         print(eventos)
         return {
             'paciente': {

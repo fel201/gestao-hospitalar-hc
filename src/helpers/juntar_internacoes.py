@@ -23,3 +23,4 @@ def juntar_internacoes(eventos, internacoes_raw, pac_id):
             'especialidade': item.get('esp_nome_especialidade')
         })
         numero_internacoes += 1
+    return numero_internacoes
