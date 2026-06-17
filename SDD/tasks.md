@@ -174,7 +174,7 @@ Plano de execução de todas as tarefas necessárias para o Sistema de Gestão d
 - [ ] Testes com intervalos conhecidos para validar cálculos
 - **Prioridade**: Essencial
 - **Dependências**: TASK-013
-- **Status**: [33%] iniciado
+- **Status**: [33%]
 - **Referência**: `CARE-RF007`, `CARE-UC005`
 
 ### [TASK-016] Implementar identificação de gargalos operacionais
