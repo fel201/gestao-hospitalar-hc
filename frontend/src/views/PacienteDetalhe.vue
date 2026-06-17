@@ -15,6 +15,17 @@
         <h2 class="text-lg font-semibold">Linha do Tempo</h2>
       </template>
 
+      <div class="mb-4 flex flex-wrap gap-3 items-center">
+        <label class="font-medium">Filtrar por evento:</label>
+        <select v-model="tipoSelecionado" class="border rounded px-3 py-2">
+          <option value="">Todos</option>
+          <option value="consulta">Consulta</option>
+          <option value="exame">Exame</option>
+          <option value="internacao">Internação</option>
+        </select>
+        <Button variant="secondary" @click="loadJornada">Atualizar</Button>
+      </div>
+
       <!-- MÉTRICAS -->
       <div v-if="jornada?.metricas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card>
@@ -184,6 +195,7 @@ const toast = useToast();
 
 const codigo = String(route.params.codigo || '');
 const jornada = ref<any | null>(null);
+const tipoSelecionado = ref('');
 
 const loadJornada = async () => {
   if (!codigo) {
@@ -192,9 +204,14 @@ const loadJornada = async () => {
   }
 
   try {
-    const { data } = await api.get('/api/paciente/jornada', { params: { codigo } });
+    const params: Record<string, any> = { codigo };
+    if (tipoSelecionado.value) {
+      params.tipo = tipoSelecionado.value;
+    }
+
+    const { data } = await api.get('/api/paciente/jornada', { params });
     jornada.value = data;
-    console.log(jornada.value)
+    console.log(jornada.value);
   } catch (error) {
     toast.error('Não foi possível carregar a jornada do paciente.');
   }

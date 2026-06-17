@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Query
+from typing import List, Optional
 
 from ..controllers import jornada_controller
 from ..dependencies import get_paciente_provider
@@ -19,6 +20,11 @@ router = APIRouter(
 @router.get("/jornada", response_model=dict)
 async def obter_jornada_paciente(
     codigo: int = Query(..., description="Código do paciente"),
+    tipo: Optional[List[str]] = Query(
+        None,
+        alias="tipo",
+        description="Filtra eventos da jornada pelos tipos: consulta, exame, internacao.",
+    ),
     paciente_provider: PacienteProviderInterface = Depends(get_paciente_provider(STRATEGY)),
 ):
     consultas_provider = ConsultasCsvProvider()
@@ -31,4 +37,5 @@ async def obter_jornada_paciente(
         consultas_provider,
         exames_provider,
         internacoes_provider,
+        especificacao=tipo,
     )

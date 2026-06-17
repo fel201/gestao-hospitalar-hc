@@ -7,7 +7,7 @@ from ..providers.interfaces.paciente_provider_interface import PacienteProviderI
 from ..helpers.juntar_consultas import juntar_consultas
 from ..helpers.juntar_exames import juntar_exames
 from ..helpers.juntar_internacoes import juntar_internacoes
-from ..helpers.jornada_utils import calculate_time_intervals
+from ..helpers.jornada_utils import calculate_time_intervals, filter_by_specification
 from ..helpers.normalize_id import _normalize_id
 
 
@@ -68,6 +68,7 @@ class JornadaController:
         consultas_provider: ConsultasCsvProvider,
         exames_provider: ExameCsvProvider,
         internacoes_provider: InternacoesCsvProvider,
+        especificacao: List[str] = None,
     ) -> Dict[str, Any]:
         paciente = await paciente_provider.obter_paciente_por_codigo(pac_id)
 
@@ -85,6 +86,7 @@ class JornadaController:
         # ordenando cronologicamente com base na data de inicio de cada evento
         
         eventos.sort(key=lambda evento: evento['data_evento'])
+        eventos = filter_by_specification(eventos, especificacao)
         calculate_time_intervals(eventos)
         return {
             'paciente': {
@@ -97,7 +99,9 @@ class JornadaController:
                 'numero_eventos': len(eventos),
                 'numero_consultas': numero_consultas,
                 'numero_exames': numero_exames,
-                'numero_internacoes': numero_internacoes
+                'numero_internacoes': numero_internacoes,
+                'numero_eventos_exibidos': len(eventos),
+                'filtro_especificacao': especificacao or []
             }
         }
 
