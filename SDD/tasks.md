@@ -166,15 +166,15 @@ Plano de execução de todas as tarefas necessárias para o Sistema de Gestão d
 - **Referência**: `CARE-RF005`, `CARE-UC003`
 
 ### [TASK-015] Implementar cálculo de tempo entre eventos
-- [ ] Criar função `calculate_time_intervals()` para calcular tempo entre eventos
+- [x] Criar função `calculate_time_intervals()` para calcular tempo entre eventos
 - [ ] Métrica: tempo de espera (agendamento até consulta)
 - [ ] Métrica: tempo de permanência (entrada até saída)
 - [ ] Métrica: duração de internação (admissão até alta)
-- [ ] Gerar campo `tempo_intervalo_horas` entre eventos
+- [x] Gerar campo `tempo_intervalo_horas` entre eventos
 - [ ] Testes com intervalos conhecidos para validar cálculos
 - **Prioridade**: Essencial
 - **Dependências**: TASK-013
-- **Status**: [0%] Não iniciado
+- **Status**: [33%]
 - **Referência**: `CARE-RF007`, `CARE-UC005`
 
 ### [TASK-016] Implementar identificação de gargalos operacionais
