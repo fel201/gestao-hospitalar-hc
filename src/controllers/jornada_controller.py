@@ -86,7 +86,6 @@ class JornadaController:
         
         eventos.sort(key=lambda evento: evento['data_evento'])
         calculate_time_intervals(eventos)
-        print(eventos)
         return {
             'paciente': {
                 'pac_id': paciente.get('codigo'),
