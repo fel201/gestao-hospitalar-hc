@@ -1,3 +1,4 @@
+
 <template>
   <div class="relative h-screen overflow-hidden md:flex">
     <!-- Mobile Menu -->
@@ -34,7 +35,10 @@
               <UsersIcon class="h-6 w-6" />
               <span>Pacientes</span>
             </router-link>
-        
+            <router-link v-if="authStore.isAuthenticated" to="/dashboard" class="flex items-center space-x-2 py-2.5 px-4 rounded transition duration-200 hover:bg-paper-active-link hover:text-white">
+              <LayoutDashboard class="h-6 w-6" />
+              <span>Dashboard</span>
+            </router-link>
         <router-link v-if="authStore.isAdmin" to="/admin" class="flex items-center space-x-2 py-2.5 px-4 rounded transition duration-200 hover:bg-paper-active-link hover:text-white">
           <ShieldCheckIcon class="h-6 w-6"/>
           <span>Admin</span>
@@ -86,7 +90,7 @@ import {
 import ProfileDropdown from '../components/ProfileDropdown.vue';
 import Button from '../components/Button.vue';
 import { useAuthStore } from '../stores/auth';
-
+import { LayoutDashboard } from 'lucide-vue-next';
 const sidebarOpen = ref(false);
 const route = useRoute();
 const router = useRouter();

@@ -3,7 +3,7 @@ import { useAuthStore } from '../stores/auth';
 import Home from '../views/Home.vue';
 import Login from '../views/Login.vue';
 import Admin from '../views/Admin.vue';
-
+import DashboardView from '../views/DashboardView.vue';
 import Exemplos from '../views/Exemplos.vue';
 import Pacientes from '../views/Pacientes.vue';
 import PacienteDetalhe from '../views/PacienteDetalhe.vue';
@@ -42,6 +42,12 @@ const routes = [
     path: '/pacientes/:codigo',
     name: 'PacienteDetalhe',
     component: PacienteDetalhe,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/dashboard',
+    name: 'DashboardJornada',
+    component: DashboardView,
     meta: { requiresAuth: true },
   },
 ];
