@@ -19,9 +19,11 @@ interface JourneyStage {
   events: StageEvent[]
   indicators: StageIndicator[]
 }
+// são apenas placeholders
 
 const specialty = ref('Cardiologia')
-
+const startDate = ref('2024-01-01')
+const endDate = ref('2024-06-30')
 
 const stages = ref<JourneyStage[]>([
   {
@@ -63,7 +65,7 @@ const stages = ref<JourneyStage[]>([
 <template>
   <div class="min-h-screen bg-slate-100">
     
-    <!-- cabeçalho do dashboard -->
+    <!-- cabeçalho principal -->
     <header class="bg-slate-900 text-white px-8 py-4">
       <div class="flex justify-between items-center">
         <div>
@@ -75,6 +77,12 @@ const stages = ref<JourneyStage[]>([
           </p>
         </div>
 
+        <div class="text-sm">
+          Perspectiva:
+          <span class="font-semibold">
+            Paciente
+          </span>
+        </div>
       </div>
     </header>
 
@@ -101,6 +109,83 @@ const stages = ref<JourneyStage[]>([
             </select>
           </div>
 
+          <div>
+            <label class="text-xs uppercase text-gray-500">
+              Data Inicial
+            </label>
+
+            <input
+              v-model="startDate"
+              type="date"
+              class="w-full border rounded-lg p-3"
+            />
+          </div>
+
+          <div>
+            <label class="text-xs uppercase text-gray-500">
+              Data Final
+            </label>
+
+            <input
+              v-model="endDate"
+              type="date"
+              class="w-full border rounded-lg p-3"
+            />
+          </div>
+
+          <div class="flex items-end">
+            <button
+              class="w-full bg-blue-900 text-white rounded-lg p-3 font-semibold"
+            >
+              Aplicar Filtros
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- KPIS -->
+      <section
+        class="grid grid-cols-4 gap-4 mb-8"
+      >
+        <div class="bg-white rounded-2xl p-5 shadow">
+          <p class="text-sm text-gray-500">
+            Total de Pacientes
+          </p>
+
+          <h2 class="text-3xl font-bold">
+            1.240
+          </h2>
+        </div>
+
+        <div class="bg-white rounded-2xl p-5 shadow">
+          <p class="text-sm text-gray-500">
+            Total de Eventos
+          </p>
+
+          <h2 class="text-3xl font-bold">
+            10.797
+          </h2>
+        </div>
+
+        <div class="bg-white rounded-2xl p-5 shadow">
+          <p class="text-sm text-gray-500">
+            Tempo Médio da Jornada
+          </p>
+
+          <h2 class="text-3xl font-bold">
+            47 dias
+          </h2>
+        </div>
+
+        <div class="bg-white rounded-2xl p-5 shadow">
+          <p class="text-sm text-gray-500">
+            Taxa de Conclusão
+          </p>
+
+          <h2 class="text-3xl font-bold">
+            78%
+          </h2>
         </div>
       </section>
 
