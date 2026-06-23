@@ -10,7 +10,8 @@ async def listar_pacientes(
     especialidade: str | None = None,
     unidade: str | None = None,
     data_inicio: str | None = None,
-    data_fim: str | None = None
+    data_fim: str | None = None,
+    ordenar_por: str = "nome"
 ) -> List[Dict[str, Any]]:
     "implementando"
 
@@ -22,7 +23,8 @@ async def listar_pacientes(
         especialidade=especialidade,
         unidade=unidade,
         data_inicio=data_inicio,
-        data_fim=data_fim
+        data_fim=data_fim,
+        ordenar_por=ordenar_por
     )
     
 async def obter_paciente_por_codigo(

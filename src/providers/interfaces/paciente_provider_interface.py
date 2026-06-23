@@ -10,8 +10,11 @@ class PacienteProviderInterface(ABC):
         page: int = 1,
         limit: int=50,
         especialidade: str | None = None,
+        unidade: str | None = None,
         data_inicio: str | None = None,
-        data_fim: str | None = None
+        data_fim: str | None = None,
+        ordenar_por: str = "nome"
+
         ) -> List[Dict[str, Any]]:
         """Deve retornar uma lista de pacientes com suporte a paginação e filtros"""
 
