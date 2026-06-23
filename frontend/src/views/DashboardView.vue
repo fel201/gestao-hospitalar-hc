@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
-
+import { onMounted } from "vue";
+import api from "../services/api";
 interface StageIndicator {
   label: string;
   value: string | number;
@@ -25,41 +26,32 @@ const specialty = ref("Cardiologia");
 const startDate = ref("2024-01-01");
 const endDate = ref("2024-06-30");
 
-const stages = ref<JourneyStage[]>([
-  {
-    id: 1,
-    title: "Entrada",
-    subtitle: "Abertura de Prontuário",
-    totalEvents: 1517,
-    events: [
-      { label: "Criação de prontuário", value: 1240 },
-      { label: "Cadastro emergência", value: 183 },
-      { label: "Transferência externa", value: 94 },
-    ],
-    indicators: [
-      { label: "Tempo médio cadastro", value: "12 min" },
-      { label: "Origem ambulatorial", value: "68%" },
-      { label: "Pacientes novos", value: "342" },
-    ],
-  },
-  {
-    id: 2,
-    title: "Consultas",
-    subtitle: "Atendimento Ambulatorial",
-    totalEvents: 3605,
-    events: [
-      { label: "Consulta ambulatorial", value: 2183 },
-      { label: "Retorno ambulatorial", value: 891 },
-      { label: "Teleconsulta", value: 214 },
-      { label: "Consulta urgência", value: 317 },
-    ],
-    indicators: [
-      { label: "Tempo médio espera", value: "38 min" },
-      { label: "Taxa de retorno", value: "42%" },
-      { label: "Consultas / paciente", value: "2.8" },
-    ],
-  },
-]);
+const dashboard = ref(null);
+const loading = ref(false);
+
+const loadDashboard = async () => {
+  loading.value = true;
+
+  try {
+    const response = await api.get("/api/dashboard", {
+      params: {
+        especialidade: specialty.value,
+        data_inicio: startDate.value,
+        data_fim: endDate.value,
+      },
+    });
+
+    dashboard.value = response.data;
+  } catch (error) {
+    console.error(error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  loadDashboard();
+});
 </script>
 
 <template>
@@ -121,6 +113,7 @@ const stages = ref<JourneyStage[]>([
 
           <div class="flex items-end">
             <button
+              @click="loadDashboard"
               class="w-full bg-blue-900 text-white rounded-lg p-3 font-semibold"
             >
               Aplicar Filtros
@@ -136,25 +129,34 @@ const stages = ref<JourneyStage[]>([
         <div class="bg-white rounded-2xl p-5 shadow">
           <p class="text-sm text-gray-500">Total de Pacientes</p>
 
-          <h2 class="text-3xl font-bold">1.240</h2>
+          <h2 class="text-3xl font-bold">
+            {{ dashboard?.kpis.total_pacientes ?? 0 }}
+          </h2>
+
         </div>
 
         <div class="bg-white rounded-2xl p-5 shadow">
           <p class="text-sm text-gray-500">Total de Eventos</p>
 
-          <h2 class="text-3xl font-bold">10.797</h2>
+          <h2 class="text-3xl font-bold">
+            {{ dashboard?.kpis.total_eventos ?? 0 }}
+          </h2>
         </div>
 
         <div class="bg-white rounded-2xl p-5 shadow">
           <p class="text-sm text-gray-500">Tempo Médio da Jornada</p>
 
-          <h2 class="text-3xl font-bold">47 dias</h2>
+          <h2 class="text-3xl font-bold">
+            {{ dashboard?.kpis.tempo_medio_jornada ?? 0 }} dias
+          </h2>
         </div>
 
         <div class="bg-white rounded-2xl p-5 shadow">
           <p class="text-sm text-gray-500">Taxa de Conclusão</p>
 
-          <h2 class="text-3xl font-bold">78%</h2>
+          <h2 class="text-3xl font-bold">
+            {{ ((dashboard?.kpis.taxa_conclusao ?? 0) * 100).toFixed(0) }}%
+          </h2>
         </div>
       </section>
 
@@ -164,7 +166,7 @@ const stages = ref<JourneyStage[]>([
 
         <div class="flex gap-6 overflow-x-auto pb-4">
           <div
-            v-for="stage in stages"
+            v-for="stage in dashboard?.etapas"
             :key="stage.id"
             class="bg-white rounded-2xl shadow min-w-[320px] p-5"
           >
@@ -175,7 +177,7 @@ const stages = ref<JourneyStage[]>([
                 </p>
 
                 <h3 class="font-bold text-2xl">
-                  {{ stage.title }}
+                  {{ stage.titulo }}
                 </h3>
               </div>
 
@@ -197,7 +199,7 @@ const stages = ref<JourneyStage[]>([
                 class="flex justify-between py-1"
               >
                 <span>
-                  {{ event.label }}
+                  {{ event.nome }}
                 </span>
 
                 <span class="font-semibold">
@@ -211,15 +213,15 @@ const stages = ref<JourneyStage[]>([
 
               <div
                 v-for="indicator in stage.indicators"
-                :key="indicator.label"
+                :key="indicator.nome"
                 class="flex justify-between py-1"
               >
                 <span>
-                  {{ indicator.label }}
+                  {{ indicator.nome }}
                 </span>
 
                 <span class="font-semibold">
-                  {{ indicator.value }}
+                  {{ indicator.valor }}
                 </span>
               </div>
             </div>

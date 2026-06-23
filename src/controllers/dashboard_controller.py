@@ -16,17 +16,17 @@ class DashboardController:
         self.internacao_provider = internacao_provider
         self.paciente_provider = paciente_provider
         
-    def get_dashboard(
+    async def get_dashboard(
         self,
         especialidade,
         data_inicio,
         data_fim
     ):
 
-        consultas = self.consulta_provider.listar_consultas()
-        exames = self.exame_provider.listar_exames()
-        internacoes = self.internacao_provider.listar_internacoes()
-        pacientes = self.paciente_provider.listar_pacientes()
+        consultas = await self.consulta_provider.listar_consultas()
+        exames = await self.exame_provider.listar_exames()
+        internacoes = await self.internacao_provider.listar_internacoes()
+        pacientes = await self.paciente_provider.listar_pacientes()
 
         consultas_filtradas = [
             c
