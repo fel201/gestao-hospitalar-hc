@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends
-from typing import List
+from typing import List, Optional
 
 from ..controllers import paciente_controller
 # Alteração: Importamos apenas a FÁBRICA
+# import provavelmente nao mais necessários
 from ..dependencies import get_paciente_provider
 from ..providers.interfaces.paciente_provider_interface import PacienteProviderInterface
 from ..controllers.jornada_controller import JornadaController as jornada_controller
@@ -25,21 +26,26 @@ router = APIRouter(
 
 @router.get("", response_model=List[dict])
 async def listar_pacientes(
-    # A mágica acontece aqui:
-    # 1. get_paciente_provider(STRATEGY) retorna a função _get_paciente_csv_provider
-    # 2. FastAPI efetivamente executa Depends(_get_paciente_csv_provider)
+
+    page: int = 1,
+    limit: int = 50,
+    especialidade: Optional[str] = None,
+    unidade: Optional[str] = None,
+    data_inicio: Optional[str] = None,
+    data_fim: Optional[str] = None,
+    ordenar_por: str = "nome",
     provider: PacienteProviderInterface = Depends(get_paciente_provider(STRATEGY))
 ):
-    """Lista todos os pacientes da fonte de dados configurada no roteador."""
-    paciente_provider = PacienteCsvProvider()
-    exames_provider = ExameCsvProvider()
-    consultas_provider = ConsultasCsvProvider()
-    internacoes_provider = InternacoesCsvProvider()
-    return await jornada_controller.listar_pacientes_com_jornada(
-        paciente_provider,
-        consultas_provider,
-        exames_provider,
-        internacoes_provider
+    """Lista todos os pacientes com suporte a paginação e filtros."""
+    return await paciente_controller.listar_pacientes(
+        provider=provider,
+        page=page,
+        limit=limit,
+        especialidade=especialidade,
+        unidade=unidade,
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+        ordenar_por=ordenar_por
     )
     
 @router.get("/{codigo}", response_model=dict)
