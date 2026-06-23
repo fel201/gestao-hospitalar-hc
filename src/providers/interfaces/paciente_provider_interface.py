@@ -5,9 +5,16 @@ class PacienteProviderInterface(ABC):
     """Interface (contrato) para provedores de dados de pacientes."""
 
     @abstractmethod
-    async def listar_pacientes(self) -> List[Dict[str, Any]]:
-        """Deve retornar uma lista de pacientes."""
-        pass
+    async def listar_pacientes(
+        self,
+        page: int = 1,
+        limit: int=50,
+        especialidade: str | None = None,
+        data_inicio: str | None = None,
+        data_fim: str | None = None
+        ) -> List[Dict[str, Any]]:
+        """Deve retornar uma lista de pacientes com suporte a paginação e filtros"""
+
 
     @abstractmethod
     async def obter_paciente_por_codigo(self, codigo: int) -> Dict[str, Any]:
