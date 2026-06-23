@@ -4,10 +4,27 @@ from ..providers.interfaces.paciente_provider_interface import PacienteProviderI
 from ..schemas.paciente import PacienteSchema 
 
 async def listar_pacientes(
-    provider: PacienteProviderInterface
+    provider: PacienteProviderInterface,
+    page: int = 1,
+    limit: int = 50,
+    especialidade: str | None = None,
+    unidade: str | None = None,
+    data_inicio: str | None = None,
+    data_fim: str | None = None
 ) -> List[Dict[str, Any]]:
-    return await provider.listar_pacientes()
+    "implementando"
 
+    page = max(page, 1)
+
+    return await provider.listar_pacientes(
+        page=page,
+        limit=limit,
+        especialidade=especialidade,
+        unidade=unidade,
+        data_inicio=data_inicio,
+        data_fim=data_fim
+    )
+    
 async def obter_paciente_por_codigo(
     codigo: int,
     provider: PacienteProviderInterface
