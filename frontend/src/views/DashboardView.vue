@@ -183,7 +183,7 @@ onMounted(() => {
 
               <div class="text-right">
                 <span class="font-bold text-3xl">
-                  {{ stage.totalEvents }}
+                  {{ stage.total_eventos }}
                 </span>
 
                 <p class="text-xs text-gray-500">eventos</p>
@@ -194,8 +194,8 @@ onMounted(() => {
               <h4 class="font-semibold text-sm uppercase mb-3">Eventos</h4>
 
               <div
-                v-for="event in stage.events"
-                :key="event.label"
+                v-for="event in stage.eventos"
+                :key="event.nome"
                 class="flex justify-between py-1"
               >
                 <span>
@@ -203,7 +203,7 @@ onMounted(() => {
                 </span>
 
                 <span class="font-semibold">
-                  {{ event.value }}
+                  {{ event.valor }}
                 </span>
               </div>
             </div>
@@ -212,7 +212,7 @@ onMounted(() => {
               <h4 class="font-semibold text-sm uppercase mb-3">Indicadores</h4>
 
               <div
-                v-for="indicator in stage.indicators"
+                v-for="indicator in stage.indicadores"
                 :key="indicator.nome"
                 class="flex justify-between py-1"
               >
