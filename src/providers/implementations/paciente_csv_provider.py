@@ -153,4 +153,25 @@ class PacienteCsvProvider(PacienteProviderInterface):
             print(f"Erro ao ler CSV: {e}")
 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paciente não encontrado no CSV")
+    
+
+
+    # código abaixo é totalmente provisório
+    async def obter_paciente_por_prontuario(self, prontuario: str) -> Dict[str, Any]:
+        """Implementação exigida pela interface para buscar por prontuário."""
+        try:
+            with open(self.csv_path, mode='r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row.get('prontuario') == prontuario:
+                        return row
+        except Exception as e:
+            print(f"Erro ao ler CSV: {e}")
+        return {}
+
+    async def salvar_paciente(self, dados: Dict[str, Any]) -> Dict[str, Any]:
+        """Implementação exigida pela interface para salvar paciente."""
+        # Como o CSV é apenas para leitura neste cenário atual, 
+        # levantamos um erro amigável se alguém tentar salvar por aqui.
+        raise NotImplementedError("A inserção de pacientes ainda não foi implementada para o provedor CSV.")
 

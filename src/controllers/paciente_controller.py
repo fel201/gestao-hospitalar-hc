@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
 from fastapi import HTTPException
 from ..providers.interfaces.paciente_provider_interface import PacienteProviderInterface
-from ..schemas.paciente import PacienteSchema 
+from ..schemas.paciente import Pacienteschema 
 
 async def listar_pacientes(
     provider: PacienteProviderInterface,
@@ -34,7 +34,7 @@ async def obter_paciente_por_codigo(
     return await provider.obter_paciente_por_codigo(codigo)
 
 async def criar_paciente(
-    paciente_data: PacienteSchema,
+    paciente_data: Pacienteschema,
     provider: PacienteProviderInterface,
 ) -> Dict[str, Any]:
     
