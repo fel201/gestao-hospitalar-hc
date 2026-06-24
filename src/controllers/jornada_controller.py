@@ -9,7 +9,7 @@ from ..helpers.juntar_exames import juntar_exames
 from ..helpers.juntar_internacoes import juntar_internacoes
 from ..helpers.jornada_utils import calculate_time_intervals
 from ..helpers.normalize_id import _normalize_id
-
+from datetime import datetime
 
 class JornadaController:
     @staticmethod
@@ -62,7 +62,7 @@ class JornadaController:
             len(prontuarios_pacientes & ids_com_jornada))
         return resultado
         
-    async def obter_jornada_paciente(
+    async def obter_jornada_paciente( # melhor id para teste: 2000127
         pac_id: int,
         paciente_provider: PacienteProviderInterface,
         consultas_provider: ConsultasCsvProvider,
@@ -85,6 +85,42 @@ class JornadaController:
         # ordenando cronologicamente com base na data de inicio de cada evento
         
         eventos.sort(key=lambda evento: evento['data_evento'])
+
+        # cálculo de intervalo e flags do gargalo
+        for i, evento_atual in enumerate(eventos):
+            evento_atual = eventos[i]
+            
+            # Padroniza a data do evento atual para objeto datetime
+            data_str = evento_atual.get('data_evento', '')
+            try:
+                dt_atual = datetime.strptime(data_str, "%d/%m/%Y") if isinstance(data_str, str) else data_str
+            except ValueError:
+                dt_atual = datetime.now() # Fallback seguro
+                evento_atual['data_evento'] = dt_atual
+
+            # Se for o primeiro evento, não tem intervalo anterior
+            if i == 0:
+                evento_atual['dias_desde_ultimo_evento'] = 0
+                evento_atual['is_gargalo'] = False
+                continue
+                
+            # Pega o evento imediatamente anterior
+            evento_anterior = eventos[i - 1]
+            data_ant_str = evento_anterior.get('data_evento', '')
+            try:
+                dt_anterior = datetime.strptime(data_ant_str, "%d/%m/%Y") if isinstance(data_ant_str, str) else data_ant_str
+            except ValueError:
+                dt_anterior = dt_atual
+
+            # diferença entre dias
+            diferenca = dt_atual - dt_anterior
+            dias = diferenca.days
+            
+            evento_atual['dias_desde_ultimo_evento'] = dias
+            
+            # se demorar mais de 60 dias, levanta a flag
+            evento_atual['is_gargalo'] = True if dias > 60 else False
+
         calculate_time_intervals(eventos)
         return {
             'paciente': {
