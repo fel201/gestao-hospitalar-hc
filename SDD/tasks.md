@@ -634,6 +634,18 @@ Plano de execução de todas as tarefas necessárias para o Sistema de Gestão d
 - **Dependências**: TASK-057
 - **Status**: [ ] Não iniciado
 
+### [BUG-059] Corrigir filtro de identificação nas funções juntar_*
+
+- [ ] Modificar `juntar_consultas` para associar eventos verificando tanto o `pac_id` (int) quanto o `prontuario` (string)
+- [ ] Replicar a mesma lógica de busca flexível (OR) na função `juntar_exames`
+- [ ] Replicar a mesma lógica de busca flexível (OR) na função `juntar_internacoes`
+- [ ] Validar correção usando o paciente `2000127` (Prontuário `19500.130`), garantindo que o JSON retorne todos os 11+ eventos
+
+* **Prioridade:** MEDIA (Oculta dados reais do histórico do paciente)
+* **Dependências:** TASK-019
+* **Status:** A Fazer
+* **Referência:** `src/helpers/juntar_consultas.py`, `src/helpers/juntar_exames.py`, `src/helpers/juntar_internacoes.py`
+
 ---
 
 ## RESUMO E MÉTRICAS
@@ -688,4 +700,6 @@ TASK-029 (Detalhe Paciente Frontend)
 5. **Soft Delete**: Usar `deleted_at` em vez de DELETE SQL.
 6. **Logs Detalhados**: Registrar todas as operações críticas em `AUDIT_LOG`.
 7. **Performance**: Alvo: respostas < 10 segundos; otimizar índices conforme necessário.
+
+
 
