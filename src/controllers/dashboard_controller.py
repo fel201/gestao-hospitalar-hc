@@ -28,15 +28,15 @@ class DashboardController:
         exames = await self.exame_provider.listar_exames()
         internacoes = await self.internacao_provider.listar_internacoes()
         pacientes = await self.paciente_provider.listar_pacientes()
-        for c in consultas:
-            print(c["especialidade"])
-        
+        print("numero de consultas: ", len(consultas))
+        print("numero de exames: ", len(exames))
+        print("numero de internacoes: ", len(internacoes))
+        print("numero de pacientes: ", len(pacientes))
         consultas_filtradas = [
             c
             for c in consultas
             if especialidade.lower() in c["especialidade"].lower()
         ]
-        print(len(consultas_filtradas))        
         consultas_primeira_vez = [
             c 
             for c in consultas_filtradas
@@ -90,16 +90,23 @@ class DashboardController:
         pacientes_unicos = set()
         for consulta in consultas_filtradas:
             pacientes_unicos.add(
-                consulta["paciente_id"]
+                consulta["prontuario"]
             )
-
+        for internacao in internacoes_filtradas:
+            pacientes_unicos.add(
+                internacao["prontuario"]
+            )
+        for exame in exames_filtrados:
+            pacientes_unicos.add(
+                exame["paciente_prontuario"]
+            )
         total_pacientes = len(
             pacientes_unicos
         )
-        print(total_pacientes)
         taxa_conclusao = \
         (len(consultas_conluidas) + len(exames_concluidos) + len(internacoes_concluidas))\
         /(len(consultas_filtradas) + len(exames_filtrados) + len(internacoes_filtradas))
+        
         dashboard = {
             "especialidade": especialidade,
 
@@ -111,7 +118,6 @@ class DashboardController:
                     + len(exames)
                     + len(internacoes_filtradas),
 
-                # dados placeholders, pq eu ainda não calculei essas taxas
                 "tempo_medio_jornada": tempo_medio_permanencia_internacao,
                 "taxa_conclusao": taxa_conclusao
             },
