@@ -3,7 +3,9 @@ from ..providers.implementations.exame_csv_provider import ExameCsvProvider
 from ..providers.implementations.internacoes_csv_provider import InternacoesCsvProvider
 from ..providers.interfaces.paciente_provider_interface import PacienteProviderInterface
 from ..helpers.jornada_utils import calcular_diferenca_horas
-
+from ..helpers.filtrar_eventos import filtrar_eventos
+from ..helpers.total_pacientes_eventos import total_pacientes_eventos    
+    
 class DashboardController:
     def __init__(
         self,
@@ -32,47 +34,41 @@ class DashboardController:
         print("numero de exames: ", len(exames))
         print("numero de internacoes: ", len(internacoes))
         print("numero de pacientes: ", len(pacientes))
-        consultas_filtradas = [
-            c
-            for c in consultas
-            if especialidade.lower() in c["especialidade"].lower()
-        ]
+        consultas_filtradas = filtrar_eventos(evento='consulta', dados=consultas, especialidade=especialidade)
+        
         consultas_primeira_vez = [
             c 
             for c in consultas_filtradas
-            if "PRIMEIRA VEZ" in c["condicao"].lower()
+            if "PRIMEIRA CONSULTA" in c["condicao"]
         ]
         
-        consultas_conluidas = [
+        consultas_concluidas = [
             c
             for c in consultas_filtradas
-            if "PACIENTE ATENDIDO" in c["retorno"].lower()
+            if "PACIENTE ATENDIDO" in c["retorno"]
         ]
-
+        
         consultas_com_diagnostico = [
             c 
-            for c in consultas_conluidas
+            for c in consultas_concluidas
             if c["cid"] != ""
         ]
-
-        exames_filtrados = [
-            c
-            for c in exames
-            if especialidade.lower() in c["especialidade_solicitante_nome"].lower() 
-        ]
+        for c in consultas_concluidas:
+            if c["cid"] != "":
+                print(c["cid"])
+                
+        print(len(consultas_primeira_vez))
+        print(len(consultas_concluidas))
+        print(len(consultas_com_diagnostico))
+        exames_filtrados = filtrar_eventos(evento='exame', dados=exames, especialidade=especialidade)
 
         exames_concluidos = [
             c 
             for c in exames_filtrados
             if "liberado" in c["situacao"].lower() 
         ]
-
-        internacoes_filtradas = [
-            i
-            for i in internacoes
-            if especialidade.lower() in i["especialidade"].lower()
-        ]
         
+        internacoes_filtradas = filtrar_eventos(evento='internacao', dados=internacoes, especialidade=especialidade)
         internacoes_concluidas = [
             i 
             for i in internacoes_filtradas
@@ -83,41 +79,29 @@ class DashboardController:
 
         for i in internacoes_concluidas:
             tempo_medio_permanencia_internacao += int(i["tempo_permanencia_dias"])
-            
         if len(internacoes_concluidas) != 0:
             tempo_medio_permanencia_internacao = round(tempo_medio_permanencia_internacao/len(internacoes_concluidas))
 
-        pacientes_unicos = set()
-        for consulta in consultas_filtradas:
-            pacientes_unicos.add(
-                consulta["prontuario"]
-            )
-        for internacao in internacoes_filtradas:
-            pacientes_unicos.add(
-                internacao["prontuario"]
-            )
-        for exame in exames_filtrados:
-            pacientes_unicos.add(
-                exame["paciente_prontuario"]
-            )
-        total_pacientes = len(
-            pacientes_unicos
-        )
+        total_pacientes = total_pacientes_eventos(consultas=consultas_filtradas,
+                                                  exames=exames_filtrados,
+                                                  internacoes=internacoes_filtradas)
+        
         taxa_conclusao = \
-        (len(consultas_conluidas) + len(exames_concluidos) + len(internacoes_concluidas))\
+        (len(consultas_concluidas) + len(exames_concluidos) + len(internacoes_concluidas))\
         /(len(consultas_filtradas) + len(exames_filtrados) + len(internacoes_filtradas))
         
+        total_consultas = len(consultas_filtradas)
+        total_exames = len(exames_filtrados)
+        total_internacoes = len(internacoes_filtradas)
+        total_eventos = total_consultas + total_exames + total_internacoes
+        
+        consultas_por_paciente = round(len(consultas_filtradas)/max(total_pacientes, 1), 2)
         dashboard = {
             "especialidade": especialidade,
 
             "kpis": {
                 "total_pacientes": total_pacientes,
-
-                "total_eventos":
-                    len(consultas_filtradas)
-                    + len(exames)
-                    + len(internacoes_filtradas),
-
+                "total_eventos": total_eventos,
                 "tempo_medio_jornada": tempo_medio_permanencia_internacao,
                 "taxa_conclusao": taxa_conclusao
             },
@@ -153,9 +137,7 @@ class DashboardController:
                     "eventos": [
                         {
                             "nome": "Consultas",
-                            "valor": len(
-                                consultas_filtradas
-                            )
+                            "valor": total_consultas
                         }
                     ],
 
@@ -163,19 +145,7 @@ class DashboardController:
                         {
                             "nome":
                                 "Consultas por paciente",
-
-                            "valor":
-                                round(
-                                    len(
-                                        consultas_filtradas
-                                    )
-                                    /
-                                    max(
-                                        total_pacientes,
-                                        1
-                                    ),
-                                    2
-                                )
+                            "valor": consultas_por_paciente
                         }
                     ]
                 },
