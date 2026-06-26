@@ -173,7 +173,7 @@ onMounted(() => {
       <section>
         <h2 class="text-xl font-bold mb-4">Jornada Assistencial</h2>
 
-        <div class="flex gap-6 overflow-x-auto pb-4">
+        <div class="flex flex-col gap-6 pr-4 h-[400px]">
           <div
             v-for="stage in dashboard?.etapas"
             :key="stage.id"
