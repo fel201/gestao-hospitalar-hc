@@ -20,8 +20,6 @@ class ExameCsvProvider:
             with open(self.csv_path, mode='r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    if len(exames) >= 50:
-                        break
 
                     exames.append({
                         'exame_id': row.get('exame_id', ''),

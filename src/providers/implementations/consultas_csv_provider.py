@@ -20,8 +20,6 @@ class ConsultasCsvProvider:
             with open(self.csv_path, mode='r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    if len(consultas) >= 50:
-                        break
 
                     try:
                         consulta_id = int(row.get('id', '') or 0)

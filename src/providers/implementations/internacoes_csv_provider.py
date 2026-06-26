@@ -20,8 +20,6 @@ class InternacoesCsvProvider:
             with open(self.csv_path, mode='r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    if len(internacoes) >= 50:
-                        break
 
                     try:
                         internacao_id = int(row.get('id_internacao', '') or 0)
