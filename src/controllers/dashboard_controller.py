@@ -35,10 +35,22 @@ class DashboardController:
             if c["especialidade"] == especialidade
         ]
 
+        consultas_primeira_vez = [
+            c 
+            for c in consultas_filtradas
+            if c["condicao"] == "PRIMEIRA VEZ"
+        ]
+
         consultas_conluidas = [
             c
             for c in consultas_filtradas
             if c["retorno"] == "PACIENTE ATENDIDO"
+        ]
+
+        consultas_com_diagnostico = [
+            c 
+            for c in consultas_conluidas
+            if c["cid"] != ""
         ]
 
         exames_filtrados = [
@@ -105,7 +117,7 @@ class DashboardController:
                 {
                     "id": "entrada",
                     "titulo": "Entrada",
-                    "total_eventos": total_pacientes,
+                    "total_eventos": len(consultas_primeira_vez),
 
                     "eventos": [
                         {
@@ -117,7 +129,7 @@ class DashboardController:
                     "indicadores": [
                         {
                             "nome": "Pacientes novos",
-                            "valor": total_pacientes
+                            "valor": len(consultas_primeira_vez)
                         }
                     ]
                 },
@@ -161,7 +173,12 @@ class DashboardController:
 
                 {
                     "id": "diagnostico",
-                    "titulo": "Diagnóstico"
+                    "titulo": "Diagnóstico",
+                    "total_eventos": len(consultas_com_diagnostico),
+
+                    "eventos": [
+
+                    ]
                 },
 
                 {

@@ -44,6 +44,7 @@ class ConsultasCsvProvider:
                         'data_procedimento': row.get('data_procedimento', ''),
                         'retorno': row.get('Retorno', ''),
                         'paciente_id': row.get('ID do Paciente', ''),
+                        'condicao': row.get('Condição do Atendimento', ''),
                     })
         except Exception as e:
             print(f"Erro ao ler CSV de consultas: {e}")
