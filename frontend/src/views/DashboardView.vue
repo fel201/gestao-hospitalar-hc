@@ -86,6 +86,15 @@ onMounted(() => {
               <option>Cardiologia</option>
               <option>Neurologia</option>
               <option>Ortopedia</option>
+              <option>Nutrição</option>
+              <option>Nefrologia</option>
+              <option>Oncologia</option>
+              <option>Psiquiatria</option>
+              <option>Urologia</option>
+              <option>Pneumologia</option>
+              <option>Gastroenterologia</option>
+              <option>Ginecologia</option>
+              <option>Endocrinologia</option>
             </select>
           </div>
 
