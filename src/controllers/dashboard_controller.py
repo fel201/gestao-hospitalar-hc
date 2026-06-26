@@ -34,10 +34,34 @@ class DashboardController:
             if c["especialidade"] == especialidade
         ]
 
+        consultas_conluidas = [
+            c
+            for c in consultas_filtradas
+            if c["retorno"] == "PACIENTE ATENDIDO"
+        ]
+
+        exames_filtrados = [
+            c
+            for c in exames
+            if c["especialidade_solicitante_nome"] == especialidade
+        ]
+
+        exames_concluidos = [
+            c 
+            for c in exames_filtrados
+            if c["situacao"] == "LIBERADO"
+        ]
+
         internacoes_filtradas = [
             i
             for i in internacoes
             if i["especialidade"] == especialidade
+        ]
+
+        internacoes_concluidas = [
+            i 
+            for i in internacoes_filtradas
+            if i["ind_saida_pac"] == 'S'
         ]
 
         pacientes_unicos = set()
@@ -64,7 +88,10 @@ class DashboardController:
 
                 # dados placeholders, pq eu ainda não calculei essas taxas
                 "tempo_medio_jornada": 47,
-                "taxa_conclusao": 0.78
+                "taxa_conclusao": 
+                    # calcula a partir dos dados de consultas, exames e internações nas respectivas áreas
+                    (len(consultas_conluidas) + len(exames_concluidos) + len(internacoes_concluidas))/(len(consultas_filtradas) + len(exames_filtrados) + len(internacoes_filtradas))
+
             },
 
             "etapas": [

@@ -42,6 +42,7 @@ class InternacoesCsvProvider:
                         'unf_descricao': row.get('unf_descricao', ''),
                         'unf_sigla': row.get('unf_sigla', ''),
                         'especialidade': row.get('esp_nome_especialidade', ''),
+                        'ind_saida_pac': row.get('ind_saida_pac', ''),
                     })
         except Exception as e:
             print(f"Erro ao ler CSV de internações: {e}")
