@@ -46,7 +46,7 @@ const routes = [
   },
   {
     path: '/dashboard',
-    name: 'DashboardJornada',
+    name: 'Dashboard Jornada',
     component: DashboardView,
     meta: { requiresAuth: true },
   },
