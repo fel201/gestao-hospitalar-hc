@@ -53,6 +53,17 @@ class DashboardController:
             for c in consultas_concluidas
             if c["cid"] != ""
         ]
+        from collections import Counter
+
+        contador = Counter(
+            c["especialidade"].strip()
+            for c in consultas_filtradas
+            if c["especialidade"].strip()
+        )
+
+        for esp, qtd in contador.most_common():
+            print(f"{qtd:5} - {esp}")
+            
         for c in consultas_concluidas:
             if c["cid"] != "":
                 print(c["cid"])
