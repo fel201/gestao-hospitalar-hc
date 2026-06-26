@@ -2,6 +2,7 @@ from ..providers.implementations.consultas_csv_provider import ConsultasCsvProvi
 from ..providers.implementations.exame_csv_provider import ExameCsvProvider
 from ..providers.implementations.internacoes_csv_provider import InternacoesCsvProvider
 from ..providers.interfaces.paciente_provider_interface import PacienteProviderInterface
+from ..helpers.jornada_utils import calcular_diferenca_horas
 
 class DashboardController:
     def __init__(

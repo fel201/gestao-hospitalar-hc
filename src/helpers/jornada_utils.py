@@ -39,3 +39,25 @@ def filter_by_specification(eventos: List[dict], especificacao: Optional[List[st
         for evento in eventos
         if str(evento.get('tipo', '')).strip().lower() in tipos_aceitos
     ]
+
+def calcular_diferenca_horas(data_inicio: str, data_fim: str) -> int:
+    """
+    Calcula a diferença em horas entre duas datas no formato 'DD/MM/YYYY, HH:MM'.
+    """
+    formato = "%d/%m/%Y, %H:%M"
+    
+    try:
+        # Converte as strings para objetos datetime
+        inicio = datetime.strptime(data_inicio, formato)
+        fim = datetime.strptime(data_fim, formato)
+        
+        # Calcula a diferença
+        diferenca = fim - inicio
+        
+        # Converte a diferença total para horas
+        horas = diferenca.total_seconds() / 3600
+        
+        return round(horas/24)
+    
+    except ValueError:
+        raise ValueError("Formato de data inválido. Esperado: 'DD/MM/YYYY, HH:MM' (ex: 13/1/2026, 08:56)")
