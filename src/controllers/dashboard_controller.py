@@ -28,23 +28,25 @@ class DashboardController:
         exames = await self.exame_provider.listar_exames()
         internacoes = await self.internacao_provider.listar_internacoes()
         pacientes = await self.paciente_provider.listar_pacientes()
-
+        for c in consultas:
+            print(c["especialidade"])
+        
         consultas_filtradas = [
             c
             for c in consultas
-            if c["especialidade"] == especialidade
+            if especialidade.lower() in c["especialidade"].lower()
         ]
-
+        print(len(consultas_filtradas))        
         consultas_primeira_vez = [
             c 
             for c in consultas_filtradas
-            if c["condicao"] == "PRIMEIRA VEZ"
+            if "PRIMEIRA VEZ" in c["condicao"].lower()
         ]
-
+        
         consultas_conluidas = [
             c
             for c in consultas_filtradas
-            if c["retorno"] == "PACIENTE ATENDIDO"
+            if "PACIENTE ATENDIDO" in c["retorno"].lower()
         ]
 
         consultas_com_diagnostico = [
@@ -56,21 +58,21 @@ class DashboardController:
         exames_filtrados = [
             c
             for c in exames
-            if c["especialidade_solicitante_nome"] == especialidade
+            if especialidade.lower() in c["especialidade_solicitante_nome"].lower() 
         ]
 
         exames_concluidos = [
             c 
             for c in exames_filtrados
-            if c["situacao"] == "LIBERADO"
+            if "liberado" in c["situacao"].lower() 
         ]
 
         internacoes_filtradas = [
             i
             for i in internacoes
-            if i["especialidade"] == especialidade
+            if especialidade.lower() in i["especialidade"].lower()
         ]
-
+        
         internacoes_concluidas = [
             i 
             for i in internacoes_filtradas
@@ -81,10 +83,11 @@ class DashboardController:
 
         for i in internacoes_concluidas:
             tempo_medio_permanencia_internacao += int(i["tempo_permanencia_dias"])
-        tempo_medio_permanencia_internacao = round(tempo_medio_permanencia_internacao/len(internacoes_concluidas))
+            
+        if len(internacoes_concluidas) != 0:
+            tempo_medio_permanencia_internacao = round(tempo_medio_permanencia_internacao/len(internacoes_concluidas))
 
         pacientes_unicos = set()
-
         for consulta in consultas_filtradas:
             pacientes_unicos.add(
                 consulta["paciente_id"]
@@ -93,7 +96,10 @@ class DashboardController:
         total_pacientes = len(
             pacientes_unicos
         )
-
+        print(total_pacientes)
+        taxa_conclusao = \
+        (len(consultas_conluidas) + len(exames_concluidos) + len(internacoes_concluidas))\
+        /(len(consultas_filtradas) + len(exames_filtrados) + len(internacoes_filtradas))
         dashboard = {
             "especialidade": especialidade,
 
@@ -107,10 +113,7 @@ class DashboardController:
 
                 # dados placeholders, pq eu ainda não calculei essas taxas
                 "tempo_medio_jornada": tempo_medio_permanencia_internacao,
-                "taxa_conclusao": 
-                    # calcula a partir dos dados de consultas, exames e internações nas respectivas áreas
-                    (len(consultas_conluidas) + len(exames_concluidos) + len(internacoes_concluidas))/(len(consultas_filtradas) + len(exames_filtrados) + len(internacoes_filtradas))
-
+                "taxa_conclusao": taxa_conclusao
             },
 
             "etapas": [

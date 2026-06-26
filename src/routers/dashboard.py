@@ -35,5 +35,4 @@ async def get_dashboard(
         data_inicio=data_inicio,
         data_fim=data_fim,
     )
-    print(data)
     return data
