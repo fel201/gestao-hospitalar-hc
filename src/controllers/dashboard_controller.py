@@ -65,6 +65,12 @@ class DashboardController:
             if i["ind_saida_pac"] == 'S'
         ]
 
+        tempo_medio_permanencia_internacao = 0
+
+        for i in internacoes_concluidas:
+            tempo_medio_permanencia_internacao += int(i["tempo_permanencia_dias"])
+        tempo_medio_permanencia_internacao = round(tempo_medio_permanencia_internacao/len(internacoes_concluidas))
+
         pacientes_unicos = set()
 
         for consulta in consultas_filtradas:
@@ -88,7 +94,7 @@ class DashboardController:
                     + len(internacoes_filtradas),
 
                 # dados placeholders, pq eu ainda não calculei essas taxas
-                "tempo_medio_jornada": 47,
+                "tempo_medio_jornada": tempo_medio_permanencia_internacao,
                 "taxa_conclusao": 
                     # calcula a partir dos dados de consultas, exames e internações nas respectivas áreas
                     (len(consultas_conluidas) + len(exames_concluidos) + len(internacoes_concluidas))/(len(consultas_filtradas) + len(exames_filtrados) + len(internacoes_filtradas))
