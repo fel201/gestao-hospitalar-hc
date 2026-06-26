@@ -189,15 +189,17 @@ Plano de execução de todas as tarefas necessárias para o Sistema de Gestão d
 - **Status**: Não iniciado
 - **Referência**: `CARE-RF007`, `CARE-UC004`
 
-### [TASK-016-2] Implementar filtragem por especificação
-- [ ] Criar função `filter_by_specification()` para filtrar eventos da jornada do paciente por especificação
-- [ ] Implementar lógica de filtragem considerando os tipos de eventos disponíveis (consultas, exames e internações)
-- [ ] Garantir que a filtragem preserve a ordenação cronológica da linha do tempo
-- [ ] Integrar o filtro à interface de visualização da jornada do paciente
-- [ ] Validar o comportamento quando nenhuma especificação for selecionada ou quando não houver eventos correspondentes
+### [TASK-016-2] Dashboard da Jornada Assistencial Principal
+
+- [ ] Exibir fluxo da jornada assistencial
+- [ ] Organizar eventos em etapas
+- [ ] Mostrar KPIs por etapa
+- [ ] Mostrar quantidade de eventos por etapa
+- [ ] Permitir filtro por especialidade
+- [ ] Permitir filtro por período
 - **Prioridade**: Essencial
 - **Status**: Não iniciado
-- **Referência**: `CARE-RF005`, `CARE-RF004`
+
 
 ## FASE 5: API Endpoints - Backend
 
@@ -208,7 +210,7 @@ Plano de execução de todas as tarefas necessárias para o Sistema de Gestão d
 - [ ] Responder com JSON conforme schema definido
 - [ ] Tratamento de erro 404 para paciente inexistente
 - [ ] Testes unitários com coverage
-- **Prioridade**: Essencial
+- **Prioridade**: Baixa
 - **Dependências**: TASK-004, TASK-008
 - **Status**: Em Progresso
 - **Referência**: SPEC.md Section 7
@@ -233,23 +235,18 @@ Plano de execução de todas as tarefas necessárias para o Sistema de Gestão d
 - [x] Responder com JSON conforme schema definido
 - [ ] Registrar acesso em `AUDIT_LOG`
 - [ ] Testes de performance com jornadas grandes
-- **Prioridade**: Essencial
+- **Prioridade**: Baixa
 - **Dependências**: TASK-004, TASK-013, TASK-014, TASK-015
 - **Status**: Em Progresso
 - **Referência**: `CARE-UC001`, SPEC.md Section 7
 
 ### [TASK-020] Implementar endpoint `GET /api/metricas`
-- [ ] Retornar métricas agregadas e pré-computadas
-- [ ] Suportar filtros: `periodo` (data_inicio, data_fim), `unidade`, `tipo_metrica`
-- [ ] Paginação opcional de resultados
-- [ ] Garantir que nenhum PII é retornado
-- [ ] Validar permissões RBAC antes de retornar
-- [ ] Registrar acesso em `AUDIT_LOG`
-- [ ] Testes de agregação e filtros
+- [ ] Suportar filtro obrigatório por especialidade
+- [ ] Retornar quantidade de consultas, exames, procedimentos e prontuários
+- [ ] Retornar KPIs referentes a uma determinada especialidade.
+- [ ] Retornar distribuição dos eventos por etapa da jornada
 - **Prioridade**: Essencial
-- **Dependências**: TASK-004, TASK-012, TASK-016
 - **Status**: Não iniciado
-- **Referência**: `CARE-UC005`, `CARE-UC006`, SPEC.md Section 7
 
 ### [TASK-021] Implementar endpoint `GET /api/metricas/indicadores`
 - [ ] Retornar indicadores principais:
@@ -303,20 +300,6 @@ Plano de execução de todas as tarefas necessárias para o Sistema de Gestão d
 ## FASE 6: Frontend - Vue/TypeScript
 
 
-### [TASK-027] Implementar página de Dashboard (Gestor)
-- [ ] Exibir indicadores principais (KPIs)
-- [ ] Gráficos de tempo médio de permanência
-- [ ] Gráficos de taxa de reinternação
-- [ ] Tabela de gargalos identificados
-- [ ] Filtros por período, unidade e especialidade
-- [ ] Chamadas para `GET /api/metricas` e `/api/metricas/indicadores`
-- [ ] Responsividade e performance
-- [ ] Testes de componentes visuais
-- **Prioridade**: Essencial
-- **Dependências**: TASK-020, TASK-021, TASK-026
-- **Status**: [ ] Não iniciado
-- **Referência**: `CARE-UC004`, `CARE-UC005`
-
 ### [TASK-028] Implementar página de Lista de Pacientes
 - [x] Exibir tabela com paginação
 - [x] Chamada para `GET /api/pacientes`
@@ -325,7 +308,7 @@ Plano de execução de todas as tarefas necessárias para o Sistema de Gestão d
 - [x] Link para detalhe do paciente
 - [ ] Indicadores de status (reinternação, gargalo)
 - [ ] Testes de paginação e filtros
-- **Prioridade**: Essencial
+- **Prioridade**: Baixa
 - **Dependências**: TASK-018, TASK-026
 - **Status**: Em Progresso
 
@@ -337,7 +320,7 @@ Plano de execução de todas as tarefas necessárias para o Sistema de Gestão d
 - [ ] Modal ou painel lateral para detalhes de cada evento
 - [ ] Indicadores de recorrência e gargalos
 - [x] Responsividade e performance
-- **Prioridade**: Essencial
+- **Prioridade**: Baixa
 - **Dependências**: TASK-019, TASK-026
 - **Status**: [71%] Em Progresso
 - **Referência**: `CARE-UC001`, `CARE-UC002`
@@ -349,7 +332,7 @@ Plano de execução de todas as tarefas necessárias para o Sistema de Gestão d
 - [ ] Interatividade: clicar para expandir detalhes
 - [ ] Scroll horizontal/vertical conforme necessário
 - [ ] Testes de renderização com diferentes números de eventos
-- **Prioridade**: Alta
+- **Prioridade**: Baixa
 - **Dependências**: TASK-019
 - **Status**: [ ] Não iniciado
 
@@ -651,6 +634,18 @@ Plano de execução de todas as tarefas necessárias para o Sistema de Gestão d
 - **Dependências**: TASK-057
 - **Status**: [ ] Não iniciado
 
+### [BUG-059] Corrigir filtro de identificação nas funções juntar_*
+
+- [ ] Modificar `juntar_consultas` para associar eventos verificando tanto o `pac_id` (int) quanto o `prontuario` (string)
+- [ ] Replicar a mesma lógica de busca flexível (OR) na função `juntar_exames`
+- [ ] Replicar a mesma lógica de busca flexível (OR) na função `juntar_internacoes`
+- [ ] Validar correção usando o paciente `2000127` (Prontuário `19500.130`), garantindo que o JSON retorne todos os 11+ eventos
+
+* **Prioridade:** MEDIA (Oculta dados reais do histórico do paciente)
+* **Dependências:** TASK-019
+* **Status:** A Fazer
+* **Referência:** `src/helpers/juntar_consultas.py`, `src/helpers/juntar_exames.py`, `src/helpers/juntar_internacoes.py`
+
 ---
 
 ## RESUMO E MÉTRICAS
@@ -705,4 +700,6 @@ TASK-029 (Detalhe Paciente Frontend)
 5. **Soft Delete**: Usar `deleted_at` em vez de DELETE SQL.
 6. **Logs Detalhados**: Registrar todas as operações críticas em `AUDIT_LOG`.
 7. **Performance**: Alvo: respostas < 10 segundos; otimizar índices conforme necessário.
+
+
 
