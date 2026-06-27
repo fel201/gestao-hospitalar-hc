@@ -2,31 +2,20 @@
 import { ref } from "vue";
 import { onMounted } from "vue";
 import api from "../services/api";
-interface StageIndicator {
-  label: string;
-  value: string | number;
-}
+import DashboardKpis from "../components/Dashboard/DashboardKpis.vue";
+import DashboardJourney from "../components/Dashboard/DashboardJourney.vue";
+import DashboardFilters from "../components/Dashboard/DashboardFilters.vue";
+import type {
+  DashboardInterface
+} from "../interfaces/dashboard.ts";
 
-interface StageEvent {
-  label: string;
-  value: number;
-}
-
-interface JourneyStage {
-  id: number;
-  title: string;
-  subtitle: string;
-  totalEvents: number;
-  events: StageEvent[];
-  indicators: StageIndicator[];
-}
 // são apenas placeholders
 
 const specialty = ref("Cardiologia");
 const startDate = ref("2024-01-01");
 const endDate = ref("2024-06-30");
 
-const dashboard = ref(null);
+const dashboard = ref<DashboardInterface>();
 const loading = ref(false);
 
 const loadDashboard = async () => {
@@ -75,102 +64,22 @@ onMounted(() => {
 
     <main class="w-full px-10 py-8">
       <!-- filtros -->
-      <section class="bg-white rounded-2xl p-8 shadow-sm mb-8">
-        <div class="grid grid-cols-4 gap-4">
-          <div>
-            <label class="text-xs uppercase text-gray-500">
-              Especialidade
-            </label>
-
-            <select v-model="specialty" class="w-full border rounded-lg p-3">
-              <option>Cardiologia</option>
-              <option>Neurologia</option>
-              <option>Ortopedia</option>
-              <option>Nutrição</option>
-              <option>Nefrologia</option>
-              <option>Oncologia</option>
-              <option>Psiquiatria</option>
-              <option>Urologia</option>
-              <option>Pneumologia</option>
-              <option>Gastroenterologia</option>
-              <option>Ginecologia</option>
-              <option>Endocrinologia</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="text-xs uppercase text-gray-500">
-              Data Inicial
-            </label>
-
-            <input
-              v-model="startDate"
-              type="date"
-              class="w-full border rounded-lg p-3"
-            />
-          </div>
-
-          <div>
-            <label class="text-xs uppercase text-gray-500"> Data Final </label>
-
-            <input
-              v-model="endDate"
-              type="date"
-              class="w-full border rounded-lg p-3"
-            />
-          </div>
-
-          <div class="flex items-end">
-            <button
-              @click="loadDashboard"
-              class="w-full bg-blue-900 text-white rounded-lg p-3 font-semibold"
-            >
-              Aplicar Filtros
-            </button>
-          </div>
-        </div>
-      </section>
+      <DashboardFilters
+      v-if="dashboard"
+      :specialty="specialty"
+      :start-date="startDate"
+      :end-date="endDate"
+      @update:specialty="specialty = $event"
+      @update:start-date="startDate = $event"
+      @update:end-date="endDate = $event"
+      @search="loadDashboard"
+      />
 
       <!-- KPIS -->
-      <section
-        class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10"
-      >
-        <div class="bg-white rounded-2xl p-5 shadow">
-          <p class="text-sm text-gray-500">Total de Pacientes</p>
-
-          <h2 class="text-3xl font-bold">
-            {{ dashboard?.kpis.total_pacientes ?? 0 }}
-          </h2>
-
-        </div>
-
-        <div class="bg-white rounded-2xl p-5 shadow">
-          <p class="text-sm text-gray-500">Total de Eventos</p>
-
-          <h2 class="text-3xl font-bold">
-            {{ dashboard?.kpis.total_eventos ?? 0 }}
-          </h2>
-        </div>
-
-        <div class="bg-white rounded-2xl p-5 shadow">
-          <p class="text-sm text-gray-500">Tempo Médio da Jornada</p>
-
-          <h2 class="text-3xl font-bold">
-            {{ dashboard?.kpis.tempo_medio_jornada ?? 0 }} dias
-          </h2>
-        </div>
-
-        <div class="bg-white rounded-2xl p-5 shadow">
-          <p class="text-sm text-gray-500">Taxa de Conclusão</p>
-
-          <h2 class="text-3xl font-bold">
-            {{ ((dashboard?.kpis.taxa_conclusao ?? 0) * 100).toFixed(0) }}%
-          </h2>
-        </div>
-      </section>
+      <DashboardKpis v-if="dashboard" :kpis="dashboard!.kpis" />
 
       <!-- jornada -->
-      <section>
+      <section v-if="dashboard">
         <h2 class="text-xl font-bold mb-4">Jornada Assistencial</h2>
 
         <div class="flex flex-col gap-6 pr-4 h-[400px]">
@@ -179,61 +88,7 @@ onMounted(() => {
             :key="stage.id"
             class="bg-white rounded-2xl shadow min-w-[320px] p-5"
           >
-            <div class="flex justify-between mb-4">
-              <div>
-                <p class="text-sm text-gray-500">
-                  {{ stage.subtitle }}
-                </p>
-
-                <h3 class="font-bold text-2xl">
-                  {{ stage.titulo }}
-                </h3>
-              </div>
-
-              <div class="text-right">
-                <span class="font-bold text-3xl">
-                  {{ stage.total_eventos }}
-                </span>
-
-                <p class="text-xs text-gray-500">eventos</p>
-              </div>
-            </div>
-
-            <div class="mb-5">
-              <h4 class="font-semibold text-sm uppercase mb-3">Eventos</h4>
-
-              <div
-                v-for="event in stage.eventos"
-                :key="event.nome"
-                class="flex justify-between py-1"
-              >
-                <span>
-                  {{ event.nome }}
-                </span>
-
-                <span class="font-semibold">
-                  {{ event.valor }}
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <h4 class="font-semibold text-sm uppercase mb-3">Indicadores</h4>
-
-              <div
-                v-for="indicator in stage.indicadores"
-                :key="indicator.nome"
-                class="flex justify-between py-1"
-              >
-                <span>
-                  {{ indicator.nome }}
-                </span>
-
-                <span class="font-semibold">
-                  {{ indicator.valor }}
-                </span>
-              </div>
-            </div>
+            <DashboardJourney :stage="stage" />
           </div>
         </div>
       </section>
