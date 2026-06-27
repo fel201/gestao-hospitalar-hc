@@ -59,7 +59,10 @@ onMounted(() => {
         </div>
       </div>
     </header>
-
+    <!-- carregamento -->
+    <div v-if="loading" class="fixed inset-0 flex items-center justify-center">
+      <div class="w-10 h-10 border-4 border-slate-200 border-t-slate-700 rounded-full animate-spin" />
+    </div>
     <main class="w-full px-10 py-8">
       <!-- filtros -->
       <DashboardFilters
