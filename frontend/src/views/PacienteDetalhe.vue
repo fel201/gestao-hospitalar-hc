@@ -131,12 +131,21 @@
         </Card>
       </div>
 
+      <!-- para os botões-->
       <div class="flex bg-slate-800 rounded-lg p-1 mt-2">
-        <button class="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-md font-medium transition-colors">
+        <button 
+          @click="abaAtiva = 'linha-do-tempo'"
+          :class="abaAtiva === 'linha-do-tempo' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'"
+          class="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-md font-medium transition-colors"
+        >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
           Linha do Tempo
         </button>
-        <button class="flex-1 flex items-center justify-center gap-2 text-slate-400 hover:text-white hover:bg-slate-700/50 py-3 px-4 rounded-md font-medium transition-colors">
+        <button 
+          @click="abaAtiva = 'analises'"
+          :class="abaAtiva === 'analises' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'"
+          class="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-md font-medium transition-colors"
+        >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
           Análises e Histórico
         </button>
@@ -150,64 +159,124 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       
       <!-- COLUNA ESQUERDA (Linha do Tempo) -->
+      
       <div class="lg:col-span-5 bg-slate-800 rounded-lg border border-slate-700 p-4 h-[600px] overflow-y-auto">
-        <h2 class="text-lg font-semibold text-white mb-4 sticky top-0 bg-slate-800 z-10 py-2">Linha do Tempo</h2>
         
-        <div v-if="jornada?.eventos?.length" class="space-y-4">
-          <div v-for="(item, index) in jornada.eventos" :key="`${item.tipo}-${index}`" class="relative group cursor-pointer" @click="selecionarEvento(item)">
-            
-            <div v-if="index !== jornada.eventos.length - 1" class="absolute left-4 top-10 bottom-[-1rem] w-px bg-slate-600"></div>
-
-            <div :class="[
-              'absolute left-2.5 top-5 w-3 h-3 rounded-full border-2 border-slate-800 z-10 transition-colors',
-              eventoSelecionado === item ? 'bg-purple-500' : 'bg-slate-500 group-hover:bg-purple-400'
-            ]"></div>
-
-            <div :class="[
-              'ml-10 border p-4 rounded-lg transition-all duration-200',
-              eventoSelecionado === item 
-                ? 'bg-slate-700 border-purple-500 shadow-md' 
-                : 'bg-slate-800/50 border-slate-700 hover:border-slate-500 hover:bg-slate-700/50'
-            ]">
-              <div class="flex justify-between items-start mb-3">
-                <h3 class="font-semibold text-slate-100">
-                  <span v-if="item.tipo === 'consulta'">Consulta Médica</span>
-                  <span v-else-if="item.tipo === 'exame'">{{ item.nome_exame || 'Exame' }}</span>
-                  <span v-else-if="item.tipo === 'internacao'">Internação</span>
-                </h3>
-                <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-900 text-slate-300 uppercase border border-slate-700 tracking-wider">
-                  {{ item.tipo }}
-                </span>
-              </div>
+        <template v-if="abaAtiva === 'linha-do-tempo'">
+          <h2 class="text-lg font-semibold text-white mb-4 sticky top-0 bg-slate-800 z-10 py-2">Linha do Tempo</h2>
+          
+          <div v-if="jornada?.eventos?.length" class="space-y-4">
+            <div v-for="(item, index) in jornada.eventos" :key="`${item.tipo}-${index}`" class="relative group cursor-pointer" @click="selecionarEvento(item)">
               
-              <div class="grid grid-cols-2 gap-2 text-xs text-slate-400 mt-2">
+              <div v-if="index !== jornada.eventos.length - 1" class="absolute left-4 top-10 bottom-[-1rem] w-px bg-slate-600"></div>
+
+              <div :class="[
+                'absolute left-2.5 top-5 w-3 h-3 rounded-full border-2 border-slate-800 z-10 transition-colors',
+                eventoSelecionado === item ? 'bg-purple-500' : 'bg-slate-500 group-hover:bg-purple-400'
+              ]"></div>
+
+              <div :class="[
+                'ml-10 border p-4 rounded-lg transition-all duration-200',
+                eventoSelecionado === item 
+                  ? 'bg-slate-700 border-purple-500 shadow-md' 
+                  : 'bg-slate-800/50 border-slate-700 hover:border-slate-500 hover:bg-slate-700/50'
+              ]">
+                <div class="flex justify-between items-start mb-3">
+                  <h3 class="font-semibold text-slate-100">
+                    <span v-if="item.tipo === 'consulta'">Consulta Médica</span>
+                    <span v-else-if="item.tipo === 'exame'">{{ item.nome_exame || 'Exame' }}</span>
+                    <span v-else-if="item.tipo === 'internacao'">Internação</span>
+                  </h3>
+                  <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-900 text-slate-300 uppercase border border-slate-700 tracking-wider">
+                    {{ item.tipo }}
+                  </span>
+                </div>
                 
-                <div class="flex items-center gap-1.5">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                  {{ formatarData(item.data_evento || item.dthr_inicio) }}
-                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs text-slate-400 mt-2">
+                  
+                  <div class="flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    {{ formatarData(item.data_evento || item.dthr_inicio) }}
+                  </div>
 
-                <div class="flex items-center gap-1.5">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                  {{ item.unidade_executora || 'Hospital das Clínicas' }}
-                </div>
+                  <div class="flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    {{ item.unidade_executora || 'Hospital das Clínicas' }}
+                  </div>
 
-                <div class="flex items-center gap-1.5">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                  Duração: {{ item.tempo_permanencia_dias ? item.tempo_permanencia_dias + ' dias' : (item.duracao || '45 min') }}
-                </div>
+                  <div class="flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Duração: {{ item.tempo_permanencia_dias ? item.tempo_permanencia_dias + ' dias' : (item.duracao || '45 min') }}
+                  </div>
 
-                <div class="flex items-center gap-1.5">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                  {{ item.profissional || 'Equipe Médica' }}
-                </div>
+                  <div class="flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    {{ item.profissional || 'Equipe Médica' }}
+                  </div>
 
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div v-else class="text-sm text-slate-400 p-4 text-center">Nenhum evento encontrado.</div>
-      </div>  
+          <div v-else class="text-sm text-slate-400 p-4 text-center">Nenhum evento encontrado.</div>
+        </template>
+
+        <template v-if="abaAtiva === 'analises'">
+          <div class="space-y-4 animate-fade-in">
+            
+            <div class="bg-slate-800/80 rounded-lg border border-slate-700 p-5">
+              <h3 class="text-white font-medium mb-6">Distribuição de Eventos na Jornada Atual</h3>
+              
+              <div class="relative flex justify-center items-center h-48 mt-8 mb-4">
+                <div class="w-40 h-40 rounded-full border-2 border-slate-800 shadow-md"
+                     style="background: conic-gradient(
+                       #10b981 0% 20%,     
+                       #a855f7 20% 30%,    
+                       #3b82f6 30% 40%,    
+                       #ef4444 40% 50%,    
+                       #f97316 50% 60%,    
+                       #eab308 60% 100%    
+                     );">
+                </div>
+                
+                <span class="absolute top-[-10px] left-10 text-emerald-500 text-sm font-medium">Consulta: 2</span>
+                <span class="absolute top-2 right-12 text-purple-400 text-sm font-medium">Triagem: 1</span>
+                <span class="absolute top-1/4 right-6 text-blue-500 text-sm font-medium">Entrada: 1</span>
+                <span class="absolute top-1/2 right-0 text-red-500 text-sm font-medium">Procedimento: 1</span>
+                <span class="absolute bottom-6 right-6 text-orange-500 text-sm font-medium">Internacao: 1</span>
+                <span class="absolute bottom-2 left-10 text-yellow-500 text-sm font-medium">Exame: 4</span>
+              </div>
+            </div>
+
+            <div class="bg-slate-800/80 rounded-lg border border-slate-700 p-5">
+              <div class="flex items-center gap-2 mb-4">
+                <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <h3 class="text-white font-medium">Fatores de Risco</h3>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <span class="px-3 py-1 bg-orange-900/30 text-orange-400 border border-orange-900/50 rounded-full text-sm">Hipertensão</span>
+                <span class="px-3 py-1 bg-orange-900/30 text-orange-400 border border-orange-900/50 rounded-full text-sm">Diabetes tipo 2</span>
+                <span class="px-3 py-1 bg-orange-900/30 text-orange-400 border border-orange-900/50 rounded-full text-sm">Obesidade</span>
+              </div>
+            </div>
+
+            <div class="bg-slate-800/80 rounded-lg border border-slate-700 p-5">
+              <div class="flex items-center gap-2 mb-4">
+                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                <h3 class="text-white font-medium">Medicamentos em Uso</h3>
+              </div>
+              <ul class="space-y-2 text-sm text-slate-300">
+                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div> Furosemida 40mg</li>
+                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div> Carvedilol 25mg</li>
+                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div> Enalapril 20mg</li>
+                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div> Espironolactona 25mg</li>
+                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div> AAS 100mg</li>
+              </ul>
+            </div>
+
+          </div>
+        </template>
+      </div>
 
       <!-- COLUNA DIREITA (Detalhes do Evento) -->
       
@@ -333,6 +402,9 @@ const toast = useToast();
 
 const codigo = String(route.params.codigo || '');
 const jornada = ref<any | null>(null);
+
+// 
+const abaAtiva = ref('linha-do-tempo'); // Pode ser 'linha-do-tempo' ou 'analises'
 
 // NOSSO NOVO ESTADO: Guarda o evento que o usuário clicou
 const eventoSelecionado = ref<any | null>(null);
