@@ -1,7 +1,6 @@
 export interface DashboardInterface {
   especialidade: string;
   kpis: DashboardKPIsInterface;
-
   entrada: DashboardModuloInterface;
   consultas: DashboardModuloInterface;
   diagnostico: DashboardModuloInterface;

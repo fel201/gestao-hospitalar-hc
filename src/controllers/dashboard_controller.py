@@ -4,8 +4,10 @@ from ..providers.implementations.internacoes_csv_provider import InternacoesCsvP
 from ..providers.interfaces.paciente_provider_interface import PacienteProviderInterface
 from ..helpers.jornada_utils import calcular_diferenca_horas
 from ..helpers.filtrar_eventos import filtrar_eventos
-from ..helpers.total_pacientes_eventos import total_pacientes_eventos    
-    
+from ..helpers.total_pacientes_eventos import total_pacientes_eventos
+from ..helpers.metricas_consultas import metricas_consultas_como_indicadores
+
+
 class DashboardController:
     def __init__(
         self,
@@ -18,180 +20,130 @@ class DashboardController:
         self.exame_provider = exame_provider
         self.internacao_provider = internacao_provider
         self.paciente_provider = paciente_provider
-        
+
     async def get_dashboard(
         self,
         especialidade,
         data_inicio,
-        data_fim
+        data_fim,
     ):
+        consultas    = await self.consulta_provider.listar_consultas()
+        exames       = await self.exame_provider.listar_exames()
+        internacoes  = await self.internacao_provider.listar_internacoes()
+        pacientes    = await self.paciente_provider.listar_pacientes()
 
-        consultas = await self.consulta_provider.listar_consultas()
-        exames = await self.exame_provider.listar_exames()
-        internacoes = await self.internacao_provider.listar_internacoes()
-        pacientes = await self.paciente_provider.listar_pacientes()
-        print("numero de consultas: ", len(consultas))
-        print("numero de exames: ", len(exames))
-        print("numero de internacoes: ", len(internacoes))
-        print("numero de pacientes: ", len(pacientes))
-        consultas_filtradas = filtrar_eventos(evento='consulta', dados=consultas, especialidade=especialidade)
-        
+        #  filtros por especialidade 
+        consultas_filtradas   = filtrar_eventos(evento='consulta',   dados=consultas,   especialidade=especialidade)
+        exames_filtrados      = filtrar_eventos(evento='exame',      dados=exames,      especialidade=especialidade)
+        internacoes_filtradas = filtrar_eventos(evento='internacao',  dados=internacoes, especialidade=especialidade)
+
+        # consultas 
         consultas_primeira_vez = [
-            c 
-            for c in consultas_filtradas
+            c for c in consultas_filtradas
             if "PRIMEIRA CONSULTA" in c["condicao"]
         ]
-        
         consultas_concluidas = [
-            c
-            for c in consultas_filtradas
+            c for c in consultas_filtradas
             if "PACIENTE ATENDIDO" in c["retorno"]
         ]
-        
         consultas_com_diagnostico = [
-            c 
-            for c in consultas_concluidas
+            c for c in consultas_concluidas
             if c["cid"] != ""
         ]
-        from collections import Counter
 
-        contador = Counter(
-            c["especialidade"].strip()
-            for c in consultas_filtradas
-            if c["especialidade"].strip()
-        )
-
-        for esp, qtd in contador.most_common():
-            print(f"{qtd:5} - {esp}")
-            
-        for c in consultas_concluidas:
-            if c["cid"] != "":
-                print(c["cid"])
-                
-        print(len(consultas_primeira_vez))
-        print(len(consultas_concluidas))
-        print(len(consultas_com_diagnostico))
-        exames_filtrados = filtrar_eventos(evento='exame', dados=exames, especialidade=especialidade)
-
+        # exames 
         exames_concluidos = [
-            c 
-            for c in exames_filtrados
-            if "liberado" in c["situacao"].lower() 
+            c for c in exames_filtrados
+            if "liberado" in c["situacao"].lower()
         ]
-        
-        internacoes_filtradas = filtrar_eventos(evento='internacao', dados=internacoes, especialidade=especialidade)
+
+        # internações
         internacoes_concluidas = [
-            i 
-            for i in internacoes_filtradas
+            i for i in internacoes_filtradas
             if i["ind_saida_pac"] == 'S'
         ]
 
         tempo_medio_permanencia_internacao = 0
+        if internacoes_concluidas:
+            tempo_medio_permanencia_internacao = round(
+                sum(int(i["tempo_permanencia_dias"]) for i in internacoes_concluidas)
+                / len(internacoes_concluidas)
+            )
 
-        for i in internacoes_concluidas:
-            tempo_medio_permanencia_internacao += int(i["tempo_permanencia_dias"])
-        if len(internacoes_concluidas) != 0:
-            tempo_medio_permanencia_internacao = round(tempo_medio_permanencia_internacao/len(internacoes_concluidas))
-
-        total_pacientes = total_pacientes_eventos(consultas=consultas_filtradas,
-                                                  exames=exames_filtrados,
-                                                  internacoes=internacoes_filtradas)
-        
-        taxa_conclusao = \
-        (len(consultas_concluidas) + len(exames_concluidos) + len(internacoes_concluidas))\
-        /(len(consultas_filtradas) + len(exames_filtrados) + len(internacoes_filtradas))
-        
-        total_consultas = len(consultas_filtradas)
-        total_exames = len(exames_filtrados)
+        # totais e KPIs 
+        total_pacientes  = total_pacientes_eventos(
+            consultas=consultas_filtradas,
+            exames=exames_filtrados,
+            internacoes=internacoes_filtradas,
+        )
+        total_consultas  = len(consultas_filtradas)
+        total_exames     = len(exames_filtrados)
         total_internacoes = len(internacoes_filtradas)
-        total_eventos = total_consultas + total_exames + total_internacoes
-        
-        consultas_por_paciente = round(len(consultas_filtradas)/max(total_pacientes, 1), 2)
+        total_eventos    = total_consultas + total_exames + total_internacoes
+
+        taxa_conclusao = (
+            (len(consultas_concluidas) + len(exames_concluidos) + len(internacoes_concluidas))
+            / (total_eventos or 1)
+        )
+        consultas_por_paciente = round(total_consultas / max(total_pacientes, 1), 2)
+
+        # métricas de consultas calculadas
+        indicadores_metricas = metricas_consultas_como_indicadores(consultas_filtradas)
+
+        # Dashboard 
         dashboard = {
-        "especialidade": especialidade,
+            "especialidade": especialidade,
 
-        "kpis": {
-            "total_pacientes": total_pacientes,
-            "total_eventos": total_eventos,
-            "tempo_medio_jornada": tempo_medio_permanencia_internacao,
-            "taxa_conclusao": taxa_conclusao,
-        },
+            "kpis": {
+                "total_pacientes":    total_pacientes,
+                "total_eventos":      total_eventos,
+                "tempo_medio_jornada": tempo_medio_permanencia_internacao,
+                "taxa_conclusao":     taxa_conclusao,
+            },
 
-        "entrada": {
-            "total_eventos": len(consultas_primeira_vez),
-            "titulo": "Entrada", # meio estranho, eu sei
-            "eventos": [
-                {
-                    "nome": "Pacientes cadastrados",
-                    "valor": total_pacientes,
-                }
-            ],
+            "entrada": {
+                "titulo":       "Entrada",
+                "total_eventos": len(consultas_primeira_vez),
+                "eventos": [
+                    {"nome": "Pacientes cadastrados", "valor": total_pacientes},
+                ],
+                "indicadores": [
+                    {"nome": "Pacientes novos", "valor": len(consultas_primeira_vez)},
+                ],
+            },
 
-            "indicadores": [
-                {
-                    "nome": "Pacientes novos",
-                    "valor": len(consultas_primeira_vez),
-                }
-            ]
-        },
+            "consultas": {
+                "titulo":       "Consultas",
+                "total_eventos": total_consultas,
+                "eventos": [
+                    {"nome": "Consultas", "valor": total_consultas},
+                ],
+                "indicadores": [
+                    {"nome": "Consultas por paciente",  "valor": consultas_por_paciente},
+                    {"nome": "Consultas concluídas",    "valor": len(consultas_concluidas)},
+                    *indicadores_metricas,
+                ],
+            },
 
-        "consultas": {
-            "total_eventos": total_consultas,
-            "titulo": "Consultas",
-            "eventos": [
-                {
-                    "nome": "Consultas",
-                    "valor": total_consultas,
-                }
-            ],
+            "diagnostico": {
+                "titulo":       "Diagnósticos",
+                "total_eventos": len(consultas_com_diagnostico),
+                "eventos": [
+                    {"nome": "Diagnósticos registrados", "valor": len(consultas_com_diagnostico)},
+                ],
+                "indicadores": [],
+            },
 
-            "indicadores": [
-                {
-                    "nome": "Consultas por paciente",
-                    "valor": consultas_por_paciente,
-                },
-                {
-                    "nome": "Consultas concluídas",
-                    "valor": len(consultas_concluidas),
-                },
-                {
-                    "nome": "Taxa de faltas",
-                },
-            ]
-        },
-
-        "diagnostico": {
-            "total_eventos": len(consultas_com_diagnostico),
-            "titulo": "Diagnosticos",
-            "eventos": [
-                {
-                    "nome": "Diagnósticos registrados",
-                    "valor": len(consultas_com_diagnostico),
-                }
-            ],
-
-            "indicadores": [
-                # futuros indicadores
-            ]
-        },
-
-        "internacao": {
-            "total_eventos": len(internacoes_filtradas),
-            "titulo": "Internacões",
-            "eventos": [
-                {
-                    "nome": "Internações",
-                    "valor": len(internacoes_filtradas),
-                }
-            ],
-
-            "indicadores": [
-                {
-                    "nome": "Tempo médio de permanência",
-                    "valor": tempo_medio_permanencia_internacao,
-                }
-            ]
+            "internacao": {
+                "titulo":       "Internações",
+                "total_eventos": total_internacoes,
+                "eventos": [
+                    {"nome": "Internações", "valor": total_internacoes},
+                ],
+                "indicadores": [
+                    {"nome": "Tempo médio de permanência", "valor": tempo_medio_permanencia_internacao},
+                ],
+            },
         }
-    }
 
         return dashboard
