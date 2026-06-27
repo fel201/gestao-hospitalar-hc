@@ -5,9 +5,7 @@ import api from "../services/api";
 import DashboardKpis from "../components/Dashboard/DashboardKpis.vue";
 import DashboardJourney from "../components/Dashboard/DashboardJourney.vue";
 import DashboardFilters from "../components/Dashboard/DashboardFilters.vue";
-import type {
-  DashboardInterface
-} from "../interfaces/dashboard.ts";
+import type { DashboardInterface } from "../interfaces/dashboard.ts";
 
 // são apenas placeholders
 
@@ -65,14 +63,14 @@ onMounted(() => {
     <main class="w-full px-10 py-8">
       <!-- filtros -->
       <DashboardFilters
-      v-if="dashboard"
-      :specialty="specialty"
-      :start-date="startDate"
-      :end-date="endDate"
-      @update:specialty="specialty = $event"
-      @update:start-date="startDate = $event"
-      @update:end-date="endDate = $event"
-      @search="loadDashboard"
+        v-if="dashboard"
+        :specialty="specialty"
+        :start-date="startDate"
+        :end-date="endDate"
+        @update:specialty="specialty = $event"
+        @update:start-date="startDate = $event"
+        @update:end-date="endDate = $event"
+        @search="loadDashboard"
       />
 
       <!-- KPIS -->
@@ -83,12 +81,20 @@ onMounted(() => {
         <h2 class="text-xl font-bold mb-4">Jornada Assistencial</h2>
 
         <div class="flex flex-col gap-6 pr-4 h-[400px]">
-          <div
-            v-for="stage in dashboard?.etapas"
-            :key="stage.id"
-            class="bg-white rounded-2xl shadow min-w-[320px] p-5"
-          >
-            <DashboardJourney :stage="stage" />
+          <div class="bg-white rounded-2xl shadow min-w-[320px] p-5">
+            <DashboardJourney :stage="dashboard.entrada" />
+          </div>
+
+          <div class="bg-white rounded-2xl shadow min-w-[320px] p-5">
+            <DashboardJourney :stage="dashboard.consultas" />
+          </div>
+
+          <div class="bg-white rounded-2xl shadow min-w-[320px] p-5">
+            <DashboardJourney :stage="dashboard.diagnostico" />
+          </div>
+
+          <div class="bg-white rounded-2xl shadow min-w-[320px] p-5">
+            <DashboardJourney :stage="dashboard.internacao" />
           </div>
         </div>
       </section>

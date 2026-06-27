@@ -108,74 +108,90 @@ class DashboardController:
         
         consultas_por_paciente = round(len(consultas_filtradas)/max(total_pacientes, 1), 2)
         dashboard = {
-            "especialidade": especialidade,
+        "especialidade": especialidade,
 
-            "kpis": {
-                "total_pacientes": total_pacientes,
-                "total_eventos": total_eventos,
-                "tempo_medio_jornada": tempo_medio_permanencia_internacao,
-                "taxa_conclusao": taxa_conclusao
-            },
+        "kpis": {
+            "total_pacientes": total_pacientes,
+            "total_eventos": total_eventos,
+            "tempo_medio_jornada": tempo_medio_permanencia_internacao,
+            "taxa_conclusao": taxa_conclusao,
+        },
 
-            "etapas": [
+        "entrada": {
+            "total_eventos": len(consultas_primeira_vez),
+            "titulo": "Entrada", # meio estranho, eu sei
+            "eventos": [
                 {
-                    "id": "entrada",
-                    "titulo": "Entrada",
-                    "total_eventos": len(consultas_primeira_vez),
+                    "nome": "Pacientes cadastrados",
+                    "valor": total_pacientes,
+                }
+            ],
 
-                    "eventos": [
-                        {
-                            "nome": "Pacientes cadastrados",
-                            "valor": total_pacientes
-                        }
-                    ],
+            "indicadores": [
+                {
+                    "nome": "Pacientes novos",
+                    "valor": len(consultas_primeira_vez),
+                }
+            ]
+        },
 
-                    "indicadores": [
-                        {
-                            "nome": "Pacientes novos",
-                            "valor": len(consultas_primeira_vez)
-                        }
-                    ]
+        "consultas": {
+            "total_eventos": total_consultas,
+            "titulo": "Consultas",
+            "eventos": [
+                {
+                    "nome": "Consultas",
+                    "valor": total_consultas,
+                }
+            ],
+
+            "indicadores": [
+                {
+                    "nome": "Consultas por paciente",
+                    "valor": consultas_por_paciente,
                 },
-
                 {
-                    "id": "consultas",
-                    "titulo": "Consultas",
-                    "total_eventos": len(
-                        consultas_filtradas
-                    ),
-
-                    "eventos": [
-                        {
-                            "nome": "Consultas",
-                            "valor": total_consultas
-                        }
-                    ],
-
-                    "indicadores": [
-                        {
-                            "nome":
-                                "Consultas por paciente",
-                            "valor": consultas_por_paciente
-                        }
-                    ]
+                    "nome": "Consultas concluídas",
+                    "valor": len(consultas_concluidas),
                 },
-
                 {
-                    "id": "diagnostico",
-                    "titulo": "Diagnóstico",
-                    "total_eventos": len(consultas_com_diagnostico),
-
-                    "eventos": [
-
-                    ]
+                    "nome": "Taxa de faltas",
                 },
+            ]
+        },
 
+        "diagnostico": {
+            "total_eventos": len(consultas_com_diagnostico),
+            "titulo": "Diagnosticos",
+            "eventos": [
                 {
-                    "id": "internacao",
-                    "titulo": "Internação"
+                    "nome": "Diagnósticos registrados",
+                    "valor": len(consultas_com_diagnostico),
+                }
+            ],
+
+            "indicadores": [
+                # futuros indicadores
+            ]
+        },
+
+        "internacao": {
+            "total_eventos": len(internacoes_filtradas),
+            "titulo": "Internacões",
+            "eventos": [
+                {
+                    "nome": "Internações",
+                    "valor": len(internacoes_filtradas),
+                }
+            ],
+
+            "indicadores": [
+                {
+                    "nome": "Tempo médio de permanência",
+                    "valor": tempo_medio_permanencia_internacao,
                 }
             ]
         }
+    }
 
         return dashboard

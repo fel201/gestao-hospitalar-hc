@@ -1,7 +1,11 @@
 export interface DashboardInterface {
   especialidade: string;
   kpis: DashboardKPIsInterface;
-  etapas: DashboardEtapaInterface[];
+
+  entrada: DashboardModuloInterface;
+  consultas: DashboardModuloInterface;
+  diagnostico: DashboardModuloInterface;
+  internacao: DashboardModuloInterface;
 }
 
 export interface DashboardKPIsInterface {
@@ -11,12 +15,11 @@ export interface DashboardKPIsInterface {
   taxa_conclusao: number;
 }
 
-export interface DashboardEtapaInterface {
-  id: string;
+export interface DashboardModuloInterface {
   titulo: string;
-  total_eventos?: number;
-  eventos?: DashboardEventoInterface[];
-  indicadores?: DashboardIndicadorInterface[];
+  total_eventos: number;
+  eventos: DashboardEventoInterface[];
+  indicadores: DashboardIndicadorInterface[];
 }
 
 export interface DashboardEventoInterface {
@@ -24,6 +27,7 @@ export interface DashboardEventoInterface {
   valor: number;
 }
 
+// cada KPI de cada módulo vai ser adicionada aqui blz
 export interface DashboardIndicadorInterface {
   nome: string;
   valor: number;

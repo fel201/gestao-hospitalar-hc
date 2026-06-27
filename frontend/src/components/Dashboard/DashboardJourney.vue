@@ -1,7 +1,7 @@
 <template>
         <div class="flex justify-between mb-4">
           <div>
-            
+
             <h3 class="font-bold text-2xl">
               {{ stage.titulo }}
             </h3>
@@ -54,10 +54,10 @@
 </template>
 
 <script setup lang="ts">
-import type { DashboardEtapaInterface } from '../../interfaces/dashboard';
+import type { DashboardModuloInterface } from '../../interfaces/dashboard';
 
 defineProps<{
-  stage: DashboardEtapaInterface
+  stage: DashboardModuloInterface
 }>();
 
 </script>
