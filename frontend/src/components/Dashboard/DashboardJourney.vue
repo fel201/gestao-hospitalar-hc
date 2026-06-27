@@ -47,7 +47,7 @@
             </span>
 
             <span class="font-semibold">
-              {{ indicator.valor }}
+              {{ formatMetric(indicator.nome, indicator.valor) }}
             </span>
           </div>
         </div>
@@ -56,6 +56,16 @@
 <script setup lang="ts">
 import type { DashboardModuloInterface } from '../../interfaces/dashboard';
 
+function formatMetric(nome: string, valor: number): string {
+  const n = nome.toLowerCase()
+  if (n.includes('proporção') || n.includes('taxa'))
+    return `${(valor * 100).toFixed(1)}%`
+  if (n.includes('min') || n.includes('tempo'))
+    return `${Math.round(valor)} min`
+  if (Number.isInteger(valor) || valor > 10)
+    return valor.toLocaleString('pt-BR')
+  return valor.toFixed(2).replace('.', ',')
+}
 defineProps<{
   stage: DashboardModuloInterface
 }>();
