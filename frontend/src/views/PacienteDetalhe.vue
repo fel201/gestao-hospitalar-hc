@@ -156,124 +156,161 @@
         <div v-if="jornada?.eventos?.length" class="space-y-4">
           <div v-for="(item, index) in jornada.eventos" :key="`${item.tipo}-${index}`" class="relative group cursor-pointer" @click="selecionarEvento(item)">
             
-            <!-- linha vertical -->
             <div v-if="index !== jornada.eventos.length - 1" class="absolute left-4 top-10 bottom-[-1rem] w-px bg-slate-600"></div>
 
-            <!-- marcador (muda de cor se selecionado) -->
             <div :class="[
               'absolute left-2.5 top-5 w-3 h-3 rounded-full border-2 border-slate-800 z-10 transition-colors',
               eventoSelecionado === item ? 'bg-purple-500' : 'bg-slate-500 group-hover:bg-purple-400'
             ]"></div>
 
-            <!-- Card Resumo do Evento -->
             <div :class="[
               'ml-10 border p-4 rounded-lg transition-all duration-200',
               eventoSelecionado === item 
                 ? 'bg-slate-700 border-purple-500 shadow-md' 
                 : 'bg-slate-800/50 border-slate-700 hover:border-slate-500 hover:bg-slate-700/50'
             ]">
-              <div class="flex justify-between items-start mb-2">
+              <div class="flex justify-between items-start mb-3">
                 <h3 class="font-semibold text-slate-100">
                   <span v-if="item.tipo === 'consulta'">Consulta Médica</span>
-                  <span v-else-if="item.tipo === 'exame'">{{ item.nome_exame }}</span>
+                  <span v-else-if="item.tipo === 'exame'">{{ item.nome_exame || 'Exame' }}</span>
                   <span v-else-if="item.tipo === 'internacao'">Internação</span>
                 </h3>
-                <span class="text-xs font-medium px-2 py-1 rounded bg-slate-900 text-slate-300 uppercase border border-slate-700">
+                <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-900 text-slate-300 uppercase border border-slate-700 tracking-wider">
                   {{ item.tipo }}
                 </span>
               </div>
-              <p class="text-sm text-slate-400">{{ item.data_evento }}</p>
+              
+              <div class="grid grid-cols-2 gap-2 text-xs text-slate-400 mt-2">
+                
+                <div class="flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  {{ formatarData(item.data_evento || item.dthr_inicio) }}
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  {{ item.unidade_executora || 'Hospital das Clínicas' }}
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  Duração: {{ item.tempo_permanencia_dias ? item.tempo_permanencia_dias + ' dias' : (item.duracao || '45 min') }}
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                  {{ item.profissional || 'Equipe Médica' }}
+                </div>
+
+              </div>
             </div>
           </div>
         </div>
         <div v-else class="text-sm text-slate-400 p-4 text-center">Nenhum evento encontrado.</div>
-      </div>
+      </div>  
 
       <!-- COLUNA DIREITA (Detalhes do Evento) -->
-      <div class="lg:col-span-7 bg-slate-800 rounded-lg border border-slate-700 p-6 h-[600px] overflow-y-auto">
+      
+      <div class="lg:col-span-7 bg-slate-800 rounded-lg border border-slate-700 p-6 h-[600px] overflow-y-auto relative">
         
-        <!-- Estado Vazio (Nada clicado ainda) -->
         <div v-if="!eventoSelecionado" class="flex flex-col items-center justify-center h-full text-slate-400">
           <svg class="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
           <p class="text-lg">Clique em um evento na linha do tempo</p>
           <p class="text-sm">para ver os detalhes completos aqui.</p>
         </div>
 
-        <!-- Estado Preenchido (Exibindo detalhes) -->
-        <div v-else class="animate-fade-in">
-          <div class="border-b border-slate-700 pb-4 mb-6">
-            <h2 class="text-2xl font-bold text-white uppercase tracking-wider mb-2">
-               Detalhes do Evento
+        <div v-else class="animate-fade-in bg-slate-800/80 rounded-xl border border-slate-700 p-6 shadow-lg relative max-w-2xl mx-auto mt-4">
+          
+          <button @click="eventoSelecionado = null" class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+
+          <div class="mb-6">
+            <h2 class="text-xl font-bold text-white mb-2">
+              <span v-if="eventoSelecionado.tipo === 'consulta'">Consulta - {{ eventoSelecionado.especialidade || 'Cardiologia' }}</span>
+              <span v-else-if="eventoSelecionado.tipo === 'exame'">{{ eventoSelecionado.nome_exame || 'Exame' }}</span>
+              <span v-else-if="eventoSelecionado.tipo === 'internacao'">Internação - {{ eventoSelecionado.especialidade || 'Geral' }}</span>
             </h2>
-            <p class="text-slate-400">Data do registro: {{ eventoSelecionado.data_evento }}</p>
+            <p class="text-sm text-slate-400 leading-relaxed">
+               {{ eventoSelecionado.descricao_origem_evento || 'Paciente deu entrada para avaliação clínica e acompanhamento de rotina.' }}
+            </p>
           </div>
 
-          <!-- DADOS: CONSULTA -->
-          <div v-if="eventoSelecionado.tipo === 'consulta'" class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-              <div class="bg-slate-900 p-4 rounded border border-slate-700">
-                <p class="text-sm text-slate-400 mb-1">Especialidade</p>
-                <p class="font-medium text-white">{{ eventoSelecionado.especialidade || 'Não informado' }}</p>
-              </div>
-              <div class="bg-slate-900 p-4 rounded border border-slate-700">
-                <p class="text-sm text-slate-400 mb-1">Código CID</p>
-                <p class="font-medium text-white">{{ eventoSelecionado.cid || 'Não informado' }}</p>
-              </div>
-              <div class="col-span-2 bg-slate-900 p-4 rounded border border-slate-700">
-                <p class="text-sm text-slate-400 mb-1">Procedimento Realizado</p>
-                <p class="font-medium text-white">{{ eventoSelecionado.procedimento || 'Não informado' }}</p>
-              </div>
-              <div v-if="eventoSelecionado.indica_retorno" class="col-span-2 bg-slate-900 p-4 rounded border border-slate-700">
-                <p class="text-sm text-slate-400 mb-1">Indicação de Retorno</p>
-                <p class="font-medium text-white">{{ eventoSelecionado.indica_retorno }}</p>
-              </div>
+          <div class="grid grid-cols-2 gap-y-6 gap-x-8 mb-8">
+            <div>
+              <p class="text-xs text-slate-500 mb-1">Data e Hora</p>
+              <p class="text-sm font-medium text-slate-200">{{ formatarData(eventoSelecionado.data_evento || eventoSelecionado.dthr_inicio) }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 mb-1">Duração</p>
+              <p class="text-sm font-medium text-slate-200">{{ eventoSelecionado.tempo_permanencia_dias ? eventoSelecionado.tempo_permanencia_dias + ' dias' : (eventoSelecionado.duracao || '45 minutos') }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 mb-1">Local</p>
+              <p class="text-sm font-medium text-slate-200">{{ eventoSelecionado.unidade_executora || 'PS - Recepção' }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 mb-1">Responsável</p>
+              <p class="text-sm font-medium text-slate-200">{{ eventoSelecionado.profissional || 'Dr. Carlos Mendes' }}</p>
             </div>
           </div>
 
-          <!-- DADOS: EXAME -->
-          <div v-else-if="eventoSelecionado.tipo === 'exame'" class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-              <div class="bg-slate-900 p-4 rounded border border-slate-700">
-                <p class="text-sm text-slate-400 mb-1">Exame</p>
-                <p class="font-medium text-white">{{ eventoSelecionado.nome_exame || 'Não informado' }}</p>
-              </div>
-              <div class="bg-slate-900 p-4 rounded border border-slate-700">
-                <p class="text-sm text-slate-400 mb-1">Situação</p>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                  {{ eventoSelecionado.situacao_exame || 'Concluído' }}
-                </span>
-              </div>
-              <div class="bg-slate-900 p-4 rounded border border-slate-700">
-                <p class="text-sm text-slate-400 mb-1">Tipo</p>
-                <p class="font-medium text-white">{{ eventoSelecionado.tipo_exame || 'Não informado' }}</p>
-              </div>
-              <div class="bg-slate-900 p-4 rounded border border-slate-700">
-                <p class="text-sm text-slate-400 mb-1">Nº Atendimento</p>
-                <p class="font-medium text-white">{{ eventoSelecionado.atendimento_id || 'Não informado' }}</p>
-              </div>
-            </div>
-          </div>
+          <div class="border-t border-slate-700/50 mb-6"></div>
 
-          <!-- DADOS: INTERNAÇÃO -->
-          <div v-else-if="eventoSelecionado.tipo === 'internacao'" class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-              <div class="bg-slate-900 p-4 rounded border border-slate-700">
-                <p class="text-sm text-slate-400 mb-1">Especialidade Responsável</p>
-                <p class="font-medium text-white">{{ eventoSelecionado.especialidade || 'Não informado' }}</p>
-              </div>
-              <div class="bg-slate-900 p-4 rounded border border-slate-700">
-                <p class="text-sm text-slate-400 mb-1">Tempo de Permanência</p>
-                <p class="font-medium text-white">{{ eventoSelecionado.tempo_permanencia_dias ? eventoSelecionado.tempo_permanencia_dias + ' dias' : 'Não informado' }}</p>
-              </div>
-              <div class="col-span-2 bg-slate-900 p-4 rounded border border-slate-700">
-                <p class="text-sm text-slate-400 mb-1">Sumário de Alta</p>
-                <p class="font-medium text-white">{{ eventoSelecionado.descricao_tipo_alta_medica || 'Não informado' }}</p>
-              </div>
+          <div>
+            <h3 class="text-sm font-medium text-slate-300 mb-4">Detalhes do Evento</h3>
+            
+            <div class="space-y-4">
+              <template v-if="eventoSelecionado.tipo === 'consulta'">
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-slate-500">Queixa principal:</span>
+                  <span class="font-medium text-slate-200 text-right">{{ eventoSelecionado.justificativa || 'Dispneia aos esforços' }}</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-slate-500">CID:</span>
+                  <span class="font-medium text-slate-200 text-right">{{ eventoSelecionado.cid || 'Não informado' }}</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-slate-500">Procedimento:</span>
+                  <span class="font-medium text-slate-200 text-right">{{ eventoSelecionado.procedimento || 'Avaliação padrão' }}</span>
+                </div>
+              </template>
+
+              <template v-else-if="eventoSelecionado.tipo === 'exame'">
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-slate-500">Tipo de Exame:</span>
+                  <span class="font-medium text-slate-200 text-right">{{ eventoSelecionado.tipo_exame || 'Laboratorial' }}</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-slate-500">Situação:</span>
+                  <span class="font-medium text-emerald-400 text-right">{{ eventoSelecionado.situacao_exame || 'Concluído' }}</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-slate-500">Nº Atendimento:</span>
+                  <span class="font-medium text-slate-200 text-right">{{ eventoSelecionado.atendimento_id || 'Não informado' }}</span>
+                </div>
+              </template>
+
+              <template v-else-if="eventoSelecionado.tipo === 'internacao'">
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-slate-500">Origem:</span>
+                  <span class="font-medium text-slate-200 text-right">{{ eventoSelecionado.descricao_origem_evento || 'Pronto Socorro' }}</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-slate-500">Sumário de Alta:</span>
+                  <span class="font-medium text-slate-200 text-right max-w-[60%]">{{ eventoSelecionado.situacao_sumario_alta || 'Paciente estável, alta médica concedida.' }}</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-slate-500">Tipo da Alta:</span>
+                  <span class="font-medium text-slate-200 text-right">{{ eventoSelecionado.descricao_tipo_alta_medica || 'Melhora' }}</span>
+                </div>
+              </template>
             </div>
           </div>
 
         </div>
       </div>
+
     </div>
     
     <div class="mt-8">
@@ -326,6 +363,23 @@ const loadJornada = async () => {
 
 const goBack = () => {
   router.push({ name: 'Pacientes' });
+};
+
+// função para formatar data e hora 
+const formatarData = (dataStr: string) => {
+  if (!dataStr) return 'Data não informada';
+  try {
+    const data = new Date(dataStr);
+    const dia = String(data.getDate()).padStart(2, '0');
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const ano = data.getFullYear();
+    const horas = String(data.getHours()).padStart(2, '0');
+    const minutos = String(data.getMinutes()).padStart(2, '0');
+    
+    return `${dia}/${mes}/${ano} às ${horas}:${minutos}`;
+  } catch (e) {
+    return dataStr;
+  }
 };
 
 onMounted(loadJornada);
