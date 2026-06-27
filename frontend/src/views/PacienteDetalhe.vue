@@ -1,171 +1,283 @@
 <template>
-  <div>
-    <h1 class="text-2xl font-bold mb-6">Detalhes do Paciente</h1>
+  <div class="min-h-screen bg-slate-900 text-slate-200 p-6">
+    <!-- ==========================================
+         ANDAR SUPERIOR: Cabeçalho e Métricas
+         ========================================== -->
+    <div class="mb-8 space-y-4">
+      
+      <Card class="bg-slate-800 border-slate-700 p-6 relative">
+        <button class="absolute top-6 right-6 text-yellow-500 hover:text-yellow-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+        </button>
 
-    <Card class="mb-6">
-      <div class="space-y-4 text-sm">
-        <div><span class="font-medium">Código:</span> {{ codigo }}</div>
-        <div><span class="font-medium">Nome:</span> {{ jornada?.paciente?.nome ?? 'Carregando...' }}</div>
-        <div><span class="font-medium">Prontuário:</span> {{ jornada?.paciente?.prontuario ?? 'Carregando...' }}</div>
-      </div>
-    </Card>
-
-    <Card class="mb-6">
-      <template #header>
-        <h2 class="text-lg font-semibold">Linha do Tempo</h2>
-      </template>
-
-      <!-- MÉTRICAS -->
-      <div v-if="jornada?.metricas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <div class="text-center">
-            <p class="text-sm text-gray-500">Total de Eventos</p>
-            <p class="text-3xl font-bold">
-              {{ jornada.metricas.numero_eventos }}
-            </p>
-          </div>
-        </Card>
-
-        <Card>
-          <div class="text-center">
-            <p class="text-sm text-gray-500">Consultas</p>
-            <p class="text-3xl font-bold text-blue-600">
-              {{ jornada.metricas.numero_consultas }}
-            </p>
-          </div>
-        </Card>
-
-        <Card>
-          <div class="text-center">
-            <p class="text-sm text-gray-500">Exames</p>
-            <p class="text-3xl font-bold text-green-600">
-              {{ jornada.metricas.numero_exames }}
-            </p>
-          </div>
-        </Card>
-
-        <Card>
-          <div class="text-center">
-            <p class="text-sm text-gray-500">Internações</p>
-            <p class="text-3xl font-bold text-red-600">
-              {{ jornada.metricas.numero_internacoes }}
-            </p>
-          </div>
-        </Card>
-      </div>
-
-      <div v-if="jornada?.eventos?.length" class="space-y-6">
-        <div v-for="(item, index) in jornada.eventos" :key="`${item.tipo}-${index}`" class="relative">
-          <!-- linha vertical -->
-          <div v-if="index !== jornada.eventos.length - 1" class="absolute left-4 top-12 bottom-0 w-px bg-gray-300">
-          </div>
-
-          <!-- marcador -->
-          <div class="absolute left-2 top-5 w-4 h-4 rounded-full bg-primary"></div>
-
-          <!-- card do evento (bg-blue-200 ficou ótimo :D)-->
-          <div class="ml-10 border rounded-lg p-4 shadow-sm bg-blue-200">
-            <div class="flex justify-between items-start mb-3">
-              <div>
-                <h3 class="font-semibold text-base">
-                  <template v-if="item.tipo === 'consulta'">
-                    Consulta Médica
-                  </template>
-
-                  <template v-else-if="item.tipo === 'exame'">
-                    {{ item.nome_exame }}
-                  </template>
-
-                  <template v-else-if="item.tipo === 'internacao'">
-                    Internação
-                  </template>
-                </h3>
-
-                <p class="text-sm text-gray-500">
-                  {{ item.data_evento }}
-                </p>
-              </div>
-
-              <span class="text-xs border rounded px-2 py-1 uppercase">
-                {{ item.tipo }}
-              </span>
+        <h1 class="text-2xl font-bold text-white mb-1">Plataforma de Jornada Assistencial</h1>
+        <p class="text-sm text-slate-400 mb-6">Hospital das Clínicas - Perspectiva do Paciente</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white text-lg font-bold">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             </div>
+            <div>
+              <div class="text-slate-400 text-xs">Paciente</div>
+              <div class="font-medium text-white">{{ jornada?.paciente?.nome ?? 'Carregando...' }}</div>
+            </div>
+          </div>
+          <div>
+            <div class="text-slate-400 text-xs">Prontuário</div>
+            <div class="font-medium text-white">{{ jornada?.paciente?.prontuario ?? 'Carregando...' }}</div>
+          </div>
+          <div>
+            <div class="text-slate-400 text-xs">Diagnóstico</div>
+            <div class="font-medium text-white">Insuficiência Cardíaca Congestiva</div> </div>
+          <div>
+            <div class="text-slate-400 text-xs">CID</div>
+            <div class="font-medium text-white">I50.0</div> </div>
+        </div>
+      </Card>
 
-            <!-- CONSULTA -->
-            <template v-if="item.tipo === 'consulta'">
-              <div class="space-y-1 text-sm">
-                <div>
-                  <strong>Especialidade:</strong>
-                  {{ item.especialidade || 'Não informado' }}
-                </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <Card class="bg-slate-800 border-slate-700 py-4 px-5">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-slate-900 rounded-lg text-blue-500">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400">Tempo Total de Atendimento</p>
+              <p class="text-xl font-bold text-white">928h 32min</p>
+            </div>
+          </div>
+        </Card>
 
-                <div>
-                  <strong>Procedimento:</strong>
-                  {{ item.procedimento || 'Não informado' }}
-                </div>
+        <Card class="bg-slate-800 border-slate-700 py-4 px-5">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-slate-900 rounded-lg text-orange-500">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400">Tempo Médio de Espera</p>
+              <p class="text-xl font-bold text-white">330 min</p>
+            </div>
+          </div>
+        </Card>
 
-                <div>
-                  <strong>CID:</strong>
-                  {{ item.cid || 'Não informado' }}
-                </div>
+        <Card class="bg-slate-800 border-slate-700 py-4 px-5">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-slate-900 rounded-lg text-purple-500">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400">Total de Eventos</p>
+              <p class="text-xl font-bold text-white">{{ jornada?.metricas?.numero_eventos || 10 }}</p>
+            </div>
+          </div>
+        </Card>
 
-                <div v-if="item.indica_retorno">
-                  <strong>Retorno:</strong>
-                  {{ item.indica_retorno }}
-                </div>
+        <Card class="bg-slate-800 border-slate-700 py-4 px-5">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-slate-900 rounded-lg text-yellow-500">
+               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400">Exames Realizados</p>
+              <p class="text-xl font-bold text-white">{{ jornada?.metricas?.numero_exames || 4 }}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card class="bg-slate-800 border-slate-700 py-4 px-5">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-slate-900 rounded-lg text-emerald-500">
+               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400">Procedimentos</p>
+              <p class="text-xl font-bold text-white">1</p> </div>
+          </div>
+        </Card>
+
+        <Card class="bg-slate-800 border-slate-700 py-4 px-5">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-slate-900 rounded-lg text-indigo-400">
+               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400">Dias de Internação</p>
+              <p class="text-xl font-bold text-white">{{ jornada?.metricas?.numero_internacoes || 38 }}</p> </div>
+          </div>
+        </Card>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card class="col-span-1 bg-slate-800 border-slate-700 py-4 px-5">
+          <div class="flex items-center gap-2 mb-2">
+            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+            <p class="text-sm font-medium text-slate-300">Desfecho</p>
+          </div>
+          <span class="inline-block bg-purple-600 text-white text-xs px-3 py-1.5 rounded-md font-medium">
+            Em Tratamento
+          </span>
+        </Card>
+
+        <Card class="col-span-2 bg-red-900/20 border border-red-900/50 py-4 px-5">
+          <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-red-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <div>
+              <p class="text-sm font-medium text-red-400 mb-1">Risco de Readmissão</p>
+              <p class="text-xs text-red-500/80">Paciente com 2 internações anteriores (últimos 6 meses)</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <div class="flex bg-slate-800 rounded-lg p-1 mt-2">
+        <button class="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-md font-medium transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+          Linha do Tempo
+        </button>
+        <button class="flex-1 flex items-center justify-center gap-2 text-slate-400 hover:text-white hover:bg-slate-700/50 py-3 px-4 rounded-md font-medium transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+          Análises e Histórico
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ==========================================
+         ANDAR INFERIOR: Grid com Linha do Tempo e Detalhes
+         ========================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <!-- COLUNA ESQUERDA (Linha do Tempo) -->
+      <div class="lg:col-span-5 bg-slate-800 rounded-lg border border-slate-700 p-4 h-[600px] overflow-y-auto">
+        <h2 class="text-lg font-semibold text-white mb-4 sticky top-0 bg-slate-800 z-10 py-2">Linha do Tempo</h2>
+        
+        <div v-if="jornada?.eventos?.length" class="space-y-4">
+          <div v-for="(item, index) in jornada.eventos" :key="`${item.tipo}-${index}`" class="relative group cursor-pointer" @click="selecionarEvento(item)">
+            
+            <!-- linha vertical -->
+            <div v-if="index !== jornada.eventos.length - 1" class="absolute left-4 top-10 bottom-[-1rem] w-px bg-slate-600"></div>
+
+            <!-- marcador (muda de cor se selecionado) -->
+            <div :class="[
+              'absolute left-2.5 top-5 w-3 h-3 rounded-full border-2 border-slate-800 z-10 transition-colors',
+              eventoSelecionado === item ? 'bg-purple-500' : 'bg-slate-500 group-hover:bg-purple-400'
+            ]"></div>
+
+            <!-- Card Resumo do Evento -->
+            <div :class="[
+              'ml-10 border p-4 rounded-lg transition-all duration-200',
+              eventoSelecionado === item 
+                ? 'bg-slate-700 border-purple-500 shadow-md' 
+                : 'bg-slate-800/50 border-slate-700 hover:border-slate-500 hover:bg-slate-700/50'
+            ]">
+              <div class="flex justify-between items-start mb-2">
+                <h3 class="font-semibold text-slate-100">
+                  <span v-if="item.tipo === 'consulta'">Consulta Médica</span>
+                  <span v-else-if="item.tipo === 'exame'">{{ item.nome_exame }}</span>
+                  <span v-else-if="item.tipo === 'internacao'">Internação</span>
+                </h3>
+                <span class="text-xs font-medium px-2 py-1 rounded bg-slate-900 text-slate-300 uppercase border border-slate-700">
+                  {{ item.tipo }}
+                </span>
               </div>
-            </template>
-
-            <!-- EXAME -->
-            <template v-else-if="item.tipo === 'exame'">
-              <div class="space-y-1 text-sm">
-                <div>
-                  <strong>Tipo:</strong>
-                  {{ item.tipo_exame || 'Não informado' }}
-                </div>
-
-                <div>
-                  <strong>Situação:</strong>
-                  {{ item.situacao_exame || 'Não informado' }}
-                </div>
-
-                <div>
-                  <strong>Atendimento:</strong>
-                  {{ item.atendimento_id || 'Não informado' }}
-                </div>
-              </div>
-            </template>
-
-            <!-- INTERNAÇÃO -->
-            <template v-else-if="item.tipo === 'internacao'">
-              <div class="space-y-1 text-sm">
-                <div>
-                  <strong>Especialidade:</strong>
-                  {{ item.especialidade || 'Não informado' }}
-                </div>
-
-                <div>
-                  <strong>Tempo de permanência:</strong>
-                  {{ item.tempo_permanencia_dias + ' dias' || 'Não informado' }}
-                </div>
-
-                <div>
-                  <strong>Alta:</strong>
-                  {{ item.descricao_tipo_alta_medica || 'Não informado' }}
-                </div>
-              </div>
-            </template>
+              <p class="text-sm text-slate-400">{{ item.data_evento }}</p>
+            </div>
           </div>
         </div>
+        <div v-else class="text-sm text-slate-400 p-4 text-center">Nenhum evento encontrado.</div>
       </div>
 
-      <div v-else class="text-sm text-muted">
-        Nenhum evento encontrado.
-      </div>
-    </Card>
+      <!-- COLUNA DIREITA (Detalhes do Evento) -->
+      <div class="lg:col-span-7 bg-slate-800 rounded-lg border border-slate-700 p-6 h-[600px] overflow-y-auto">
+        
+        <!-- Estado Vazio (Nada clicado ainda) -->
+        <div v-if="!eventoSelecionado" class="flex flex-col items-center justify-center h-full text-slate-400">
+          <svg class="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+          <p class="text-lg">Clique em um evento na linha do tempo</p>
+          <p class="text-sm">para ver os detalhes completos aqui.</p>
+        </div>
 
-    <div class="mt-6">
-      <Button @click="goBack" variant="secondary">Voltar para a lista</Button>
+        <!-- Estado Preenchido (Exibindo detalhes) -->
+        <div v-else class="animate-fade-in">
+          <div class="border-b border-slate-700 pb-4 mb-6">
+            <h2 class="text-2xl font-bold text-white uppercase tracking-wider mb-2">
+               Detalhes do Evento
+            </h2>
+            <p class="text-slate-400">Data do registro: {{ eventoSelecionado.data_evento }}</p>
+          </div>
+
+          <!-- DADOS: CONSULTA -->
+          <div v-if="eventoSelecionado.tipo === 'consulta'" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-slate-900 p-4 rounded border border-slate-700">
+                <p class="text-sm text-slate-400 mb-1">Especialidade</p>
+                <p class="font-medium text-white">{{ eventoSelecionado.especialidade || 'Não informado' }}</p>
+              </div>
+              <div class="bg-slate-900 p-4 rounded border border-slate-700">
+                <p class="text-sm text-slate-400 mb-1">Código CID</p>
+                <p class="font-medium text-white">{{ eventoSelecionado.cid || 'Não informado' }}</p>
+              </div>
+              <div class="col-span-2 bg-slate-900 p-4 rounded border border-slate-700">
+                <p class="text-sm text-slate-400 mb-1">Procedimento Realizado</p>
+                <p class="font-medium text-white">{{ eventoSelecionado.procedimento || 'Não informado' }}</p>
+              </div>
+              <div v-if="eventoSelecionado.indica_retorno" class="col-span-2 bg-slate-900 p-4 rounded border border-slate-700">
+                <p class="text-sm text-slate-400 mb-1">Indicação de Retorno</p>
+                <p class="font-medium text-white">{{ eventoSelecionado.indica_retorno }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- DADOS: EXAME -->
+          <div v-else-if="eventoSelecionado.tipo === 'exame'" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-slate-900 p-4 rounded border border-slate-700">
+                <p class="text-sm text-slate-400 mb-1">Exame</p>
+                <p class="font-medium text-white">{{ eventoSelecionado.nome_exame || 'Não informado' }}</p>
+              </div>
+              <div class="bg-slate-900 p-4 rounded border border-slate-700">
+                <p class="text-sm text-slate-400 mb-1">Situação</p>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                  {{ eventoSelecionado.situacao_exame || 'Concluído' }}
+                </span>
+              </div>
+              <div class="bg-slate-900 p-4 rounded border border-slate-700">
+                <p class="text-sm text-slate-400 mb-1">Tipo</p>
+                <p class="font-medium text-white">{{ eventoSelecionado.tipo_exame || 'Não informado' }}</p>
+              </div>
+              <div class="bg-slate-900 p-4 rounded border border-slate-700">
+                <p class="text-sm text-slate-400 mb-1">Nº Atendimento</p>
+                <p class="font-medium text-white">{{ eventoSelecionado.atendimento_id || 'Não informado' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- DADOS: INTERNAÇÃO -->
+          <div v-else-if="eventoSelecionado.tipo === 'internacao'" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-slate-900 p-4 rounded border border-slate-700">
+                <p class="text-sm text-slate-400 mb-1">Especialidade Responsável</p>
+                <p class="font-medium text-white">{{ eventoSelecionado.especialidade || 'Não informado' }}</p>
+              </div>
+              <div class="bg-slate-900 p-4 rounded border border-slate-700">
+                <p class="text-sm text-slate-400 mb-1">Tempo de Permanência</p>
+                <p class="font-medium text-white">{{ eventoSelecionado.tempo_permanencia_dias ? eventoSelecionado.tempo_permanencia_dias + ' dias' : 'Não informado' }}</p>
+              </div>
+              <div class="col-span-2 bg-slate-900 p-4 rounded border border-slate-700">
+                <p class="text-sm text-slate-400 mb-1">Sumário de Alta</p>
+                <p class="font-medium text-white">{{ eventoSelecionado.descricao_tipo_alta_medica || 'Não informado' }}</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-8">
+      <Button @click="goBack" class="bg-slate-700 hover:bg-slate-600 text-white border-0">Voltar para a lista</Button>
     </div>
   </div>
 </template>
@@ -185,6 +297,13 @@ const toast = useToast();
 const codigo = String(route.params.codigo || '');
 const jornada = ref<any | null>(null);
 
+// NOSSO NOVO ESTADO: Guarda o evento que o usuário clicou
+const eventoSelecionado = ref<any | null>(null);
+
+const selecionarEvento = (evento: any) => {
+  eventoSelecionado.value = evento;
+};
+
 const loadJornada = async () => {
   if (!codigo) {
     toast.error('Código de paciente inválido.');
@@ -194,7 +313,12 @@ const loadJornada = async () => {
   try {
     const { data } = await api.get('/api/paciente/jornada', { params: { codigo } });
     jornada.value = data;
-    console.log(jornada.value)
+    
+    // Opcional: Se quiser que o primeiro item já venha aberto ao carregar a tela
+    if (data.eventos && data.eventos.length > 0) {
+      eventoSelecionado.value = data.eventos[0];
+    }
+    
   } catch (error) {
     toast.error('Não foi possível carregar a jornada do paciente.');
   }
@@ -206,3 +330,14 @@ const goBack = () => {
 
 onMounted(loadJornada);
 </script>
+
+<style scoped>
+/* Pequena animação para quando o conteúdo da direita trocar */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
