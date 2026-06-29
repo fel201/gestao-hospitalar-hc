@@ -7,7 +7,7 @@ from ..helpers.jornada_utils import calcular_diferenca_horas
 from ..helpers.filtrar_eventos import filtrar_eventos
 from ..helpers.total_pacientes_eventos import total_pacientes_eventos
 from ..helpers.metricas_consultas import metricas_consultas_como_indicadores
-
+from ..helpers.metricas_cirurgias import metricas_cirurgias
 
 
 class DashboardController:
@@ -81,20 +81,22 @@ class DashboardController:
             exames=exames_filtrados,
             internacoes=internacoes_filtradas,
         )
+        
+        total_cirurgias = len(cirurgias_filtradas)
         total_consultas  = len(consultas_filtradas)
         total_exames     = len(exames_filtrados)
         total_internacoes = len(internacoes_filtradas)
-        total_eventos    = total_consultas + total_exames + total_internacoes
+        total_eventos    = total_consultas + total_exames + total_internacoes + total_cirurgias
 
         taxa_conclusao = (
             (len(consultas_concluidas) + len(exames_concluidos) + len(internacoes_concluidas))
             / (total_eventos or 1)
         )
+        
         consultas_por_paciente = round(total_consultas / max(total_pacientes, 1), 2)
-
         # métricas de consultas calculadas
-        indicadores_metricas = metricas_consultas_como_indicadores(consultas_filtradas)
-
+        indicadores_consultas = metricas_consultas_como_indicadores(consultas_filtradas)
+        indicadores_cirurgias = metricas_cirurgias(cirurgias_filtradas, total_pacientes)
         #proporção de exames regulados
         exames_regulados = [
             c 
@@ -146,7 +148,7 @@ class DashboardController:
                 "indicadores": [
                     {"nome": "Consultas por paciente",  "valor": consultas_por_paciente},
                     {"nome": "Consultas concluídas",    "valor": len(consultas_concluidas)},
-                    *indicadores_metricas,
+                    *indicadores_consultas,
                 ],
             },
 
@@ -172,6 +174,17 @@ class DashboardController:
                 "indicadores": [
                     {"nome": "Tempo médio de permanência", "valor": tempo_medio_permanencia_internacao},
                 ],
+            },
+            "cirurgias": {
+                "titulo": "Cirurgias",
+                "total_eventos": total_cirurgias,
+                "eventos": [
+                    {
+                        "nome": "Cirurgias",
+                        "valor": total_cirurgias,
+                    },
+                ],
+                "indicadores": indicadores_cirurgias,
             },
         }
 
