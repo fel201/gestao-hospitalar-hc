@@ -91,23 +91,23 @@ onMounted(() => {
 
         <div class="flex flex-row gap-6 overflow-x-auto pb-6 snap-x custom-scrollbar">
           
-          <div class="bg-slate-800/80 rounded-xl shadow-lg border border-slate-700 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-emerald-500 p-5">
+          <div class="bg-slate-800/80 rounded-xl shadow-lg border border-slate-700 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-blue-900 p-5">
             <DashboardJourney :stage="dashboard.entrada" tipo="entrada" />
           </div>
 
-          <div class="bg-slate-800/80 rounded-xl shadow-lg border border-slate-700 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-blue-500 p-5">
+          <div class="bg-slate-800/80 rounded-xl shadow-lg border border-slate-700 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-blue-900 p-5">
             <DashboardJourney :stage="dashboard.consultas" tipo="consultas" />
           </div>
 
-          <div class="bg-slate-800/80 rounded-xl shadow-lg border border-slate-700 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-purple-500 p-5">
+          <div class="bg-slate-800/80 rounded-xl shadow-lg border border-slate-700 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-blue-900 p-5">
             <DashboardJourney :stage="dashboard.diagnostico" tipo="diagnostico" />
           </div>
 
-          <div class="bg-slate-800/80 rounded-xl shadow-lg border border-slate-700 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-orange-500 p-5">
+          <div class="bg-slate-800/80 rounded-xl shadow-lg border border-slate-700 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-blue-900 p-5">
             <DashboardJourney :stage="dashboard.procedimentos" tipo="procedimentos" />
           </div>
 
-          <div class="bg-slate-800/80 rounded-xl shadow-lg border border-slate-700 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-red-500 p-5">
+          <div class="bg-slate-800/80 rounded-xl shadow-lg border border-slate-700 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-blue-900 p-5">
             <DashboardJourney :stage="dashboard.internacao" tipo="internacao" />
           </div>
 
