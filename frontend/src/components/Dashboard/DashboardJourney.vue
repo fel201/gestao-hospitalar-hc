@@ -63,7 +63,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-// 1. Definimos o que este componente espera receber da "mesa" (DashboardView)
+// Definimos o que este componente espera receber da "mesa" (DashboardView)
 const props = defineProps({
   stage: {
     type: Object,
@@ -76,7 +76,7 @@ const props = defineProps({
   }
 });
 
-// 2. Um "dicionário" que muda as cores, ícones e títulos dependendo se é Entrada, Consulta, etc.
+// Um "dicionário" que muda as cores, ícones e títulos dependendo se é Entrada, Consulta, etc.
 const config = computed(() => {
   const mapa: Record<string, any> = {
     entrada: { 
