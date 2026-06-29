@@ -5,6 +5,7 @@ export interface DashboardInterface {
   consultas: DashboardModuloInterface;
   diagnostico: DashboardModuloInterface;
   internacao: DashboardModuloInterface;
+  cirurgias: DashboardModuloInterface;
 }
 
 export interface DashboardKPIsInterface {

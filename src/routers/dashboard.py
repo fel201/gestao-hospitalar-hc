@@ -5,7 +5,7 @@ from ..providers.implementations.consultas_csv_provider import ConsultasCsvProvi
 from ..providers.implementations.exame_csv_provider import ExameCsvProvider
 from ..providers.implementations.internacoes_csv_provider import InternacoesCsvProvider
 from ..providers.implementations.paciente_csv_provider import PacienteCsvProvider
-
+from ..providers.implementations.cirurgias_csv_provider import CirurgiasCsvProvider
 
 router = APIRouter(
     prefix="/api/dashboard",
@@ -19,6 +19,7 @@ def get_dashboard_controller() -> DashboardController:
         exame_provider=ExameCsvProvider(),
         internacao_provider=InternacoesCsvProvider(),
         paciente_provider=PacienteCsvProvider(),
+        cirurgia_provider=CirurgiasCsvProvider()
     )
 
 @router.get("", response_model=dict)

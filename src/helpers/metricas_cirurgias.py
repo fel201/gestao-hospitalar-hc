@@ -58,14 +58,11 @@ def metricas_cirurgias(cirurgias, total_pacientes):
             "valor": pacientes_operados(cirurgias),
         },
         {
-            "nome": "Proporção de pacientes operados",
-            "valor": proporcao_pacientes_operados(
-                cirurgias,
-                total_pacientes,
-            ),
+            "nome": "Proporção de pacientes operados (%)",
+            "valor": round(proporcao_pacientes_operados(cirurgias, total_pacientes)*100, 2),
         },
         {
-            "nome": "Tempo médio de cirurgia",
+            "nome": "Tempo médio de cirurgia (min)",
             "valor": tempo_medio_cirurgia(cirurgias),
         },
     ]
