@@ -24,6 +24,7 @@ def filtrar_eventos(evento: str, dados, especialidade):
     campos = {
         "consulta": "especialidade",
         "internacao": "especialidade",
+        "cirurgia": "especialidade",
         "exame": "especialidade_solicitante_nome",
     }
 

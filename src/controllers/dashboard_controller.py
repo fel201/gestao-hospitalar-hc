@@ -2,10 +2,12 @@ from ..providers.implementations.consultas_csv_provider import ConsultasCsvProvi
 from ..providers.implementations.exame_csv_provider import ExameCsvProvider
 from ..providers.implementations.internacoes_csv_provider import InternacoesCsvProvider
 from ..providers.interfaces.paciente_provider_interface import PacienteProviderInterface
+from ..providers.implementations.cirurgias_csv_provider import CirurgiasCsvProvider
 from ..helpers.jornada_utils import calcular_diferenca_horas
 from ..helpers.filtrar_eventos import filtrar_eventos
 from ..helpers.total_pacientes_eventos import total_pacientes_eventos
 from ..helpers.metricas_consultas import metricas_consultas_como_indicadores
+
 
 
 class DashboardController:
@@ -14,11 +16,13 @@ class DashboardController:
         consulta_provider: ConsultasCsvProvider,
         exame_provider: ExameCsvProvider,
         internacao_provider: InternacoesCsvProvider,
+        cirurgia_provider: CirurgiasCsvProvider,
         paciente_provider: PacienteProviderInterface,
     ):
         self.consulta_provider = consulta_provider
         self.exame_provider = exame_provider
         self.internacao_provider = internacao_provider
+        self.cirurgia_provider = cirurgia_provider
         self.paciente_provider = paciente_provider
 
     async def get_dashboard(
@@ -31,12 +35,13 @@ class DashboardController:
         exames       = await self.exame_provider.listar_exames()
         internacoes  = await self.internacao_provider.listar_internacoes()
         pacientes    = await self.paciente_provider.listar_pacientes()
-
+        cirurgias    = await self.cirurgia_provider.listar_cirurgias()
         #  filtros por especialidade 
         consultas_filtradas   = filtrar_eventos(evento='consulta',   dados=consultas,   especialidade=especialidade)
         exames_filtrados      = filtrar_eventos(evento='exame',      dados=exames,      especialidade=especialidade)
         internacoes_filtradas = filtrar_eventos(evento='internacao',  dados=internacoes, especialidade=especialidade)
-
+        cirurgias_filtradas =   filtrar_eventos(evento="cirurgia", dados=cirurgias, especialidade=especialidade,
+)
         # consultas 
         consultas_primeira_vez = [
             c for c in consultas_filtradas
