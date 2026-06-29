@@ -80,25 +80,37 @@ onMounted(() => {
       <DashboardKpis v-if="dashboard" :kpis="dashboard!.kpis" />
 
       <!-- jornada -->
-      <section v-if="dashboard">
-        <h2 class="text-xl font-bold mb-4">Jornada Assistencial</h2>
+      <section v-if="dashboard" class="mt-8">
+        <div class="flex items-center justify-between mb-6 text-slate-700">
+          <h2 class="text-xl font-bold flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            Jornada Assistencial
+          </h2>
+          <span class="text-sm font-medium text-slate-400">6 etapas - Cardiologia</span>
+        </div>
 
-        <div class="flex flex-col gap-6 pr-4 h-[400px]">
-          <div class="bg-white rounded-2xl shadow min-w-[320px] p-5">
-            <DashboardJourney :stage="dashboard.entrada" />
+        <div class="flex flex-row gap-6 overflow-x-auto pb-6 snap-x">
+          
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-emerald-500 p-5">
+            <DashboardJourney :stage="dashboard.entrada" tipo="entrada" />
           </div>
 
-          <div class="bg-white rounded-2xl shadow min-w-[320px] p-5">
-            <DashboardJourney :stage="dashboard.consultas" />
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-blue-500 p-5">
+            <DashboardJourney :stage="dashboard.consultas" tipo="consultas" />
           </div>
 
-          <div class="bg-white rounded-2xl shadow min-w-[320px] p-5">
-            <DashboardJourney :stage="dashboard.diagnostico" />
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-purple-500 p-5">
+            <DashboardJourney :stage="dashboard.diagnostico" tipo="diagnostico" />
           </div>
 
-          <div class="bg-white rounded-2xl shadow min-w-[320px] p-5">
-            <DashboardJourney :stage="dashboard.internacao" />
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-orange-500 p-5">
+            <DashboardJourney :stage="dashboard.procedimentos" tipo="procedimentos" />
           </div>
+
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-red-500 p-5">
+            <DashboardJourney :stage="dashboard.internacao" tipo="internacao" />
+          </div>
+
         </div>
       </section>
     </main>
