@@ -90,6 +90,26 @@ class DashboardController:
         # métricas de consultas calculadas
         indicadores_metricas = metricas_consultas_como_indicadores(consultas_filtradas)
 
+        #proporção de exames regulados
+        exames_regulados = [
+            c 
+            for c in exames_filtrados
+            if c["condicao"].split()[0] == "Regulado"
+        ]
+
+        #tempo médio entre solicitação e realização de exames
+        tempos = []
+        for c in exames_filtrados:
+            tempos.append(calcular_diferenca_horas(c["data_hora_solicitacao"], c["data_hora_realizacao"]))
+        tempo_medio_solicitacao_realizacao = (
+            sum(tempos)/len(tempos)
+            if tempos else 0
+        )
+        tempo_medio_solicitacao_realizacao *= 60
+
+        #proporção de exames pendentes
+        exames_pendentes_proporcao = (len(exames_filtrados) - len(exames_concluidos))/len(exames_filtrados)
+
         # Dashboard 
         dashboard = {
             "especialidade": especialidade,
@@ -131,7 +151,11 @@ class DashboardController:
                 "eventos": [
                     {"nome": "Diagnósticos registrados", "valor": len(consultas_com_diagnostico)},
                 ],
-                "indicadores": [],
+                "indicadores": [
+                    {"nome": "Proporção de exames regulados", "valor": len(exames_regulados)/len(exames_filtrados)},
+                    {"nome": "Tempo médio solicitação -> realização", "valor": tempo_medio_solicitacao_realizacao},
+                    {"nome": "Proporção de exames pendentes", "valor": exames_pendentes_proporcao},
+                ],
             },
 
             "internacao": {

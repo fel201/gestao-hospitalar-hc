@@ -34,6 +34,7 @@ class ExameCsvProvider:
                         'situacao': row.get('situacao', ''),
                         'especialidade_solicitante_nome': row.get('especialidade_solicitante_nome', ''),
                         'retorno': row.get('retorno', ''),
+                        'condicao': row.get('condicao_exame', ''),
                     })
         except Exception as e:
             print(f"Erro ao ler CSV de exames: {e}")
