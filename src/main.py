@@ -53,6 +53,19 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",  # frontend local
+        os.getenv("URL_ORIGIN")
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Placeholder para incluir os roteadores da API
 from .routers import paciente, auth, admin, jornada, dashboard
 app.include_router(paciente.router)

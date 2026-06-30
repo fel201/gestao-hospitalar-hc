@@ -1,8 +1,11 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/auth';
 
+
+console.log(import.meta.env.VITE_API_URL);
+
 const api = axios.create({
-  baseURL: '/', // Adjust if your API is on a different host
+  baseURL: import.meta.env.VITE_API_URL, // Adjust if your API is on a different host
   headers: {
     'Content-Type': 'application/json',
   }
