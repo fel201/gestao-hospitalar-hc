@@ -53,10 +53,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Serve o frontend Vue 3 empacotado
-app.mount("/static/dist/assets", StaticFiles(directory="src/static/dist/assets"), name="assets")
-app.mount("/static/dist", StaticFiles(directory="src/static/dist"), name="static")
-
 # Placeholder para incluir os roteadores da API
 from .routers import paciente, auth, admin, jornada, dashboard
 app.include_router(paciente.router)
