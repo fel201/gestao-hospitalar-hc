@@ -8,12 +8,13 @@
     {
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "../src/static/dist" }
+      "config": { "distDir": "dist" }
     }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "src/main.py" },
-    { "src": "/static/dist/(.*)", "dest": "src/static/dist/$1" },
-    { "src": "/(.*)", "dest": "src/static/dist/index.html" }
+    { "src": "/assets/(.*)", "dest": "frontend/dist/assets/$1" },
+    { "src": "/favicon.svg", "dest": "frontend/dist/favicon.svg" },
+    { "src": "/(.*)", "dest": "frontend/dist/index.html" }
   ]
 }

@@ -75,26 +75,18 @@ app.include_router(jornada.router)
 app.include_router(dashboard.router)
 from pathlib import Path
 
-# ... depois dos app.include_router(...)
+# main.py está em src/, então sobe um nível até a raiz do projeto, depois entra em frontend/dist
+STATIC_DIR = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
-BASE_DIR = Path(__file__).resolve().parent  # aponta pra src/
-STATIC_DIR = BASE_DIR / "static" / "dist"
+if STATIC_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
 
-# serve tudo que está em src/static/dist sob o prefixo /static/dist
-app.mount("/static/dist", StaticFiles(directory=STATIC_DIR), name="static")
-
-@app.get("/{full_path:path}")
-async def serve_frontend(full_path: str):
-    """
-    Serve o index.html para rotas do SPA (Vue Router).
-    """
-    if full_path.startswith("api"):
-        raise HTTPException(status_code=404, detail="API route not found")
-
-    index_path = STATIC_DIR / "index.html"
-    if index_path.exists():
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        if full_path.startswith("api"):
+            raise HTTPException(status_code=404, detail="API route not found")
+        index_path = STATIC_DIR / "index.html"
         return FileResponse(index_path)
-    return {"error": "Frontend build not found"}
 
 from fastapi import Request
 
