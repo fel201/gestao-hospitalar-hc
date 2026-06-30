@@ -1,4 +1,4 @@
-def total_pacientes_eventos(consultas, internacoes, exames):
+def total_pacientes_eventos(consultas, internacoes, exames, cirurgias):
     pacientes_unicos = set()
     for consulta in consultas:
         pacientes_unicos.add(
@@ -12,6 +12,9 @@ def total_pacientes_eventos(consultas, internacoes, exames):
         pacientes_unicos.add(
             exame["paciente_prontuario"]
         )
+    for cirurgia in cirurgias:
+        pacientes_unicos.add(cirurgia["paciente_id"])
+
     return len(
         pacientes_unicos
     )

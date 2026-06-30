@@ -54,7 +54,7 @@ def cirurgias_por_especialidade(cirurgias):
 def metricas_cirurgias(cirurgias, total_pacientes):
     return [
         {
-            "nome": "Pacientes operados",
+            "nome": "Pacientes únicos operados",
             "valor": pacientes_operados(cirurgias),
         },
         {

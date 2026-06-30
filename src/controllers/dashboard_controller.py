@@ -80,6 +80,7 @@ class DashboardController:
             consultas=consultas_filtradas,
             exames=exames_filtrados,
             internacoes=internacoes_filtradas,
+            cirurgias=cirurgias_filtradas
         )
         
         total_cirurgias = len(cirurgias_filtradas)
