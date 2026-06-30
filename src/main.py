@@ -59,12 +59,12 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",  # frontend local
-        os.getenv("URL_ORIGIN")
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+print(os.getenv("URL_ORIGIN"))
 
 # Placeholder para incluir os roteadores da API
 from .routers import paciente, auth, admin, jornada, dashboard
@@ -73,20 +73,39 @@ app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(jornada.router)
 app.include_router(dashboard.router)
+from pathlib import Path
+
+# ... depois dos app.include_router(...)
+
+BASE_DIR = Path(__file__).resolve().parent  # aponta pra src/
+STATIC_DIR = BASE_DIR / "static" / "dist"
+
+# serve tudo que está em src/static/dist sob o prefixo /static/dist
+app.mount("/static/dist", StaticFiles(directory=STATIC_DIR), name="static")
+
 @app.get("/{full_path:path}")
 async def serve_frontend(full_path: str):
     """
-    Serve o arquivo index.html para todas as rotas que não são da API ou arquivos estáticos.
-    Isso é necessário para que o roteamento do Vue (SPA) funcione.
+    Serve o index.html para rotas do SPA (Vue Router).
     """
-    # Se a rota começa com 'api', deixa o roteador do FastAPI lidar
     if full_path.startswith("api"):
         raise HTTPException(status_code=404, detail="API route not found")
-    
-    index_path = os.path.join("src", "static", "dist", "index.html")
-    if os.path.exists(index_path):
+
+    index_path = STATIC_DIR / "index.html"
+    if index_path.exists():
         return FileResponse(index_path)
     return {"error": "Frontend build not found"}
+
+from fastapi import Request
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    print(f"Request: {request.method} {request.url}")
+    print(f"Origin: {request.headers.get('origin')}")
+    print(f"Host: {request.headers.get('host')}")
+    response = await call_next(request)
+    print(f"Response headers: {response.headers}")
+    return response
 
 # Exemplo:
 # from .routers import aih, bpa, material
