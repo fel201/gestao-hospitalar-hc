@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory, NavigationGuardNext } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
-import Home from '../views/Home.vue';
 import Login from '../views/Login.vue';
 import DashboardView from '../views/DashboardView.vue';
 import Pacientes from '../views/Pacientes.vue';
@@ -9,9 +8,10 @@ import PacienteDetalhe from '../views/PacienteDetalhe.vue';
 const routes = [
   {
     path: '/',
-    name: 'Home',
-    component: Home,
-  },
+    name: 'Dashboard Jornada',
+    component: DashboardView,
+    meta: { requiresAuth: true },
+  },  
   {
     path: '/login',
     name: 'Login',
@@ -30,12 +30,7 @@ const routes = [
     component: PacienteDetalhe,
     meta: { requiresAuth: true },
   },
-  {
-    path: '/dashboard',
-    name: 'Dashboard Jornada',
-    component: DashboardView,
-    meta: { requiresAuth: true },
-  },
+  
 ];
 
 const router = createRouter({

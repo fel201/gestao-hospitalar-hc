@@ -53,7 +53,7 @@
 
         <router-link
           v-if="authStore.isAuthenticated"
-          to="/dashboard"
+          to="/"
           class="flex items-center gap-3 py-3 px-4 rounded-lg transition-colors hover:bg-slate-800 hover:text-white"
           active-class="bg-slate-800 text-white"
         >
