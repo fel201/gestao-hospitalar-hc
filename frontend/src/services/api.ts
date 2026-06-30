@@ -5,12 +5,9 @@ import { useAuthStore } from '../stores/auth';
 console.log(import.meta.env.VITE_API_URL);
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL, // Adjust if your API is on a different host
-  headers: {
-    'Content-Type': 'application/json',
-  }
-});
-
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true
+})
 // Request interceptor to add the access token
 api.interceptors.request.use(config => {
   const authStore = useAuthStore();
