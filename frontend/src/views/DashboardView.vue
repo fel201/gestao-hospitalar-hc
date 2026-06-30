@@ -44,22 +44,6 @@ onMounted(() => {
 <template>
   <div class="min-h-screen bg-slate-900 w-full font-sans text-slate-200">
     
-    <!-- cabeçalho-->
-    <header class="bg-slate-950 text-white px-8 py-5 border-b border-slate-800 shadow-sm">
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-2xl font-bold tracking-tight">Dashboard Assistencial</h1>
-          <p class="text-sm text-slate-400 mt-1">
-            Plataforma Integrada Assistencial
-          </p>
-        </div>
-
-        <div class="text-sm text-slate-400 bg-slate-900 px-4 py-2 rounded-full border border-slate-700">
-          Perspectiva:
-          <span class="font-semibold text-white ml-1"> Paciente </span>
-        </div>
-      </div>
-    </header>
 
     <div v-if="loading" class="fixed inset-0 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm z-50">
       <div class="w-10 h-10 border-4 border-slate-600 border-t-blue-500 rounded-full animate-spin" />

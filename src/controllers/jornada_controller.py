@@ -9,7 +9,7 @@ from ..helpers.juntar_exames import juntar_exames
 from ..helpers.juntar_internacoes import juntar_internacoes
 from ..helpers.jornada_utils import calculate_time_intervals, filter_by_specification
 from ..helpers.normalize_id import _normalize_id
-
+from datetime import datetime
 
 class JornadaController:
     @staticmethod
@@ -57,7 +57,7 @@ class JornadaController:
             "total_pages": (total + page_size - 1) // page_size,
         }
         
-    async def obter_jornada_paciente(
+    async def obter_jornada_paciente( 
         pac_id: int,
         paciente_provider: PacienteProviderInterface,
         consultas_provider: ConsultasCsvProvider,

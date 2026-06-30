@@ -115,6 +115,7 @@ class DashboardController:
         #proporção de exames pendentes
         exames_pendentes_proporcao = round((len(exames_filtrados) - len(exames_concluidos))/len(exames_filtrados), 2)
         proporcao_exames_regulados = len(exames_regulados)/len(exames_filtrados)
+        
         # Dashboard 
         dashboard = {
             "especialidade": especialidade,

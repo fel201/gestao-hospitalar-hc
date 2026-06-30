@@ -37,21 +37,30 @@ const props = defineProps({
 
 const buttonClass = computed(() => {
   if (props.disabled || props.loading) {
-    return 'bg-paper-disabled text-gray-500';
+    return "bg-slate-700 text-slate-400";
   }
+
   switch (props.variant) {
-    case 'primary':
-      return 'bg-paper-primary hover:bg-paper-primary-hover text-white';
-    case 'info':
-      return 'bg-paper-info hover:bg-paper-info-hover text-white';
-    case 'success':
-      return 'bg-paper-success hover:bg-paper-success-hover text-white';
-    case 'warning':
-      return 'bg-paper-warning hover:bg-paper-warning-hover text-white';
-    case 'danger':
-      return 'bg-paper-danger hover:bg-paper-danger-hover text-white';
+    case "primary":
+      return "bg-blue-600 hover:bg-blue-700 text-white";
+
+    case "info":
+      return "bg-sky-600 hover:bg-sky-700 text-white";
+
+    case "success":
+      return "bg-emerald-600 hover:bg-emerald-700 text-white";
+
+    case "warning":
+      return "bg-amber-500 hover:bg-amber-600 text-white";
+
+    case "danger":
+      return "bg-red-600 hover:bg-red-700 text-white";
+
+    case "secondary":
+      return "bg-slate-700 hover:bg-slate-600 text-white";
+
     default:
-      return 'bg-paper-default hover:bg-paper-default-hover text-white';
+      return "bg-slate-700 hover:bg-slate-600 text-white";
   }
 });
 

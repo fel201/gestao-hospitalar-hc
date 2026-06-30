@@ -1,15 +1,19 @@
 <template>
-  <div class="relative h-screen overflow-hidden md:flex">
+  <div class="relative h-screen overflow-hidden md:flex bg-slate-900 text-slate-200">
     <!-- Mobile Menu -->
     <div
-      class="bg-paper-sidebar text-gray-100 flex justify-between md:hidden shrink-0"
+      class="bg-slate-950 text-slate-200 flex justify-between md:hidden border-b border-slate-800 shrink-0"
     >
-      <router-link to="/" class="block p-4 text-white font-bold"
-        >My App</router-link
+      <router-link
+        to="/"
+        class="block p-4 text-white font-bold tracking-tight"
       >
+        Dashboard Assistencial
+      </router-link>
+
       <button
         @click="sidebarOpen = !sidebarOpen"
-        class="p-4 focus:outline-none focus:bg-paper-active-link"
+        class="p-4 hover:bg-slate-800 transition-colors"
       >
         <Bars3Icon class="h-6 w-6" />
       </button>
@@ -18,90 +22,86 @@
     <!-- Sidebar -->
     <aside
       :class="{ '-translate-x-full': !sidebarOpen }"
-      class="bg-paper-sidebar text-gray-100 w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform md:relative md:translate-x-0 transition duration-200 ease-in-out z-20 h-full shrink-0"
+      class="bg-slate-950 text-slate-200 w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform md:relative md:translate-x-0 transition duration-200 ease-in-out z-20 h-full shrink-0 border-r border-slate-800"
     >
+      <!-- Logo -->
       <div
-        @click="() => router.push('/')"
-        class="cursor-pointer text-white flex items-center space-x-2 px-4"
+        @click="router.push('/')"
+        class="cursor-pointer flex items-center gap-3 px-4"
       >
-        <CubeTransparentIcon class="h-8 w-8" />
-        <span class="text-2xl font-extrabold">My App</span>
-      </div>
-      <div class="px-4 my-6">
-        <div class="border-t border-white border-opacity-20"></div>
+        <CubeTransparentIcon class="h-8 w-8 text-blue-500" />
+        <span class="text-xl font-bold tracking-tight text-white">
+          Jornada Assistencial
+        </span>
       </div>
 
-      <nav>
-        <router-link
-          to="/"
-          class="flex items-center space-x-2 py-2.5 px-4 rounded transition duration-200 hover:bg-paper-active-link hover:text-white"
-        >
-          <HomeIcon class="h-6 w-6" />
-          <span>Home</span>
-        </router-link>
+      <div class="px-4">
+        <div class="border-t border-slate-800"></div>
+      </div>
 
-        <router-link
-          to="/exemplos"
-          class="flex items-center space-x-2 py-2.5 px-4 rounded transition duration-200 hover:bg-paper-active-link hover:text-white"
-        >
-          <BeakerIcon class="h-6 w-6" />
-          <span>Exemplos</span>
-        </router-link>
+      <!-- Navegação -->
+      <nav class="space-y-2">
         <router-link
           v-if="authStore.isAuthenticated"
           to="/pacientes"
-          class="flex items-center space-x-2 py-2.5 px-4 rounded transition duration-200 hover:bg-paper-active-link hover:text-white"
+          class="flex items-center gap-3 py-3 px-4 rounded-lg transition-colors hover:bg-slate-800 hover:text-white"
+          active-class="bg-slate-800 text-white"
         >
-          <UsersIcon class="h-6 w-6" />
+          <UsersIcon class="h-5 w-5" />
           <span>Pacientes</span>
         </router-link>
+
         <router-link
           v-if="authStore.isAuthenticated"
           to="/dashboard"
-          class="flex items-center space-x-2 py-2.5 px-4 rounded transition duration-200 hover:bg-paper-active-link hover:text-white"
+          class="flex items-center gap-3 py-3 px-4 rounded-lg transition-colors hover:bg-slate-800 hover:text-white"
+          active-class="bg-slate-800 text-white"
         >
-          <LayoutDashboard class="h-6 w-6" />
+          <LayoutDashboard class="h-5 w-5" />
           <span>Dashboard</span>
-        </router-link>
-        <router-link
-          v-if="authStore.isAdmin"
-          to="/admin"
-          class="flex items-center space-x-2 py-2.5 px-4 rounded transition duration-200 hover:bg-paper-active-link hover:text-white"
-        >
-          <ShieldCheckIcon class="h-6 w-6" />
-          <span>Admin</span>
         </router-link>
       </nav>
     </aside>
 
-    <!-- Content -->
-    <div class="flex-1 flex flex-col bg-paper-bg overflow-y-auto h-full">
+    <!-- Conteúdo -->
+    <div class="flex-1 flex flex-col bg-slate-900 overflow-y-auto h-full">
       <header
-        class="flex justify-between items-center p-6 bg-white/80 backdrop-blur-md border-b border-gray-300 sticky top-0 z-10"
+        class="flex justify-between items-center px-8 py-5 bg-slate-950 border-b border-slate-800 shadow-sm sticky top-0 z-10"
       >
         <div>
-          <h1 class="text-2xl font-semibold text-paper-text">
+          <h1 class="text-2xl font-bold tracking-tight text-white">
             {{ $route.name }}
           </h1>
+
+          <p class="text-sm text-slate-400 mt-1">
+            Plataforma Integrada Assistencial
+          </p>
         </div>
+
         <div>
-          <router-link v-if="!authStore.isAuthenticated" to="/login">
+          <router-link
+            v-if="!authStore.isAuthenticated"
+            to="/login"
+          >
             <Button variant="primary">
               <template #icon>
                 <ArrowRightOnRectangleIcon class="h-5 w-5" />
               </template>
+
               Login
             </Button>
           </router-link>
+
           <ProfileDropdown v-else />
         </div>
       </header>
+
       <main class="flex-1">
         <div
           :class="
             route.name === 'DashboardJornada'
-              ? 'w-full px-6 lg:px-8'
-              : 'container py-4 md:py-6'
+              ? 'w-full px-10 py-8'
+              : 'w-full px-10 py-8'
           "
         >
           <router-view />
@@ -114,29 +114,30 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+
 import {
-  HomeIcon,
-  BeakerIcon,
   UsersIcon,
-  ShieldCheckIcon,
   CubeTransparentIcon,
   Bars3Icon,
   ArrowRightOnRectangleIcon,
 } from "@heroicons/vue/24/outline";
+
+import { LayoutDashboard } from "lucide-vue-next";
+
 import ProfileDropdown from "../components/ProfileDropdown.vue";
 import Button from "../components/Button.vue";
 import { useAuthStore } from "../stores/auth";
-import { LayoutDashboard } from "lucide-vue-next";
+
 const sidebarOpen = ref(false);
+
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
-// Close sidebar on route change
 watch(
   () => route.path,
   () => {
     sidebarOpen.value = false;
-  },
+  }
 );
 </script>

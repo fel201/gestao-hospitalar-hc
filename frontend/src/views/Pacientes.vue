@@ -1,19 +1,29 @@
 <template>
-  <div>
-    <h1 class="text-2xl font-bold mb-6">Lista de Pacientes</h1>
-    <Card class="mb-6">
+  <div class="min-h-screen bg-slate-900 text-slate-200">
+    <h1 class="text-3xl font-bold tracking-tight text-white mb-2">
+      Lista de Pacientes
+    </h1>
+
+    <p class="text-slate-400 mb-8">
+      Consulta e gerenciamento dos pacientes cadastrados.
+    </p>
+    <Card class="bg-slate-800 border border-slate-700 rounded-xl shadow-lg">
       <div class="mb-6 flex items-center space-x-4">
         <div class="form-group flex-1">
           <label for="pacienteCodigoInput" class="form-label"
             >Buscar Paciente por Código</label
           >
           <div class="flex items-center space-x-2">
-            <input
-              id="pacienteCodigoInput"
-              v-model="pacienteCodigoInput"
-              type="number"
-              placeholder="Digite o código do paciente"
-              class="form-control"
+          <input
+            id="pacienteCodigoInput"
+            v-model="pacienteCodigoInput"
+            type="number"
+            placeholder="Digite o código do paciente"
+            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3
+                  text-slate-200 placeholder:text-slate-500
+                  focus:outline-none focus:border-blue-500
+                  focus:ring-1 focus:ring-blue-500
+                  transition-colors"
             />
             <Button
               @click="fetchPacientePorCodigo"
@@ -29,7 +39,7 @@
       </div>
     </Card>
 
-    <Card v-if="pacienteDetalhe" class="mt-6">
+    <Card v-if="pacienteDetalhe" >
       <template #header>
         <h2 class="text-lg font-semibold">Detalhes do Paciente</h2>
       </template>
@@ -80,7 +90,7 @@
       </div>
     </Card>
 
-    <Card class="mt-6">
+    <Card class="bg-slate-800 border border-slate-700 rounded-xl shadow-lg">
       <DataTable :headers="headers" :items="pacientes">
         <template #actions="{ item }">
           <div class="flex space-x-2">
@@ -109,7 +119,7 @@
           </div>
         </template>
       </DataTable>
-    </Card>
+    </Card class="bg-slate-800 border border-slate-700 rounded-xl shadow-lg">
     <div class="flex justify-between items-center mt-6">
       <Button
         variant="secondary"
