@@ -17,50 +17,45 @@ class JornadaController:
         paciente_provider: PacienteProviderInterface,
         consultas_provider: ConsultasCsvProvider,
         exames_provider: ExameCsvProvider,
-        internacoes_provider: InternacoesCsvProvider
-    ):
-        pacientes = await paciente_provider.listar_pacientes()
+        internacoes_provider: InternacoesCsvProvider,
+        page: int = 1,
+        page_size: int = 50,
+    ):  
+        pacientes = await paciente_provider.listar_pacientes() 
 
         consultas = await consultas_provider.listar_consultas()
         exames = await exames_provider.listar_exames()
         internacoes = await internacoes_provider.listar_internacoes()
 
         ids_com_jornada = set()
+
         for consulta in consultas:
-            ids_com_jornada.add(
-                _normalize_id(consulta.get("prontuario"))
-            )
+            ids_com_jornada.add(_normalize_id(consulta.get("prontuario")))
 
         for exame in exames:
-            ids_com_jornada.add(
-                _normalize_id(exame.get("paciente_prontuario"))
-            )
+            ids_com_jornada.add(_normalize_id(exame.get("paciente_prontuario")))
 
         for internacao in internacoes:
-            ids_com_jornada.add(
-                _normalize_id(internacao.get("prontuario"))
-            )
+            ids_com_jornada.add(_normalize_id(internacao.get("prontuario")))
 
-        resultado = [
+        pacientes_com_jornada = [
             paciente
             for paciente in pacientes
             if _normalize_id(paciente["prontuario"]) in ids_com_jornada
         ]
-        prontuarios_pacientes = {
-            _normalize_id(p["prontuario"])
-            for p in pacientes
-            if p["prontuario"]
+
+        total = len(pacientes_com_jornada)
+
+        inicio = (page - 1) * page_size
+        fim = inicio + page_size
+
+        return {
+            "items": pacientes_com_jornada[inicio:fim],
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": (total + page_size - 1) // page_size,
         }
-
-        print("Prontuários pacientes:",
-            len(prontuarios_pacientes))
-
-        print("Prontuários jornada:",
-            len(ids_com_jornada))
-
-        print("Interseção:",
-            len(prontuarios_pacientes & ids_com_jornada))
-        return resultado
         
     async def obter_jornada_paciente(
         pac_id: int,
@@ -104,4 +99,3 @@ class JornadaController:
                 'filtro_especificacao': especificacao or []
             }
         }
-

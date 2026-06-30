@@ -23,23 +23,27 @@ router = APIRouter(
     dependencies=[Depends(auth_handler.decode_token)]
 )
 
-@router.get("", response_model=List[dict])
+
+from fastapi import Query
+
+@router.get("")
 async def listar_pacientes(
-    # A mágica acontece aqui:
-    # 1. get_paciente_provider(STRATEGY) retorna a função _get_paciente_csv_provider
-    # 2. FastAPI efetivamente executa Depends(_get_paciente_csv_provider)
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
     provider: PacienteProviderInterface = Depends(get_paciente_provider(STRATEGY))
 ):
-    """Lista todos os pacientes da fonte de dados configurada no roteador."""
     paciente_provider = PacienteCsvProvider()
     exames_provider = ExameCsvProvider()
     consultas_provider = ConsultasCsvProvider()
     internacoes_provider = InternacoesCsvProvider()
+
     return await jornada_controller.listar_pacientes_com_jornada(
         paciente_provider,
         consultas_provider,
         exames_provider,
-        internacoes_provider
+        internacoes_provider,
+        page=page,
+        page_size=page_size,
     )
     
 @router.get("/{codigo}", response_model=dict)
