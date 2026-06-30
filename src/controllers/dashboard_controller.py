@@ -6,8 +6,8 @@ from ..providers.implementations.cirurgias_csv_provider import CirurgiasCsvProvi
 from ..helpers.jornada_utils import calcular_diferenca_horas
 from ..helpers.filtrar_eventos import filtrar_eventos
 from ..helpers.total_pacientes_eventos import total_pacientes_eventos
-from ..helpers.metricas_consultas import metricas_consultas_como_indicadores
-from ..helpers.metricas_cirurgias import metricas_cirurgias
+from ..metrics.metricas_consultas import metricas_consultas_como_indicadores
+from ..metrics.metricas_cirurgias import metricas_cirurgias
 
 
 class DashboardController:
@@ -117,7 +117,7 @@ class DashboardController:
 
         #proporção de exames pendentes
         exames_pendentes_proporcao = (len(exames_filtrados) - len(exames_concluidos))/len(exames_filtrados)
-
+        proporcao_exames_regulados = len(exames_regulados)/len(exames_filtrados)
         # Dashboard 
         dashboard = {
             "especialidade": especialidade,
@@ -160,7 +160,7 @@ class DashboardController:
                     {"nome": "Diagnósticos registrados", "valor": len(consultas_com_diagnostico)},
                 ],
                 "indicadores": [
-                    {"nome": "Proporção de exames regulados", "valor": len(exames_regulados)/len(exames_filtrados)},
+                    {"nome": "Proporção de exames regulados", "valor": proporcao_exames_regulados},
                     {"nome": "Tempo médio solicitação -> realização", "valor": tempo_medio_solicitacao_realizacao},
                     {"nome": "Proporção de exames pendentes", "valor": exames_pendentes_proporcao},
                 ],

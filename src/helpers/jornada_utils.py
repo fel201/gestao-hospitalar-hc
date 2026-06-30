@@ -56,7 +56,6 @@ def calcular_diferenca_horas(data_inicio: str, data_fim: str) -> int:
         
         # Converte a diferença total para horas
         horas = diferenca.total_seconds() / 3600
-        
         return round(horas)
     
     except ValueError:

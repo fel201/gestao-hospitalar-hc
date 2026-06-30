@@ -491,21 +491,37 @@ _METRICAS_INDICADORES: list[tuple[str, str, str]] = [
     ("proporcao_consultas_retorno",           "Proporção de consultas de retorno",       "proporcao"),
     ("media_retornos_por_paciente",           "Média de retornos por paciente",          "media_retornos_por_paciente"),
     ("proporcao_interconsultas",              "Proporção de interconsultas",             "proporcao"),
-    ("proporcao_pacientes_com_interconsulta", "Pacientes com interconsulta (%)",         "proporcao"),
+    ("proporcao_pacientes_com_interconsulta", "Pacientes com interconsulta",         "proporcao"),
 ]
-
+# só pra não repetir isso dentro da função dnv
+_METRICAS_PERCENTUAIS = {
+    "Proporção de consultas reguladas",
+    "Taxa de faltas",
+    "Taxa de não realização",
+    "Proporção de consultas de retorno",
+    "Proporção de interconsultas",
+    "Pacientes com interconsulta",
+}
 
 def metricas_consultas_como_indicadores(consultas: list[dict[str, Any]]) -> list[dict]:
-    """
-    Calcula todas as métricas e retorna uma lista de indicadores no formato
-    { nome: str, valor: float } — compatível com DashboardIndicadorInterface.
-
-    Uso no controller:
-        indicadores_metricas = metricas_consultas_como_indicadores(consultas_filtradas)
-    """
     metricas = calcular_todas_metricas_consultas(consultas)
-    return [
-        {"nome": nome, "valor": metricas[metrica_key][valor_key]}
-        for metrica_key, nome, valor_key in _METRICAS_INDICADORES
-        if metrica_key in metricas
-    ]
+
+    indicadores = []
+
+    for metrica_key, nome, valor_key in _METRICAS_INDICADORES:
+        if metrica_key not in metricas:
+            continue
+
+        valor = metricas[metrica_key][valor_key]
+
+        if nome in _METRICAS_PERCENTUAIS:
+            valor = f"{valor * 100:.2f}%"
+
+        indicadores.append({
+            "nome": nome,
+            "valor": valor,
+        })
+
+    return indicadores
+
+    return indicadores
