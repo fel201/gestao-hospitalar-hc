@@ -173,7 +173,7 @@ class DashboardController:
                     {"nome": "Internações", "valor": total_internacoes},
                 ],
                 "indicadores": [
-                    {"nome": "Tempo médio de permanência", "valor": tempo_medio_permanencia_internacao},
+                    {"nome": "Tempo médio de permanência (dias)", "valor": tempo_medio_permanencia_internacao},
                 ],
             },
             "cirurgias": {
