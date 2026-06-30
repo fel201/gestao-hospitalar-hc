@@ -100,7 +100,7 @@ onMounted(() => {
           </div>
 
           <div class="bg-slate-800/80 rounded-xl shadow-lg border border-slate-700 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-blue-900 p-5">
-            <DashboardJourney :stage="dashboard.diagnostico" tipo="diagnostico" />
+            <DashboardJourney :stage="dashboard.exames" tipo="exames" />
           </div>
 
           <div class="bg-slate-800/80 rounded-xl shadow-lg border border-slate-700 min-w-[320px] max-w-[320px] snap-start border-t-4 border-t-blue-900 p-5">

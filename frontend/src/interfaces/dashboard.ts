@@ -3,7 +3,7 @@ export interface DashboardInterface {
   kpis: DashboardKPIsInterface;
   entrada: DashboardModuloInterface;
   consultas: DashboardModuloInterface;
-  diagnostico: DashboardModuloInterface;
+  exames: DashboardModuloInterface;
   internacao: DashboardModuloInterface;
   cirurgias: DashboardModuloInterface;
 }

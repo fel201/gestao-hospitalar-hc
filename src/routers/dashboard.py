@@ -18,7 +18,6 @@ def get_dashboard_controller() -> DashboardController:
         consulta_provider=ConsultasCsvProvider(),
         exame_provider=ExameCsvProvider(),
         internacao_provider=InternacoesCsvProvider(),
-        paciente_provider=PacienteCsvProvider(),
         cirurgia_provider=CirurgiasCsvProvider()
     )
 

@@ -1,7 +1,6 @@
 from ..providers.implementations.consultas_csv_provider import ConsultasCsvProvider
 from ..providers.implementations.exame_csv_provider import ExameCsvProvider
 from ..providers.implementations.internacoes_csv_provider import InternacoesCsvProvider
-from ..providers.interfaces.paciente_provider_interface import PacienteProviderInterface
 from ..providers.implementations.cirurgias_csv_provider import CirurgiasCsvProvider
 from ..helpers.jornada_utils import calcular_diferenca_horas
 from ..helpers.filtrar_eventos import filtrar_eventos
@@ -17,13 +16,11 @@ class DashboardController:
         exame_provider: ExameCsvProvider,
         internacao_provider: InternacoesCsvProvider,
         cirurgia_provider: CirurgiasCsvProvider,
-        paciente_provider: PacienteProviderInterface,
     ):
         self.consulta_provider = consulta_provider
         self.exame_provider = exame_provider
         self.internacao_provider = internacao_provider
         self.cirurgia_provider = cirurgia_provider
-        self.paciente_provider = paciente_provider
 
     async def get_dashboard(
         self,
@@ -34,8 +31,8 @@ class DashboardController:
         consultas    = await self.consulta_provider.listar_consultas()
         exames       = await self.exame_provider.listar_exames()
         internacoes  = await self.internacao_provider.listar_internacoes()
-        pacientes    = await self.paciente_provider.listar_pacientes()
         cirurgias    = await self.cirurgia_provider.listar_cirurgias()
+        
         #  filtros por especialidade 
         consultas_filtradas   = filtrar_eventos(evento='consulta',   dados=consultas,   especialidade=especialidade)
         exames_filtrados      = filtrar_eventos(evento='exame',      dados=exames,      especialidade=especialidade)
@@ -113,10 +110,10 @@ class DashboardController:
             sum(tempos)/len(tempos)
             if tempos else 0
         )
-        tempo_medio_solicitacao_realizacao *= 60
-
+        tempo_medio_solicitacao_realizacao *= 60 
+        tempo_medio_solicitacao_realizacao = round(tempo_medio_solicitacao_realizacao, 2)
         #proporção de exames pendentes
-        exames_pendentes_proporcao = (len(exames_filtrados) - len(exames_concluidos))/len(exames_filtrados)
+        exames_pendentes_proporcao = round((len(exames_filtrados) - len(exames_concluidos))/len(exames_filtrados), 2)
         proporcao_exames_regulados = len(exames_regulados)/len(exames_filtrados)
         # Dashboard 
         dashboard = {
@@ -153,10 +150,11 @@ class DashboardController:
                 ],
             },
 
-            "diagnostico": {
-                "titulo":       "Diagnósticos",
-                "total_eventos": len(consultas_com_diagnostico),
+            "exames": {
+                "titulo":       "Exames",
+                "total_eventos": total_exames,
                 "eventos": [
+                    {"nome": "Exames", "valor": total_exames},
                     {"nome": "Diagnósticos registrados", "valor": len(consultas_com_diagnostico)},
                 ],
                 "indicadores": [

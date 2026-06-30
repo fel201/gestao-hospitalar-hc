@@ -2,9 +2,8 @@ import csv
 from typing import List, Dict, Any
 from fastapi import HTTPException, status
 
-from ..interfaces.paciente_provider_interface import PacienteProviderInterface
 
-class PacienteCsvProvider(PacienteProviderInterface):
+class PacienteCsvProvider:
     def __init__(self, csv_path: str = 'data/pacientes.csv'):
         self.csv_path = csv_path
         self._check_file_exists()
