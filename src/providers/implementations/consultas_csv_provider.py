@@ -2,9 +2,11 @@ import csv
 from typing import List, Dict, Any
 from fastapi import HTTPException, status
 
+from ..csv_path_resolver import resolve_csv_path
+
 class ConsultasCsvProvider:
     def __init__(self, csv_path: str = 'data/consultas.csv'):
-        self.csv_path = csv_path
+        self.csv_path = resolve_csv_path(csv_path)
         self._check_file_exists()
 
     def _check_file_exists(self):
