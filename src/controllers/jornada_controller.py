@@ -1,3 +1,4 @@
+import asyncio
 from typing import Dict, Any, List
 from datetime import datetime
 from ..providers.implementations.consultas_csv_provider import ConsultasCsvProvider
@@ -21,11 +22,12 @@ class JornadaController:
         page: int = 1,
         page_size: int = 50,
     ):  
-        pacientes = await paciente_provider.listar_pacientes() 
-
-        consultas = await consultas_provider.listar_consultas()
-        exames = await exames_provider.listar_exames()
-        internacoes = await internacoes_provider.listar_internacoes()
+        pacientes, consultas, exames, internacoes = await asyncio.gather(
+            paciente_provider.listar_pacientes(),
+            consultas_provider.listar_consultas(),
+            exames_provider.listar_exames(),
+            internacoes_provider.listar_internacoes(),
+        )
 
         ids_com_jornada = set()
 
@@ -70,13 +72,13 @@ class JornadaController:
         pac_id_normalized = _normalize_id(pac_id)
         eventos = []
         
-        consultas_raw = await consultas_provider.listar_consultas()
+        consultas_raw, exames_raw, internacoes_raw = await asyncio.gather(
+            consultas_provider.listar_consultas(),
+            exames_provider.listar_exames(),
+            internacoes_provider.listar_internacoes(),
+        )
         numero_consultas = juntar_consultas(eventos, consultas_raw, pac_id=pac_id_normalized)
-        
-        exames_raw = await exames_provider.listar_exames()
         numero_exames = juntar_exames(eventos, exames_raw, pac_id=pac_id_normalized)
-        
-        internacoes_raw = await internacoes_provider.listar_internacoes()
         numero_internacoes = juntar_internacoes(eventos, internacoes_raw, pac_id_normalized)
         # ordenando cronologicamente com base na data de inicio de cada evento
         

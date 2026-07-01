@@ -1,3 +1,5 @@
+import asyncio
+
 from ..providers.implementations.consultas_csv_provider import ConsultasCsvProvider
 from ..providers.implementations.exame_csv_provider import ExameCsvProvider
 from ..providers.implementations.internacoes_csv_provider import InternacoesCsvProvider
@@ -28,10 +30,12 @@ class DashboardController:
         data_inicio,
         data_fim,
     ):
-        consultas    = await self.consulta_provider.listar_consultas()
-        exames       = await self.exame_provider.listar_exames()
-        internacoes  = await self.internacao_provider.listar_internacoes()
-        cirurgias    = await self.cirurgia_provider.listar_cirurgias()
+        consultas, exames, internacoes, cirurgias = await asyncio.gather(
+            self.consulta_provider.listar_consultas(),
+            self.exame_provider.listar_exames(),
+            self.internacao_provider.listar_internacoes(),
+            self.cirurgia_provider.listar_cirurgias(),
+        )
         
         #  filtros por especialidade 
         consultas_filtradas   = filtrar_eventos(evento='consulta',   dados=consultas,   especialidade=especialidade)
