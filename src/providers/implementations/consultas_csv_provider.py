@@ -23,6 +23,7 @@ class ConsultasCsvProvider:
             'prontuario': row.get('Prontuario', ''),
             'especialidade': row.get('especialidade', ''),
             'cid': row.get('CID', ''),
+            'data_hora_criacao': row.get('Data/Hora de Criação', ''),
             'data_hora_consulta': row.get('Data/Hora da Consulta', ''),
             'data_hora_fim': row.get('Data/Hora de Fim', ''),
             'justificativa': row.get('Justificativa', ''),

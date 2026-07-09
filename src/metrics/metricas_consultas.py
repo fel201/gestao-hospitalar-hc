@@ -142,24 +142,14 @@ def taxa_nao_realizacao(consultas: list[dict[str, Any]]) -> dict:
 
 def tempo_medio_agendamento_realizacao(consultas: list[dict[str, Any]]) -> dict:
     """
-    Tempo médio (em horas) entre o horário agendado da consulta
+    tempo médio (em horas) entre o horário agendado da consulta
     e o momento em que ela foi finalizada.
-
-    Considera apenas consultas com Retorno = 'PACIENTE ATENDIDO' e
-    com ambas as datas preenchidas.
-
-    Retorna:
-        {
-            "n_consultas": int,
-            "media_horas": float,
-            "media_minutos": float
-        }
     """
     deltas = []
     for c in consultas:
         if RETORNO_ATENDIDO not in c.get("retorno", ""):
             continue
-        h = _horas_entre(c.get("data_hora_consulta", ""), c.get("data_hora_fim", ""))
+        h = _horas_entre(c.get("data_hora_criacao", ""), c.get("data_hora_fim", ""))
         if h is not None and h >= 0:
             deltas.append(h)
 
@@ -487,7 +477,7 @@ _METRICAS_INDICADORES: list[tuple[str, str, str]] = [
     ("proporcao_consultas_reguladas",         "Proporção de consultas reguladas",       "proporcao"),
     ("taxa_nao_realizacao",                   "Taxa de faltas",                          "taxa_faltas"),
     ("taxa_nao_realizacao",                   "Taxa de não realização",                  "taxa_nao_realizacao"),
-    ("tempo_medio_agendamento_realizacao",    "Tempo médio até realização (min)",        "media_minutos"),
+    ("tempo_medio_agendamento_realizacao",    "Tempo médio de agendamento até realização (horas)",        "media_horas"),
     ("proporcao_consultas_retorno",           "Proporção de consultas de retorno",       "proporcao"),
     ("media_retornos_por_paciente",           "Média de retornos por paciente",          "media_retornos_por_paciente"),
     ("proporcao_interconsultas",              "Proporção de interconsultas",             "proporcao"),
@@ -524,4 +514,3 @@ def metricas_consultas_como_indicadores(consultas: list[dict[str, Any]]) -> list
 
     return indicadores
 
-    return indicadores
