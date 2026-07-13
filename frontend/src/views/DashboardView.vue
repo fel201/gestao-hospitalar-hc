@@ -5,6 +5,7 @@ import api from "../services/api";
 import DashboardKpis from "../components/Dashboard/DashboardKpis.vue";
 import DashboardJourney from "../components/Dashboard/DashboardJourney.vue";
 import DashboardFilters from "../components/Dashboard/DashboardFilters.vue";
+import DashboardModuleAnalytics from "../components/Dashboard/DashboardModuleAnalytics.vue";
 import type { DashboardInterface } from "../interfaces/dashboard.ts";
 
 // são apenas placeholders
@@ -195,6 +196,8 @@ onBeforeUnmount(cleanup);
 
           </div>
         </section>
+
+        <DashboardModuleAnalytics v-if="dashboard" />
       </template>
     </main>
   </div>
