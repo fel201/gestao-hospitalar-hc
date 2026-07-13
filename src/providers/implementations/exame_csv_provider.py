@@ -13,7 +13,7 @@ class ExameCsvProvider:
         return {
             'exame_id': row.get('exame_id', ''),
             'paciente_id': row.get('paciente_id', ''),
-            'paciente_prontuario': row.get('paciente_prontuario', ''),
+            'prontuario': row.get('paciente_prontuario', ''),
             'nome_exame': row.get('nome_exame', ''),
             'tipo_exame': row.get('tipo_exame', ''),
             'data_hora_solicitacao': row.get('data_hora_solicitacao', ''),

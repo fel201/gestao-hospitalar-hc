@@ -17,6 +17,7 @@ class CirurgiasCsvProvider:
 
         return {
             "cid": row.get("CID", ""),
+            "prontuario": row.get("Prontuário", ""),
             "id": cirurgia_id,
             "paciente_id": row.get("Codigo do Paciente", ""),
             "especialidade": row.get("Especialidade", ""),

@@ -10,10 +10,10 @@ def total_pacientes_eventos(consultas, internacoes, exames, cirurgias):
         )
     for exame in exames:
         pacientes_unicos.add(
-            exame["paciente_prontuario"]
+            exame["prontuario"]
         )
     for cirurgia in cirurgias:
-        pacientes_unicos.add(cirurgia["paciente_id"])
+        pacientes_unicos.add(cirurgia["prontuario"])
 
     return len(
         pacientes_unicos

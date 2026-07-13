@@ -151,7 +151,7 @@ def media_retornos_por_paciente(consultas: list[dict[str, Any]]) -> dict:
 
     for c in consultas:
         if CONDICAO_RETORNO in c.get("condicao", ""):
-            pid = c.get("paciente_id", "")
+            pid = c.get("prontuario", "")
             if pid:
                 retornos_por_paciente[pid] += 1
 
@@ -182,7 +182,7 @@ def intervalo_medio_regulada_primeiro_retorno(consultas: list[dict[str, Any]]) -
     # Agrupa por paciente
     por_paciente: dict[str, list[dict]] = defaultdict(list)
     for c in consultas:
-        pid = c.get("paciente_id", "")
+        pid = c.get("prontuario", "")
         if pid:
             por_paciente[pid].append(c)
 
@@ -247,7 +247,7 @@ def intervalo_medio_retornos_consecutivos(consultas: list[dict[str, Any]]) -> di
     """
     por_paciente: dict[str, list[dict]] = defaultdict(list)
     for c in consultas:
-        pid = c.get("paciente_id", "")
+        pid = c.get("prontuario", "")
         if pid and CONDICAO_RETORNO in c.get("condicao", ""):
             por_paciente[pid].append(c)
 
@@ -283,7 +283,7 @@ def encaminhamentos_por_consulta_regulada(consultas: list[dict[str, Any]]) -> di
     """
     por_paciente: dict[str, list[dict]] = defaultdict(list)
     for c in consultas:
-        pid = c.get("paciente_id", "")
+        pid = c.get("prontuario", "")
         if pid:
             por_paciente[pid].append(c)
 
@@ -347,11 +347,11 @@ def proporcao_pacientes_com_interconsulta(consultas: list[dict[str, Any]]) -> di
     Calcula a proporção de pacientes únicos que possuem ao menos uma
     consulta com Condição = 'INTERCONSULTA'.
     """
-    todos = {c.get("paciente_id") for c in consultas if c.get("paciente_id")}
+    todos = {c.get("prontuario") for c in consultas if c.get("prontuario")}
     com_intercon = {
-        c.get("paciente_id")
+        c.get("prontuario")
         for c in consultas
-        if CONDICAO_INTERCON in c.get("condicao", "") and c.get("paciente_id")
+        if CONDICAO_INTERCON in c.get("condicao", "") and c.get("prontuario")
     }
 
     total = len(todos)
