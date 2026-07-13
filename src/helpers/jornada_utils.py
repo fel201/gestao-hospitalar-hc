@@ -60,3 +60,8 @@ def calcular_diferenca_horas(data_inicio: str, data_fim: str) -> int:
     
     except ValueError:
         raise ValueError("Formato de data inválido. Esperado: 'DD/MM/YYYY, HH:MM' (ex: 13/1/2026, 08:56)")
+
+def dias_entre(inicio: str, fim: str) -> float | None:
+    """Diferença em dias entre duas strings de data/hora."""
+    h = calcular_diferenca_horas(inicio, fim)
+    return h / 24 if h is not None else None

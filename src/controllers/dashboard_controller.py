@@ -9,7 +9,7 @@ from ..helpers.filtrar_eventos import filtrar_eventos
 from ..helpers.total_pacientes_eventos import total_pacientes_eventos
 from ..metrics.metricas_consultas import metricas_consultas_como_indicadores
 from ..metrics.metricas_cirurgias import metricas_cirurgias
-
+from ..metrics.metricas_exames import tempo_medio_solicitacao_realizacao
 
 class DashboardController:
     def __init__(
@@ -107,15 +107,7 @@ class DashboardController:
         ]
 
         #tempo médio entre solicitação e realização de exames
-        tempos = []
-        for c in exames_filtrados:
-            tempos.append(calcular_diferenca_horas(c["data_hora_solicitacao"], c["data_hora_realizacao"]))
-        tempo_medio_solicitacao_realizacao = (
-            sum(tempos)/len(tempos)
-            if tempos else 0
-        )
-        tempo_medio_solicitacao_realizacao *= 60 
-        tempo_medio_solicitacao_realizacao = round(tempo_medio_solicitacao_realizacao, 2)
+        tempo_medio_soli_real = tempo_medio_solicitacao_realizacao(exames_filtrados) 
         #proporção de exames pendentes
         exames_pendentes_proporcao = round((len(exames_filtrados) - len(exames_concluidos))/len(exames_filtrados), 2)
         proporcao_exames_regulados = len(exames_regulados)/len(exames_filtrados)
@@ -164,7 +156,7 @@ class DashboardController:
                 ],
                 "indicadores": [
                     {"nome": "Proporção de exames regulados", "valor": proporcao_exames_regulados},
-                    {"nome": "Tempo médio solicitação -> realização", "valor": tempo_medio_solicitacao_realizacao},
+                    {"nome": "Tempo médio de solicitação até realização", "valor": tempo_medio_soli_real},
                     {"nome": "Proporção de exames pendentes", "valor": exames_pendentes_proporcao},
                 ],
             },

@@ -13,7 +13,9 @@ def total_pacientes_eventos(consultas, internacoes, exames, cirurgias):
             exame["prontuario"]
         )
     for cirurgia in cirurgias:
-        pacientes_unicos.add(cirurgia["prontuario"])
+        pacientes_unicos.add(
+            cirurgia["prontuario"]
+        )
 
     return len(
         pacientes_unicos

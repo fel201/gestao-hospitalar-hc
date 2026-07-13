@@ -1,13 +1,13 @@
 # Formato de data esperado: 'dd/m/yyyy, HH:MM'  (ex: '13/1/2025, 09:51')
 
 from __future__ import annotations
-
+from ..helpers.jornada_utils import calcular_diferenca_horas, dias_entre
 from datetime import datetime
 from collections import defaultdict
 from typing import Any
 
 RETORNO_ATENDIDO   = "PACIENTE ATENDIDO"
-RETORNO_FALTOU     = "PACIENTE FALTOU"
+RETORNO_PACIENTE_FALTOU     = "PACIENTE FALTOU"
 RETORNO_PROFISSIONAL_FALTOU = "PROFISSIONAL FALTOU"
 RETORNO_AGENDADO   = "PACIENTE AGENDADO"
 
@@ -36,20 +36,6 @@ def _parse_dt(s: str) -> datetime | None:
         return None
 
 
-def _horas_entre(inicio: str, fim: str) -> float | None:
-    """Diferença em horas entre duas strings de data/hora. Retorna None se inválido."""
-    dt_ini = _parse_dt(inicio)
-    dt_fim = _parse_dt(fim)
-    if dt_ini is None or dt_fim is None:
-        return None
-    delta = dt_fim - dt_ini
-    return delta.total_seconds() / 3600
-
-
-def _dias_entre(inicio: str, fim: str) -> float | None:
-    """Diferença em dias entre duas strings de data/hora."""
-    h = _horas_entre(inicio, fim)
-    return h / 24 if h is not None else None
 
 
 def proporcao_consultas_reguladas(consultas: list[dict[str, Any]]) -> dict:
@@ -63,12 +49,12 @@ def proporcao_consultas_reguladas(consultas: list[dict[str, Any]]) -> dict:
 
     reguladas = sum(
         1 for c in consultas
-        if CONDICAO_REGULADA in c.get("condicao", "")
+        if CONDICAO_REGULADA in c.get("condicao", "") 
     )
     return {
         "total": total,
         "reguladas": reguladas,
-        "proporcao": round(reguladas / total, 4),
+        "proporcao": round(reguladas/total, 2),
     }
 
 
@@ -80,7 +66,7 @@ def porcentagem_faltas_pacientes(consultas: list[dict[str, Any]]) -> dict:
             "total": 0, "porcentagem_faltas_pacientes": 0.0,
         }
 
-    faltas = sum(1 for c in consultas if RETORNO_FALTOU in c.get("retorno", ""))
+    faltas = sum(1 for c in consultas if RETORNO_PACIENTE_FALTOU in c.get("retorno", ""))
 
     return {
         "total": total,
@@ -113,7 +99,7 @@ def tempo_medio_agendamento_realizacao(consultas: list[dict[str, Any]]) -> dict:
         if RETORNO_ATENDIDO not in c.get("retorno", ""):
             continue
         if "CONSULTA REGULADA" in c.get("condicao", ""):
-            h = _horas_entre(c.get("data_hora_criacao", ""), c.get("data_hora_consulta", ""))
+            h = calcular_diferenca_horas(c.get("data_hora_criacao", ""), c.get("data_hora_consulta", ""))
             if h is not None and h >= 0:
                 deltas.append(h)
 
@@ -127,7 +113,21 @@ def tempo_medio_agendamento_realizacao(consultas: list[dict[str, Any]]) -> dict:
         "media_minutos": round(media_h * 60, 2),
     }
 
+def proporcao_consultas_sem_prontuario(consultas: list[dict[str, Any]]) -> dict:
+    total = len(consultas)
+    if total == 0: return {"total": 0, "proporcao_sem_prontuario": 0}
+    
+    consultas_sem_prontuario = []
+    for c in consultas:
+        if c["prontuario"] == "":
+            consultas_sem_prontuario.append(c)
 
+    proporcao = round(len(consultas_sem_prontuario)/total, 2)
+    return {
+        "total_sem_prontuario": len(consultas_sem_prontuario),
+        "proporcao_sem_prontuario": proporcao 
+    }
+    
 def proporcao_consultas_retorno(consultas: list[dict[str, Any]]) -> dict:
     """
     Proporção de consultas com Condição = 'RETORNO' sobre o total.
@@ -140,7 +140,7 @@ def proporcao_consultas_retorno(consultas: list[dict[str, Any]]) -> dict:
     return {
         "total": total,
         "retornos": retornos,
-        "proporcao": round(retornos / total, 4),
+        "proporcao": round(retornos / total, 2),
     }
 
 def media_retornos_por_paciente(consultas: list[dict[str, Any]]) -> dict:
@@ -182,12 +182,13 @@ def intervalo_medio_regulada_primeiro_retorno(consultas: list[dict[str, Any]]) -
     # Agrupa por paciente
     por_paciente: dict[str, list[dict]] = defaultdict(list)
     for c in consultas:
-        pid = c.get("prontuario", "")
-        if pid:
-            por_paciente[pid].append(c)
+        prontuario = c.get("prontuario", "")
+        if prontuario:
+            por_paciente[prontuario].append(c)
 
     intervalos = []
-    for pid, eventos in por_paciente.items():
+    count = 0
+    for prontuario, eventos in por_paciente.items():
         reguladas = sorted(
             [e for e in eventos if CONDICAO_REGULADA in e.get("condicao", "")],
             key=lambda e: _parse_dt(e.get("data_hora_consulta", "")) or datetime.max,
@@ -198,6 +199,8 @@ def intervalo_medio_regulada_primeiro_retorno(consultas: list[dict[str, Any]]) -
         )
 
         if not reguladas or not retornos:
+            count = count+1
+            print(count)
             continue
 
         dt_reg = _parse_dt(reguladas[0].get("data_hora_consulta", ""))
@@ -215,7 +218,7 @@ def intervalo_medio_regulada_primeiro_retorno(consultas: list[dict[str, Any]]) -
         if primeiro_retorno is None:
             continue
 
-        dias = _dias_entre(
+        dias = dias_entre(
             reguladas[0].get("data_hora_consulta", ""),
             primeiro_retorno.get("data_hora_consulta", ""),
         )
@@ -258,7 +261,7 @@ def intervalo_medio_retornos_consecutivos(consultas: list[dict[str, Any]]) -> di
             key=lambda e: _parse_dt(e.get("data_hora_consulta", "")) or datetime.max,
         )
         for i in range(1, len(retornos_ord)):
-            dias = _dias_entre(
+            dias = dias_entre(
                 retornos_ord[i - 1].get("data_hora_consulta", ""),
                 retornos_ord[i].get("data_hora_consulta", ""),
             )
@@ -320,13 +323,6 @@ def encaminhamentos_por_consulta_regulada(consultas: list[dict[str, Any]]) -> di
 def proporcao_interconsultas(consultas: list[dict[str, Any]]) -> dict:
     """
     Proporção de consultas com Condição = 'INTERCONSULTA' sobre o total.
-
-    Retorna:
-        {
-            "total": int,
-            "interconsultas": int,
-            "proporcao": float
-        }
     """
     total = len(consultas)
     if total == 0:
@@ -338,7 +334,7 @@ def proporcao_interconsultas(consultas: list[dict[str, Any]]) -> dict:
     return {
         "total": total,
         "interconsultas": interconsultas,
-        "proporcao": round(interconsultas / total, 4),
+        "proporcao": round(interconsultas / total, 2),
     }
 
 
@@ -361,7 +357,7 @@ def proporcao_pacientes_com_interconsulta(consultas: list[dict[str, Any]]) -> di
     return {
         "total_pacientes": total,
         "pacientes_com_interconsulta": len(com_intercon),
-        "proporcao": round(len(com_intercon) / total, 4),
+        "proporcao": round(len(com_intercon) / total, 2),
     }
 
 
@@ -372,14 +368,16 @@ def calcular_todas_metricas_consultas(consultas: list[dict[str, Any]]) -> dict:
     executa todas as métricas acima e retorna um dicionário consolidado.
     """
     return {
-        "proporcao_consultas_reguladas":            proporcao_consultas_reguladas(consultas),
-        "porcentagem_faltas_profissionais":         porcentagem_faltas_profissional(consultas),          
-        "porcentagem_faltas_pacientes":             porcentagem_faltas_pacientes(consultas),
-        "tempo_medio_agendamento_realizacao":       tempo_medio_agendamento_realizacao(consultas),
-        "proporcao_consultas_retorno":              proporcao_consultas_retorno(consultas),
-        "media_retornos_por_paciente":              media_retornos_por_paciente(consultas),
-        "proporcao_interconsultas":                 proporcao_interconsultas(consultas),
-        "proporcao_pacientes_com_interconsulta":    proporcao_pacientes_com_interconsulta(consultas),
+        "proporcao_consultas_reguladas":                proporcao_consultas_reguladas(consultas),
+        "intervalo_medio_regulada_primeiro_retorno":    intervalo_medio_regulada_primeiro_retorno(consultas),
+        "proporcao_consultas_sem_prontuario":           proporcao_consultas_sem_prontuario(consultas),
+        "porcentagem_faltas_profissionais":             porcentagem_faltas_profissional(consultas),          
+        "porcentagem_faltas_pacientes":                 porcentagem_faltas_pacientes(consultas),
+        "tempo_medio_agendamento_realizacao":           tempo_medio_agendamento_realizacao(consultas),
+        "proporcao_consultas_retorno":                  proporcao_consultas_retorno(consultas),
+        "media_retornos_por_paciente":                  media_retornos_por_paciente(consultas),
+        "proporcao_interconsultas":                     proporcao_interconsultas(consultas),
+        "proporcao_pacientes_com_interconsulta":        proporcao_pacientes_com_interconsulta(consultas),
     }
     
     
@@ -390,6 +388,8 @@ def calcular_todas_metricas_consultas(consultas: list[dict[str, Any]]) -> dict:
 # Permite escolher exatamente qual campo de cada métrica expor ao frontend.
 _METRICAS_INDICADORES: list[tuple[str, str, str]] = [
     ("proporcao_consultas_reguladas",         "Proporção de consultas reguladas",       "proporcao"),
+    ("intervalo_medio_regulada_primeiro_retorno", "Intervalo médio da consulta regulada ao primeiro retorno", "media_dias"),
+    ("proporcao_consultas_sem_prontuario",      "Proporção de consultas sem prontuário registrado", "proporcao_sem_prontuario"),
     ("porcentagem_faltas_profissionais",      "Porcentagem de faltas por parte do profissional",    "porcentagem_faltas_profissionais"),
     ("porcentagem_faltas_pacientes",          "Porcentagem de faltas por parte do paciente",   "porcentagem_faltas_pacientes"),
     ("tempo_medio_agendamento_realizacao",    "Tempo médio de agendamento até realização (horas)",        "media_horas"),
@@ -398,15 +398,8 @@ _METRICAS_INDICADORES: list[tuple[str, str, str]] = [
     ("proporcao_interconsultas",              "Proporção de interconsultas",             "proporcao"),
     ("proporcao_pacientes_com_interconsulta", "Pacientes com interconsulta",         "proporcao"),
 ]
+
 # só pra não repetir isso dentro da função dnv
-_METRICAS_PERCENTUAIS = {
-    "Proporção de consultas reguladas",
-    "Taxa de faltas",
-    "Taxa de não realização",
-    "Proporção de consultas de retorno",
-    "Proporção de interconsultas",
-    "Pacientes com interconsulta",
-}
 
 def metricas_consultas_como_indicadores(consultas: list[dict[str, Any]]) -> list[dict]:
     metricas = calcular_todas_metricas_consultas(consultas)
@@ -418,13 +411,11 @@ def metricas_consultas_como_indicadores(consultas: list[dict[str, Any]]) -> list
             continue
 
         valor = metricas[metrica_key][valor_key]
-
-        if nome in _METRICAS_PERCENTUAIS:
-            valor = f"{valor * 100:.2f}%"
-
+        if "Porcentagem" in nome: valor_real = f"{valor}%"
+        else: valor_real = valor
         indicadores.append({
             "nome": nome,
-            "valor": valor,
+            "valor": valor_real,
         })
 
     return indicadores
