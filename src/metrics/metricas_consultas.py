@@ -171,9 +171,6 @@ def media_retornos_por_paciente(consultas: list[dict[str, Any]]) -> dict:
         "media_retornos_por_paciente": round(total_retornos / total_pacientes, 2),
     }
 
-
-# métrica geral
-# não foi utilizada
 def intervalo_medio_regulada_primeiro_retorno(consultas: list[dict[str, Any]]) -> dict:
     """
     Para cada paciente, encontra a consulta regulada mais antiga e o primeiro
@@ -191,25 +188,25 @@ def intervalo_medio_regulada_primeiro_retorno(consultas: list[dict[str, Any]]) -
     for prontuario, eventos in por_paciente.items():
         reguladas = sorted(
             [e for e in eventos if CONDICAO_REGULADA in e.get("condicao", "")],
-            key=lambda e: _parse_dt(e.get("data_hora_consulta", "")) or datetime.max,
+            key=lambda e: _parse_dt(e.get("data_hora_realizacao", "")) or datetime.max,
         )
         retornos = sorted(
             [e for e in eventos if CONDICAO_RETORNO in e.get("condicao", "")],
-            key=lambda e: _parse_dt(e.get("data_hora_consulta", "")) or datetime.max,
+            key=lambda e: _parse_dt(e.get("data_hora_realizacao", "")) or datetime.max,
         )
 
         if not reguladas or not retornos:
             continue
 
-        dt_reg = _parse_dt(reguladas[0].get("data_hora_consulta", ""))
+        dt_reg = _parse_dt(reguladas[0].get("data_hora_realizacao", ""))
         if dt_reg is None:
             continue
-
+        
         # Primeiro retorno APÓS a consulta regulada
         primeiro_retorno = next(
             (
                 r for r in retornos
-                if (_parse_dt(r.get("data_hora_consulta", "")) or datetime.min) > dt_reg
+                if (_parse_dt(r.get("data_hora_realizacao", "")) or datetime.min) > dt_reg
             ),
             None,
         )
@@ -217,8 +214,8 @@ def intervalo_medio_regulada_primeiro_retorno(consultas: list[dict[str, Any]]) -
             continue
 
         dias = dias_entre(
-            reguladas[0].get("data_hora_consulta", ""),
-            primeiro_retorno.get("data_hora_consulta", ""),
+            reguladas[0].get("data_hora_realizacao", ""),
+            primeiro_retorno.get("data_hora_realizacao", ""),
         )
         if dias is not None and dias >= 0:
             intervalos.append(dias)
@@ -232,19 +229,10 @@ def intervalo_medio_regulada_primeiro_retorno(consultas: list[dict[str, Any]]) -
     }
 
 
-# Intervalo médio entre retornos consecutivos (por paciente)
-# ainda não foi utilizado, pois é uma métrica geral
-
 def intervalo_medio_retornos_consecutivos(consultas: list[dict[str, Any]]) -> dict:
     """
     Para cada paciente com mais de um retorno, calcula os intervalos entre
     retornos consecutivos. Retorna a média global em dias.
-
-    Retorna:
-        {
-            "n_intervalos": int,
-            "media_dias": float
-        }
     """
     por_paciente: dict[str, list[dict]] = defaultdict(list)
     for c in consultas:
@@ -256,12 +244,12 @@ def intervalo_medio_retornos_consecutivos(consultas: list[dict[str, Any]]) -> di
     for pid, retornos in por_paciente.items():
         retornos_ord = sorted(
             retornos,
-            key=lambda e: _parse_dt(e.get("data_hora_consulta", "")) or datetime.max,
+            key=lambda e: _parse_dt(e.get("data_hora_realizacao", "")) or datetime.max,
         )
         for i in range(1, len(retornos_ord)):
             dias = dias_entre(
-                retornos_ord[i - 1].get("data_hora_consulta", ""),
-                retornos_ord[i].get("data_hora_consulta", ""),
+                retornos_ord[i - 1].get("data_hora_realizacao", ""),
+                retornos_ord[i].get("data_hora_realizacao", ""),
             )
             if dias is not None and dias >= 0:
                 intervalos.append(dias)
@@ -269,9 +257,10 @@ def intervalo_medio_retornos_consecutivos(consultas: list[dict[str, Any]]) -> di
     if not intervalos:
         return {"n_intervalos": 0, "media_dias": 0.0}
 
+    media_dias = round(sum(intervalos) / len(intervalos), 2)
     return {
         "n_intervalos": len(intervalos),
-        "media_dias": round(sum(intervalos) / len(intervalos), 2),
+        "media_dias": f"{media_dias} dias"
     }
 
 
@@ -284,17 +273,17 @@ def encaminhamentos_por_consulta_regulada(consultas: list[dict[str, Any]]) -> di
     """
     por_paciente: dict[str, list[dict]] = defaultdict(list)
     for c in consultas:
-        pid = c.get("prontuario", "")
-        if pid:
-            por_paciente[pid].append(c)
+        prontuario = c.get("prontuario", "")
+        if prontuario:
+            por_paciente[prontuario].append(c)
 
     encaminhamentos: dict[str, int] = defaultdict(int)
     total_reguladas = 0
 
-    for pid, eventos in por_paciente.items():
+    for prontuario, eventos in por_paciente.items():
         eventos_ord = sorted(
             eventos,
-            key=lambda e: _parse_dt(e.get("data_hora_consulta", "")) or datetime.max,
+            key=lambda e: _parse_dt(e.get("data_hora_realizacao", "")) or datetime.max,
         )
         for i, ev in enumerate(eventos_ord):
             if CONDICAO_REGULADA not in ev.get("condicao", ""):
@@ -306,7 +295,7 @@ def encaminhamentos_por_consulta_regulada(consultas: list[dict[str, Any]]) -> di
                 encaminhamentos[proximo] += 1
             else:
                 encaminhamentos["SEM SEGUIMENTO"] += 1
-
+                
     return {
         "total_reguladas": total_reguladas,
         "encaminhamentos": dict(
@@ -368,8 +357,10 @@ def calcular_todas_metricas_consultas(consultas: list[dict[str, Any]]) -> dict:
     return {
         "proporcao_consultas_reguladas":                proporcao_consultas_reguladas(consultas),
         "intervalo_medio_regulada_primeiro_retorno":    intervalo_medio_regulada_primeiro_retorno(consultas),
+        "intervalo_medio_retornos_consecutivos":        intervalo_medio_retornos_consecutivos(consultas),
         "proporcao_consultas_sem_prontuario":           proporcao_consultas_sem_prontuario(consultas),
         "porcentagem_faltas_profissionais":             porcentagem_faltas_profissional(consultas),          
+        "encaminhamentos_por_consulta_regulada":        encaminhamentos_por_consulta_regulada(consultas),
         "porcentagem_faltas_pacientes":                 porcentagem_faltas_pacientes(consultas),
         "tempo_medio_agendamento_realizacao":           tempo_medio_agendamento_realizacao(consultas),
         "proporcao_consultas_retorno":                  proporcao_consultas_retorno(consultas),
@@ -386,14 +377,16 @@ def calcular_todas_metricas_consultas(consultas: list[dict[str, Any]]) -> dict:
 # Permite escolher exatamente qual campo de cada métrica expor ao frontend.
 _METRICAS_INDICADORES: list[tuple[str, str, str]] = [
     ("proporcao_consultas_reguladas",         "Proporção de consultas reguladas",       "proporcao"),
-    ("intervalo_medio_regulada_primeiro_retorno", "Intervalo médio da consulta regulada ao primeiro retorno", "media_dias"),
+    ("proporcao_interconsultas",              "Proporção de interconsultas",             "proporcao"),
+    ("proporcao_consultas_retorno",           "Proporção de consultas de retorno",       "proporcao"),
     ("proporcao_consultas_sem_prontuario",      "Proporção de consultas sem prontuário registrado", "proporcao_sem_prontuario"),
+    ("encaminhamentos_por_consulta_regulada", "Encaminhamento frequente por consulta regulada", "encaminhamentos"),
+    ("intervalo_medio_regulada_primeiro_retorno", "Intervalo médio da consulta regulada ao primeiro retorno", "media_dias"),
+    ("intervalo_medio_retornos_consecutivos", "Intervalo médio de retornos consecutivos", "media_dias"),
     ("porcentagem_faltas_profissionais",      "Porcentagem de faltas por parte do profissional",    "porcentagem_faltas_profissionais"),
     ("porcentagem_faltas_pacientes",          "Porcentagem de faltas por parte do paciente",   "porcentagem_faltas_pacientes"),
     ("tempo_medio_agendamento_realizacao",    "Tempo médio de agendamento até realização (horas)",        "media_horas"),
-    ("proporcao_consultas_retorno",           "Proporção de consultas de retorno",       "proporcao"),
     ("media_retornos_por_paciente",           "Média de retornos por paciente",          "media_retornos_por_paciente"),
-    ("proporcao_interconsultas",              "Proporção de interconsultas",             "proporcao"),
     ("proporcao_pacientes_com_interconsulta", "Pacientes com interconsulta",         "proporcao"),
 ]
 

@@ -79,7 +79,6 @@ def taxa_prontuarios_inertes(
         if evento["prontuario"]:
             prontuarios_com_evento.add(evento["prontuario"])    
             count+=1
-            print(count)
     inertes = 0
 
     for paciente in pacientes:
@@ -88,9 +87,6 @@ def taxa_prontuarios_inertes(
 
         
     taxa_prontuarios_inertes = round((inertes/len(pacientes))*100, 2)
-    print(len(pacientes))
-    print(inertes)
-    print(len(prontuarios_com_evento))
     return {
         "nome": "Taxa de prontuários inertes",
         "valor": f"{taxa_prontuarios_inertes}%",
