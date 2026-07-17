@@ -1,12 +1,13 @@
 import asyncio
-
 from ..providers.implementations.consultas_csv_provider import ConsultasCsvProvider
 from ..providers.implementations.exame_csv_provider import ExameCsvProvider
 from ..providers.implementations.internacoes_csv_provider import InternacoesCsvProvider
 from ..providers.implementations.cirurgias_csv_provider import CirurgiasCsvProvider
+from ..providers.implementations.paciente_csv_provider import PacienteCsvProvider
 from ..helpers.jornada_utils import calcular_diferenca_horas
 from ..helpers.filtrar_eventos import filtrar_eventos
 from ..helpers.total_pacientes_eventos import total_pacientes_eventos
+from ..metrics.metricas_entradas import tempo_medio_cadastro_evento, taxa_prontuarios_inertes
 from ..metrics.metricas_consultas import metricas_consultas_como_indicadores
 from ..metrics.metricas_cirurgias import metricas_cirurgias
 from ..metrics.metricas_exames import tempo_medio_solicitacao_realizacao
@@ -18,11 +19,13 @@ class DashboardController:
         exame_provider: ExameCsvProvider,
         internacao_provider: InternacoesCsvProvider,
         cirurgia_provider: CirurgiasCsvProvider,
+        paciente_provider: PacienteCsvProvider
     ):
         self.consulta_provider = consulta_provider
         self.exame_provider = exame_provider
         self.internacao_provider = internacao_provider
         self.cirurgia_provider = cirurgia_provider
+        self.paciente_provider = paciente_provider
 
     async def get_dashboard(
         self,
@@ -30,13 +33,13 @@ class DashboardController:
         data_inicio,
         data_fim,
     ):
-        consultas, exames, internacoes, cirurgias = await asyncio.gather(
+        consultas, exames, internacoes, cirurgias, pacientes = await asyncio.gather(
             self.consulta_provider.listar_consultas(),
             self.exame_provider.listar_exames(),
             self.internacao_provider.listar_internacoes(),
             self.cirurgia_provider.listar_cirurgias(),
+            self.paciente_provider.listar_pacientes()
         )
-        
         #  filtros por especialidade 
         consultas_filtradas   = filtrar_eventos(evento='consulta',   dados=consultas,   especialidade=especialidade)
         exames_filtrados      = filtrar_eventos(evento='exame',      dados=exames,      especialidade=especialidade)
@@ -82,7 +85,9 @@ class DashboardController:
             exames=exames_filtrados,
             internacoes=internacoes_filtradas,
             cirurgias=cirurgias_filtradas
+        
         )
+        
         
         total_cirurgias = len(cirurgias_filtradas)
         total_consultas  = len(consultas_filtradas)
@@ -96,6 +101,22 @@ class DashboardController:
         )
         
         consultas_por_paciente = round(total_consultas / max(total_pacientes, 1), 2)
+        # métricas de entrada
+        
+        tempo_medio_cad_evento = tempo_medio_cadastro_evento(
+            consultas=consultas,
+            exames=exames,
+            internacoes=internacoes,
+            pacientes=pacientes,
+            cirurgias=cirurgias
+        )
+        taxa_prontuarios_ausentes = taxa_prontuarios_inertes(
+            consultas=consultas,
+            exames=exames,
+            internacoes=internacoes,
+            pacientes=pacientes,
+            cirurgias=cirurgias
+        )
         # métricas de consultas calculadas
         indicadores_consultas = metricas_consultas_como_indicadores(consultas_filtradas)
         indicadores_cirurgias = metricas_cirurgias(cirurgias_filtradas, total_pacientes)
@@ -131,6 +152,8 @@ class DashboardController:
                 ],
                 "indicadores": [
                     {"nome": "Pacientes novos", "valor": len(consultas_primeira_vez)},
+                    tempo_medio_cad_evento,
+                    taxa_prontuarios_ausentes
                 ],
             },
 

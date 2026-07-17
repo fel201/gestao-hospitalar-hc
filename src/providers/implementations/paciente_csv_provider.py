@@ -1,6 +1,5 @@
 from typing import List, Dict, Any
 from fastapi import HTTPException, status
-
 from ..csv_file_provider import CsvFileProvider
 
 
@@ -18,6 +17,7 @@ class PacienteCsvProvider:
 
         return {
             'codigo': codigo,
+            'data_cadastro': row.get('data_cadastro', ''),
             'prontuario': row.get('prontuario', ''),
             'nome': row.get('nome_iniciais', ''),
             'nome_social': row.get('nome_social_iniciais', ''),

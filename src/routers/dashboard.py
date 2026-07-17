@@ -18,7 +18,8 @@ def get_dashboard_controller() -> DashboardController:
         consulta_provider=ConsultasCsvProvider(),
         exame_provider=ExameCsvProvider(),
         internacao_provider=InternacoesCsvProvider(),
-        cirurgia_provider=CirurgiasCsvProvider()
+        cirurgia_provider=CirurgiasCsvProvider(),
+        paciente_provider=PacienteCsvProvider()
     )
 
 @router.get("", response_model=dict)

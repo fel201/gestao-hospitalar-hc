@@ -22,7 +22,7 @@ class CirurgiasCsvProvider:
             "paciente_id": row.get("Codigo do Paciente", ""),
             "especialidade": row.get("Especialidade", ""),
             "duracao_cirurgia": row.get("duracao_cirurgia", ""),
-            "data_inicio_cirurgia": row.get("data_inicio_cirurgia", ""),
+            "data_hora_realizacao": row.get("data_inicio_cirurgia", ""),
             "data_fim_cirurgia": row.get("data_fim_cirurgia", ""),
             "cancelada": row.get("cancelada", ""),
             "situacao": row.get("situacao", ""),

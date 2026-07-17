@@ -20,7 +20,7 @@ class InternacoesCsvProvider:
             'atendimento': row.get('atendimento', ''),
             'prontuario': row.get('prontuario', ''),
             'codigo_paciente': row.get('codigo_paciente', ''),
-            'dthr_inicio': row.get('dthr_inicio', ''),
+            'data_hora_realizacao': row.get('dthr_inicio', ''),
             'dthr_fim': row.get('dthr_fim', ''),
             'tempo_permanencia_dias': row.get('tempo_permanencia_dias', ''),
             'situacao_sumario_alta': row.get('Indica situação do sumário de alta', ''),

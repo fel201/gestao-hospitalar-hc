@@ -99,7 +99,7 @@ def tempo_medio_agendamento_realizacao(consultas: list[dict[str, Any]]) -> dict:
         if RETORNO_ATENDIDO not in c.get("retorno", ""):
             continue
         if "CONSULTA REGULADA" in c.get("condicao", ""):
-            h = calcular_diferenca_horas(c.get("data_hora_criacao", ""), c.get("data_hora_consulta", ""))
+            h = calcular_diferenca_horas(c.get("data_hora_criacao", ""), c.get("data_hora_realizacao", ""))
             if h is not None and h >= 0:
                 deltas.append(h)
 
@@ -199,8 +199,6 @@ def intervalo_medio_regulada_primeiro_retorno(consultas: list[dict[str, Any]]) -
         )
 
         if not reguladas or not retornos:
-            count = count+1
-            print(count)
             continue
 
         dt_reg = _parse_dt(reguladas[0].get("data_hora_consulta", ""))
