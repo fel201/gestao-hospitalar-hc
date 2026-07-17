@@ -104,10 +104,8 @@ const config = computed(() => {
   return mapa[props.tipo] || mapa.consultas;
 });
 
-// 2. A inteligência que define se uma métrica está Crítica (Vermelho), Alerta (Amarelo) ou Boa (Verde)
+
 const avaliarIndicador = (indicador: any) => {
-  // O ideal é que a sua API (no Python/FastAPI) mande um campo "status" junto com o indicador.
-  // Ex: { nome: 'Tempo de espera', valor: '38 min', variacao: '+5 min', status: 'ruim' }
   
   if (indicador.status === 'ruim') {
     return { cor: 'text-red-500', icone: 'M5 10l7-7m0 0l7 7m-7-7v18' }; // Seta p/ cima
