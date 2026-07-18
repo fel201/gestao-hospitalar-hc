@@ -146,12 +146,11 @@ class DashboardController:
 
             "entrada": {
                 "titulo":       "Entrada",
-                "total_eventos": len(consultas_primeira_vez),
+                "total_eventos": total_pacientes,
                 "eventos": [
                     {"nome": "Pacientes cadastrados", "valor": total_pacientes},
                 ],
                 "indicadores": [
-                    {"nome": "Pacientes novos", "valor": len(consultas_primeira_vez)},
                     tempo_medio_cad_evento,
                     taxa_prontuarios_ausentes
                 ],
@@ -162,6 +161,7 @@ class DashboardController:
                 "total_eventos": total_consultas,
                 "eventos": [
                     {"nome": "Consultas", "valor": total_consultas},
+                    {"nome": "Primeiras consultas", "valor": len(consultas_primeira_vez)}
                 ],
                 "indicadores": [
                     {"nome": "Consultas por paciente",  "valor": consultas_por_paciente},

@@ -5,68 +5,109 @@
         <p class="text-[11px] uppercase tracking-[0.35em] text-slate-500">Fluxo assistencial</p>
         <h2 class="text-xl font-semibold text-white">Análise por módulo e subprocesso</h2>
         <p class="mt-2 max-w-2xl text-sm text-slate-400">
-          Selecione um módulo e um subprocesso para visualizar indicadores que respondem às questões de gestão operacional.
+          Selecione um módulo e um subprocesso para visualizar os gráficos correspondentes.
         </p>
       </div>
     </div>
 
     <div class="mt-6 flex flex-wrap gap-2">
       <button
-        v-for="module in modules"
-        :key="module.id"
+        v-for="modulo in MODULOS"
+        :key="modulo.id"
         class="rounded-full border px-3 py-2 text-sm font-medium transition"
-        :class="activeModule === module.id
+        :class="activeModulo === modulo.id
           ? 'border-blue-500 bg-blue-500/20 text-blue-200'
           : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-slate-500 hover:text-white'"
-        @click="selectModule(module.id)"
+        @click="selecionarModulo(modulo.id)"
       >
-        {{ module.label }}
+        {{ modulo.label }}
       </button>
     </div>
 
-    <div class="mt-6 grid gap-3 lg:grid-cols-3">
+    <div v-if="moduloSelecionado" class="mt-6 grid gap-3 lg:grid-cols-3">
       <button
-        v-for="submodule in selectedModule.submodules"
-        :key="submodule.id"
+        v-for="sub in moduloSelecionado.submodulos"
+        :key="sub.id"
         class="rounded-xl border p-4 text-left transition"
-        :class="activeSubmodule === submodule.id
+        :class="activeSubmodulo === sub.id
           ? 'border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-900/20'
           : 'border-slate-700 bg-slate-900/70 hover:border-slate-500'"
-        @click="activeSubmodule = submodule.id"
+        @click="activeSubmodulo = sub.id"
       >
-        <p class="text-sm font-semibold text-white">{{ submodule.title }}</p>
-        <p class="mt-2 text-sm text-slate-400">{{ submodule.description }}</p>
+        <p class="text-sm font-semibold text-white">{{ sub.titulo }}</p>
+        <p class="mt-2 text-sm text-slate-400">{{ sub.descricao }}</p>
       </button>
     </div>
 
-    <div v-if="selectedSubmodule" class="mt-8 rounded-2xl border border-slate-700/70 bg-slate-900/60 p-5">
+    <div v-if="submoduloSelecionado" class="mt-8 rounded-2xl border border-slate-700/70 bg-slate-900/60 p-5">
       <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <p class="text-[11px] uppercase tracking-[0.3em] text-slate-500">Subprocesso ativo</p>
-          <h3 class="text-lg font-semibold text-white">{{ selectedSubmodule.title }}</h3>
-          <p class="mt-1 text-sm text-slate-400">{{ selectedSubmodule.description }}</p>
+          <h3 class="text-lg font-semibold text-white">{{ submoduloSelecionado.titulo }}</h3>
+          <p class="mt-1 text-sm text-slate-400">{{ submoduloSelecionado.descricao }}</p>
         </div>
       </div>
 
       <div class="mt-6 grid gap-6 xl:grid-cols-2">
         <div
-          v-for="chart in selectedSubmodule.charts"
-          :key="chart.id"
+          v-for="item in graficosResolvidos"
+          :key="item.spec.id"
           class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4"
+          :class="{ 'xl:col-span-2': item.spec.tipo === 'distribuicao' }"
         >
           <div class="flex items-start justify-between gap-2">
-            <div>
-              <h4 class="text-sm font-semibold text-white">{{ chart.title }}</h4>
-              <p class="mt-1 text-xs text-slate-400">{{ chart.description }}</p>
-            </div>
+            <h4 class="text-sm font-semibold text-white">{{ item.spec.titulo }}</h4>
             <span class="rounded-full bg-slate-700 px-2 py-1 text-[11px] uppercase tracking-[0.25em] text-slate-300">
-              {{ chart.typeLabel }}
+              {{ rotuloTipo(item.spec.tipo) }}
             </span>
           </div>
 
-          <div class="mt-4 h-56">
-            <component :is="chartComponent(chart.type)" :data="buildChartData(chart)" :options="buildChartOptions(chart)" />
+          <!-- Gráfico ainda não implementado no backend, ou faltam indicadores -->
+          <div v-if="item.indisponivel" class="mt-4 flex h-40 items-center justify-center rounded-lg border border-dashed border-slate-700 bg-slate-900/40 p-4 text-center">
+            <p class="text-xs text-slate-500">
+              Ainda não disponível no backend{{ item.faltando.length ? ': ' + item.faltando.join(', ') : '' }}.
+            </p>
           </div>
+
+          <!-- Comparação de proporções (2-4 categorias em %) -->
+          <div v-else-if="item.spec.tipo === 'comparacao-proporcao'" class="mt-4 h-56">
+            <Bar :data="buildComparacaoProporcaoData(item)" :options="chartOptionsComparacaoProporcao" />
+          </div>
+
+          <!-- Comparação de valores em dias/horas (mesma unidade) -->
+          <div v-else-if="item.spec.tipo === 'comparacao-dias'" class="mt-4 h-56">
+            <Bar :data="buildComparacaoValorData(item)" :options="chartOptionsComparacaoValor(item.spec.unidade)" />
+          </div>
+
+          <!-- Comparação mista: unidades diferentes -> dois cards de estatística lado a lado -->
+          <div v-else-if="item.spec.tipo === 'comparacao-mista'" class="mt-4 grid h-40 grid-cols-2 gap-3">
+            <div
+              v-for="ind in item.indicadores"
+              :key="ind.nome"
+              class="flex flex-col items-center justify-center rounded-lg bg-slate-900/50 p-3 text-center"
+            >
+              <span class="text-2xl font-bold text-white">{{ formatarValor(ind.valor) }}</span>
+              <span class="mt-1 text-xs text-slate-400">{{ ind.nome }}</span>
+            </div>
+          </div>
+
+          <!-- Distribuição (dict {categoria: contagem}) -> gráfico de barras horizontal -->
+          <div
+            v-else-if="item.spec.tipo === 'distribuicao'"
+            class="mt-4"
+            :style="{ height: alturaBarraDistribuicao(item.indicadores[0]) + 'px' }"
+          >
+            <Bar :data="buildDistribuicaoData(item.indicadores[0])" :options="buildDistribuicaoOptions(item.indicadores[0])" />
+          </div>
+
+          <!-- Valor simples (número, string, dias, horas etc) -->
+          <div v-else class="mt-4 flex h-40 items-center justify-center">
+            <p class="text-3xl font-bold text-white">{{ formatarValor(item.indicadores[0]?.valor) }}</p>
+          </div>
+        </div>
+
+        <div v-if="graficosResolvidos.length === 0" class="col-span-full text-sm text-slate-400">
+          Nenhum gráfico configurado para este subprocesso ainda.
         </div>
       </div>
     </div>
@@ -75,552 +116,556 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Bar, Doughnut, Line } from 'vue-chartjs';
+import { Bar } from 'vue-chartjs';
 import {
   Chart as ChartJS,
   BarElement,
   CategoryScale,
   LinearScale,
-  ArcElement,
-  PointElement,
-  LineElement,
   Tooltip,
-  Legend,
-  Title
+  Legend
 } from 'chart.js';
+import type { DashboardInterface } from '../../interfaces/dashboard';
 
-ChartJS.register(BarElement, CategoryScale, LinearScale, ArcElement, PointElement, LineElement, Tooltip, Legend, Title);
+ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-type ChartSpec = {
-  id: string;
-  title: string;
-  description: string;
-  type: string;
-  typeLabel: string;
-  labels: string[];
-  values: number[];
-  backgroundColor?: string[];
-  borderColor?: string[];
-  unit?: string;
+// -------------------------------------------------------------------------
+// Tipos
+// -------------------------------------------------------------------------
+
+// Formato real de distribuição vindo do backend: dict ordenado por contagem
+// desc, ex.: encaminhamentos_por_consulta_regulada -> {"RETORNO": 12, "SEM SEGUIMENTO": 5, ...}
+type IndicadorDistribuicao = Record<string, number>;
+
+type Indicador = {
+  nome: string;
+  valor: number | string | IndicadorDistribuicao;
 };
 
-type SubmoduleSpec = {
+type TipoGrafico =
+  | 'comparacao-proporcao'  // N indicadores em % lado a lado (0-100), pode incluir "Outros" residual
+  | 'comparacao-dias'       // N indicadores numéricos na mesma unidade (dias/horas)
+  | 'comparacao-mista'      // 2 indicadores com unidades diferentes -> cards lado a lado
+  | 'distribuicao'          // 1 indicador cujo valor é um dict {categoria: contagem}
+  | 'valor-simples';        // 1 indicador numérico/textual isolado
+
+type GraficoSpec = {
   id: string;
-  title: string;
-  description: string;
-  metric: string;
-  insights: string[];
-  charts: ChartSpec[];
+  titulo: string;
+  tipo: TipoGrafico;
+  // nomes exatos ("nome") dos indicadores do backend que compõem este gráfico
+  indicadorNomes: string[];
+  // para 'comparacao-proporcao': adiciona categoria "Outros" = 100 - soma dos indicadores listados
+  incluirOutros?: boolean;
+  // para 'comparacao-dias': unidade exibida no eixo/tooltip (ex.: "dias", "horas")
+  unidade?: string;
 };
 
-type ModuleSpec = {
+type SubmoduloSpec = {
+  id: string;
+  titulo: string;
+  descricao: string;
+  graficos: GraficoSpec[];
+};
+
+type ModuloSpec = {
   id: string;
   label: string;
-  submodules: SubmoduleSpec[];
+  dataKey: keyof Pick<DashboardInterface, 'entrada' | 'consultas' | 'exames' | 'internacao' | 'cirurgias'>;
+  submodulos: SubmoduloSpec[];
 };
 
-const modules: ModuleSpec[] = [
+// -------------------------------------------------------------------------
+// Props
+// -------------------------------------------------------------------------
+
+const props = defineProps<{
+  dashboard: DashboardInterface;
+}>();
+
+// -------------------------------------------------------------------------
+// Estrutura de módulos/subprocessos/gráficos, seguindo o documento de
+// especificação e o mapeamento confirmado indicador-a-indicador.
+// -------------------------------------------------------------------------
+
+const MODULOS: ModuloSpec[] = [
   {
     id: 'entrada',
     label: 'Entrada',
-    submodules: [
+    dataKey: 'entrada',
+    submodulos: [
       {
-        id: 'entrada-criar-prontuario',
-        title: 'Criação de prontuário',
-        description: 'Indicadores de abertura e cuidado inicial.',
-        metric: 'Tempo médio até o primeiro evento: 32 min',
-        insights: [
-          'Em média, quanto tempo os pacientes aguardam entre o cadastro e o primeiro evento assistencial?',
-          'Qual a taxa de prontuários inertes sem evento subsequente?'
-        ],
-        charts: [
+        id: 'entrada-prontuario',
+        titulo: 'Criação de prontuário',
+        descricao: 'Tempo até o primeiro evento assistencial e prontuários inertes.',
+        graficos: [
           {
-            id: 'tempo-entrada',
-            title: 'Tempo até o primeiro evento',
-            description: 'Distribuição do intervalo entre cadastro e primeiro contato assistencial.',
-            type: 'bar',
-            typeLabel: 'Barra',
-            labels: ['< 15 min', '15–30 min', '30–60 min', '> 60 min'],
-            values: [24, 36, 22, 18],
-            backgroundColor: ['rgba(59, 130, 246, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(239, 68, 68, 0.7)']
+            id: 'entrada-tempo-primeiro-evento',
+            titulo: 'Tempo médio entre cadastro e o primeiro evento assistencial',
+            tipo: 'valor-simples',
+            indicadorNomes: ['Tempo médio da data de cadastro até o primeiro evento'],
           },
           {
-            id: 'inercia-entrada',
-            title: 'Prontuários inertes',
-            description: 'Percentual de prontuários sem evento assistencial subsequente.',
-            type: 'doughnut',
-            typeLabel: 'Rosca',
-            labels: ['Com evolução', 'Inertes'],
-            values: [82, 18],
-            backgroundColor: ['rgba(16, 185, 129, 0.8)', 'rgba(239, 68, 68, 0.8)']
-          }
-        ]
-      }
-    ]
+            id: 'entrada-prontuarios-inertes',
+            titulo: 'Taxa de prontuários inertes (sem evento subsequente)',
+            tipo: 'valor-simples',
+            indicadorNomes: ['Taxa de prontuários inertes'],
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'consultas',
     label: 'Consultas',
-    submodules: [
+    dataKey: 'consultas',
+    submodulos: [
       {
-        id: 'consultas-reguladas',
-        title: 'Realização de consulta regulada',
-        description: 'Visão da demanda regulada e seus desfechos.',
-        metric: 'Proporção regulada: 42%',
-        insights: [
-          'Qual a proporção de consultas reguladas em relação ao total?',
-          'Quais encaminhamentos são mais frequentes após a consulta regulada?'
-        ],
-        charts: [
+        id: 'consultas-realizacao',
+        titulo: 'Realização de consultas',
+        descricao: 'Reguladas, retornos e interconsultas: proporções, encaminhamentos, faltas e intervalos.',
+        graficos: [
           {
-            id: 'proporcao-consultas',
-            title: 'Distribuição de consultas',
-            description: 'Comparativo entre consultas reguladas e não reguladas.',
-            type: 'doughnut',
-            typeLabel: 'Rosca',
-            labels: ['Reguladas', 'Não reguladas'],
-            values: [42, 58],
-            backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(100, 116, 139, 0.8)']
+            id: 'consultas-proporcao-tipos',
+            titulo: 'Proporção de consultas reguladas, de retorno e interconsultas',
+            tipo: 'comparacao-proporcao',
+            indicadorNomes: [
+              'Proporção de consultas reguladas',
+              'Proporção de consultas de retorno',
+              'Proporção de interconsultas',
+            ],
+            incluirOutros: true,
           },
           {
-            id: 'desfechos-consultas',
-            title: 'Desfechos subsequentes',
-            description: 'Probabilidade de exame, retorno, internação e cirurgia após consulta regulada.',
-            type: 'bar',
-            typeLabel: 'Barra',
-            labels: ['Exame', 'Retorno', 'Internação', 'Cirurgia'],
-            values: [32, 27, 11, 4],
-            backgroundColor: ['rgba(59, 130, 246, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(236, 72, 153, 0.7)']
-          }
-        ]
+            id: 'consultas-encaminhamentos',
+            titulo: 'Encaminhamentos mais frequentes após consulta regulada',
+            tipo: 'distribuicao',
+            indicadorNomes: ['Encaminhamento frequente por consulta regulada'],
+          },
+          {
+            id: 'consultas-probabilidade-desfecho',
+            titulo: 'Probabilidade de a consulta regulada resultar em exame, retorno, internação ou cirurgia',
+            tipo: 'distribuicao',
+            indicadorNomes: ['Probabilidade de desfecho da consulta regulada'], // ainda não existe no backend
+          },
+          {
+            id: 'consultas-faltas',
+            titulo: 'Faltas: pacientes x profissionais',
+            tipo: 'comparacao-proporcao',
+            indicadorNomes: [
+              'Porcentagem de faltas por parte do profissional',
+              'Porcentagem de faltas por parte do paciente',
+            ],
+          },
+          {
+            id: 'consultas-tempo-prontuario-agendamento',
+            titulo: 'Tempo médio entre a criação do prontuário e o agendamento da consulta',
+            tipo: 'valor-simples',
+            indicadorNomes: ['Tempo médio entre prontuário e agendamento'], // ainda não existe no backend
+            unidade: 'horas',
+          },
+          {
+            id: 'consultas-tempo-agendamento-realizacao',
+            titulo: 'Tempo médio entre agendamento e realização da consulta',
+            tipo: 'valor-simples',
+            indicadorNomes: ['Tempo médio de agendamento até realização (horas)'],
+          },
+          {
+            id: 'consultas-retorno-interconsulta-paciente',
+            titulo: 'Consultas de retorno por paciente x pacientes com interconsulta',
+            tipo: 'comparacao-mista',
+            indicadorNomes: ['Média de retornos por paciente', 'Pacientes com interconsulta'],
+          },
+          {
+            id: 'consultas-intervalo-retornos',
+            titulo: 'Intervalo: regulada → 1º retorno x retorno → retorno',
+            tipo: 'comparacao-dias',
+            indicadorNomes: [
+              'Intervalo médio da consulta regulada ao primeiro retorno',
+              'Intervalo médio de retornos consecutivos',
+            ],
+            unidade: 'dias',
+          },
+        ],
       },
-      {
-        id: 'consultas-retorno',
-        title: 'Realização de consulta de retorno',
-        description: 'Perfil de retornos e intervalo entre consultas.',
-        metric: 'Retornos por paciente: 1,8',
-        insights: [
-          'Quantas consultas de retorno, em média, são geradas por paciente?',
-          'Qual o intervalo médio entre retorno e retorno?'
-        ],
-        charts: [
-          {
-            id: 'retornos-por-paciente',
-            title: 'Retornos por paciente',
-            description: 'Média de consultas de retorno por paciente no período.',
-            type: 'bar',
-            typeLabel: 'Barra',
-            labels: ['1', '2', '3+'],
-            values: [44, 31, 25],
-            backgroundColor: ['rgba(16, 185, 129, 0.7)', 'rgba(59, 130, 246, 0.7)', 'rgba(245, 158, 11, 0.7)']
-          },
-          {
-            id: 'intervalo-retornos',
-            title: 'Intervalo entre consultas',
-            description: 'Tempo médio entre a primeira consulta regulada e o primeiro retorno.',
-            type: 'line',
-            typeLabel: 'Linha',
-            labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
-            values: [12, 10, 14, 11],
-            backgroundColor: ['rgba(59, 130, 246, 0.3)']
-          }
-        ]
-      },
-      {
-        id: 'consultas-triagem',
-        title: 'Realização de triagem de interconsulta',
-        description: 'Fluxo de triagem e geração de interconsultas.',
-        metric: 'Triagem efetiva: 61%',
-        insights: [
-          'Qual a proporção de pacientes que passam por triagem de interconsulta?',
-          'Qual a proporção das triagens que geram interconsulta?'
-        ],
-        charts: [
-          {
-            id: 'triagem-pacientes',
-            title: 'Pacientes com triagem',
-            description: 'Participação de pacientes que passaram pela triagem de interconsulta.',
-            type: 'doughnut',
-            typeLabel: 'Rosca',
-            labels: ['Com triagem', 'Sem triagem'],
-            values: [61, 39],
-            backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(100, 116, 139, 0.8)']
-          },
-          {
-            id: 'triagem-conversao',
-            title: 'Conversão em interconsulta',
-            description: 'Percentual das triagens que efetivamente geraram interconsulta.',
-            type: 'bar',
-            typeLabel: 'Barra',
-            labels: ['Sim', 'Não'],
-            values: [61, 39],
-            backgroundColor: ['rgba(16, 185, 129, 0.7)', 'rgba(239, 68, 68, 0.7)']
-          }
-        ]
-      },
-      {
-        id: 'consultas-interconsulta',
-        title: 'Realização de interconsulta',
-        description: 'Participação de interconsultas na jornada.',
-        metric: 'Interconsultas: 18% do total',
-        insights: [
-          'Qual a proporção de interconsultas em relação ao total?',
-          'Qual a proporção dos pacientes que passam por interconsultas?'
-        ],
-        charts: [
-          {
-            id: 'participacao-interconsulta',
-            title: 'Participação das interconsultas',
-            description: 'Peso das interconsultas no total de consultas.',
-            type: 'doughnut',
-            typeLabel: 'Rosca',
-            labels: ['Interconsulta', 'Outras'],
-            values: [18, 82],
-            backgroundColor: ['rgba(236, 72, 153, 0.8)', 'rgba(100, 116, 139, 0.8)']
-          },
-          {
-            id: 'pacientes-interconsulta',
-            title: 'Pacientes com interconsulta',
-            description: 'Proporção de pacientes que tiveram pelo menos uma interconsulta.',
-            type: 'bar',
-            typeLabel: 'Barra',
-            labels: ['Sim', 'Não'],
-            values: [27, 73],
-            backgroundColor: ['rgba(59, 130, 246, 0.7)', 'rgba(148, 163, 184, 0.7)']
-          }
-        ]
-      }
-    ]
+    ],
   },
   {
     id: 'exames',
     label: 'Exames',
-    submodules: [
+    dataKey: 'exames',
+    submodulos: [
       {
-        id: 'exames-regulados',
-        title: 'Realização de exames regulados',
-        description: 'Perfil dos exames regulados.',
-        metric: 'Exames regulados: 31% do total',
-        insights: [
-          'Qual a proporção de exames regulados em relação ao total de exames?',
-          'Quais tipos de exames mais predominam dentro dos regulados?'
+        id: 'exames-ambulatoriais',
+        titulo: 'Exames Ambulatoriais',
+        descricao: 'Proporção, volume por paciente, tempos e gargalos dos exames ambulatoriais.',
+        graficos: [
+          { id: 'exames-amb-proporcao', titulo: 'Proporção de exames ambulatoriais em relação ao total', tipo: 'valor-simples', indicadorNomes: [] },
+          { id: 'exames-amb-volume', titulo: 'Volume médio de exames ambulatoriais por paciente', tipo: 'valor-simples', indicadorNomes: [] },
+          { id: 'exames-amb-tempo-agendamento', titulo: 'Tempo médio entre solicitação e agendamento', tipo: 'valor-simples', indicadorNomes: [] },
+          { id: 'exames-amb-tempo-realizacao', titulo: 'Tempo médio entre agendamento e realização', tipo: 'valor-simples', indicadorNomes: [] },
+          { id: 'exames-amb-gargalos', titulo: 'Exames que são gargalos recorrentes', tipo: 'distribuicao', indicadorNomes: [] },
         ],
-        charts: [
-          {
-            id: 'proporcao-exames-regulados',
-            title: 'Participação dos exames regulados',
-            description: 'Comparativo entre exames regulados e demais exames.',
-            type: 'doughnut',
-            typeLabel: 'Rosca',
-            labels: ['Regulados', 'Outros'],
-            values: [31, 69],
-            backgroundColor: ['rgba(16, 185, 129, 0.8)', 'rgba(100, 116, 139, 0.8)']
-          },
-          {
-            id: 'tipos-exames-regulados',
-            title: 'Tipos mais frequentes',
-            description: 'Tipos de exame mais comuns no fluxo regulado.',
-            type: 'bar',
-            typeLabel: 'Barra',
-            labels: ['Tomografia', 'Hemograma', 'Ultrassom', 'Ecocardiograma'],
-            values: [18, 24, 15, 12],
-            backgroundColor: ['rgba(59, 130, 246, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(236, 72, 153, 0.7)']
-          }
-        ]
       },
       {
-        id: 'exames-ambulatorial',
-        title: 'Solicitação ambulatorial de exames',
-        description: 'Análise de exames ambulatoriais e gargalos.',
-        metric: 'Média por paciente: 2,4 exames',
-        insights: [
-          'Qual o volume médio de exames ambulatoriais por paciente?',
-          'Quais exames são gargalos recorrentes?'
+        id: 'exames-hospitalares',
+        titulo: 'Exames Hospitalares',
+        descricao: 'Proporção, tipos predominantes, tempos e gargalos dos exames na internação.',
+        graficos: [
+          { id: 'exames-hosp-proporcao', titulo: 'Proporção de exames de internação em relação ao total', tipo: 'valor-simples', indicadorNomes: [] },
+          { id: 'exames-hosp-tipos', titulo: 'Tipos de exame mais predominantes na internação', tipo: 'distribuicao', indicadorNomes: [] },
+          { id: 'exames-hosp-volume', titulo: 'Volume médio de exames por paciente internado', tipo: 'valor-simples', indicadorNomes: [] },
+          { id: 'exames-hosp-tempo-agendamento', titulo: 'Tempo médio entre solicitação e agendamento', tipo: 'valor-simples', indicadorNomes: [] },
+          { id: 'exames-hosp-tempo-realizacao', titulo: 'Tempo médio entre agendamento e realização', tipo: 'valor-simples', indicadorNomes: [] },
+          { id: 'exames-hosp-gargalos', titulo: 'Exames que são gargalos recorrentes', tipo: 'distribuicao', indicadorNomes: [] },
         ],
-        charts: [
-          {
-            id: 'volume-ambulatorial',
-            title: 'Volume por paciente',
-            description: 'Média de exames ambulatoriais por paciente.',
-            type: 'bar',
-            typeLabel: 'Barra',
-            labels: ['1', '2', '3+'],
-            values: [33, 41, 26],
-            backgroundColor: ['rgba(59, 130, 246, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(245, 158, 11, 0.7)']
-          },
-          {
-            id: 'gargalos-ambulatorial',
-            title: 'Gargalos recorrentes',
-            description: 'Exames com maior tempo de espera e atraso.',
-            type: 'line',
-            typeLabel: 'Linha',
-            labels: ['MRI', 'Tomografia', 'Lab', 'Ecocardiograma'],
-            values: [14, 11, 9, 7],
-            backgroundColor: ['rgba(239, 68, 68, 0.3)']
-          }
-        ]
-      }
-    ]
+      },
+      {
+        id: 'exames-pre-operatorios',
+        titulo: 'Exames Pré-operatórios',
+        descricao: 'Proporção, tipos predominantes, tempos e gargalos dos exames pré-operatórios.',
+        graficos: [
+          { id: 'exames-pre-proporcao', titulo: 'Proporção de exames pré-operatórios em relação ao total', tipo: 'valor-simples', indicadorNomes: [] },
+          { id: 'exames-pre-tipos', titulo: 'Tipos de exame mais predominantes no pré-operatório', tipo: 'distribuicao', indicadorNomes: [] },
+          { id: 'exames-pre-tempo-agendamento', titulo: 'Tempo médio entre solicitação e agendamento', tipo: 'valor-simples', indicadorNomes: [] },
+          { id: 'exames-pre-tempo-realizacao', titulo: 'Tempo médio entre agendamento e realização', tipo: 'valor-simples', indicadorNomes: [] },
+          { id: 'exames-pre-gargalos', titulo: 'Exames que são gargalos recorrentes', tipo: 'distribuicao', indicadorNomes: [] },
+        ],
+      },
+      {
+        id: 'exames-comparacao',
+        titulo: 'Comparação entre os três',
+        descricao: 'Ambulatoriais x Hospitalares x Pré-operatórios lado a lado.',
+        graficos: [
+          { id: 'exames-cmp-proporcao', titulo: 'Comparação de proporção por natureza de exame', tipo: 'comparacao-proporcao', indicadorNomes: [] },
+          { id: 'exames-cmp-tipos', titulo: 'Comparação de tipos mais predominantes', tipo: 'distribuicao', indicadorNomes: [] },
+          { id: 'exames-cmp-tempo-agendamento', titulo: 'Comparação de tempo até agendamento', tipo: 'comparacao-dias', indicadorNomes: [], unidade: 'horas' },
+          { id: 'exames-cmp-tempo-realizacao', titulo: 'Comparação de tempo até realização', tipo: 'comparacao-dias', indicadorNomes: [], unidade: 'horas' },
+          { id: 'exames-cmp-gargalos', titulo: 'Comparação de gargalos recorrentes', tipo: 'distribuicao', indicadorNomes: [] },
+        ],
+      },
+    ],
   },
   {
     id: 'internacao',
     label: 'Internação',
-    submodules: [
+    dataKey: 'internacao',
+    submodulos: [
       {
-        id: 'internacao-regular',
-        title: 'Realização de internação',
-        description: 'Métricas de internação clínica e regulada.',
-        metric: 'Tempo médio de internação: 5,4 dias',
-        insights: [
-          'Qual a proporção de pacientes internados por especialidade clínica?',
-          'Qual o tempo médio entre solicitação e internação?'
+        id: 'internacao-realizacao',
+        titulo: 'Realização de Internação',
+        descricao: 'Por especialidade clínica, tempo médio e proporção ambulatorial x regulada.',
+        graficos: [
+          { id: 'internacao-especialidade', titulo: 'Proporção de pacientes internados por especialidade clínica', tipo: 'distribuicao', indicadorNomes: [] },
+          { id: 'internacao-tempo-especialidade', titulo: 'Tempo médio de internação por especialidade clínica', tipo: 'distribuicao', indicadorNomes: [] },
+          { id: 'internacao-tipo-solicitacao', titulo: 'Ambulatorial x regulada em relação ao total', tipo: 'comparacao-proporcao', indicadorNomes: [] },
+          { id: 'internacao-tempo-solicitacao', titulo: 'Tempo médio entre solicitação e internação', tipo: 'valor-simples', indicadorNomes: ['Tempo médio de permanência (dias)'] },
         ],
-        charts: [
-          {
-            id: 'internacao-especialidades',
-            title: 'Internações por especialidade',
-            description: 'Participação das principais especialidades clínicas.',
-            type: 'bar',
-            typeLabel: 'Barra',
-            labels: ['Cardiologia', 'Oncologia', 'Pneumologia', 'Neurologia'],
-            values: [28, 24, 19, 15],
-            backgroundColor: ['rgba(59, 130, 246, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(236, 72, 153, 0.7)']
-          },
-          {
-            id: 'internacao-tipo',
-            title: 'Tipo de internação',
-            description: 'Comparativo entre internações ambulatoriais e reguladas.',
-            type: 'doughnut',
-            typeLabel: 'Rosca',
-            labels: ['Regulada', 'Ambulatorial'],
-            values: [63, 37],
-            backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(100, 116, 139, 0.8)']
-          }
-        ]
       },
       {
         id: 'internacao-pre-operatoria',
-        title: 'Realização de internação pré-operatória',
-        description: 'Participação da internação pré-operatória.',
-        metric: 'Pré-operatória: 19% das internações',
-        insights: [
-          'Qual a proporção de pacientes internados para pré-operatório?',
-          'Quais as proporções de internações cirúrgicas em relação ao todo?'
+        titulo: 'Internação Pré-operatória',
+        descricao: 'Proporção por especialidade cirúrgica e participação no total de internações.',
+        graficos: [
+          { id: 'internacao-pre-especialidade', titulo: 'Proporção de internados para pré-operatório por especialidade cirúrgica', tipo: 'distribuicao', indicadorNomes: [] },
+          { id: 'internacao-pre-participacao', titulo: 'Participação da pré-operatória no total de internações', tipo: 'comparacao-proporcao', indicadorNomes: [], incluirOutros: true },
         ],
-        charts: [
-          {
-            id: 'pre-op-participacao',
-            title: 'Participação pré-operatória',
-            description: 'Peso das internações pré-operatórias no conjunto.',
-            type: 'doughnut',
-            typeLabel: 'Rosca',
-            labels: ['Pré-operatória', 'Outros'],
-            values: [19, 81],
-            backgroundColor: ['rgba(245, 158, 11, 0.8)', 'rgba(100, 116, 139, 0.8)']
-          },
-          {
-            id: 'pre-op-cirurgicas',
-            title: 'Internações cirúrgicas',
-            description: 'Comparativo entre internações cirúrgicas e clínicas.',
-            type: 'bar',
-            typeLabel: 'Barra',
-            labels: ['Cirúrgica', 'Clínica'],
-            values: [19, 81],
-            backgroundColor: ['rgba(236, 72, 153, 0.7)', 'rgba(59, 130, 246, 0.7)']
-          }
-        ]
-      }
-    ]
+      },
+      {
+        id: 'internacao-pos-operatoria',
+        titulo: 'Internação Pós-operatória',
+        descricao: 'Proporção em UTI por especialidade e tempo médio de internação pós-operatória.',
+        graficos: [
+          { id: 'internacao-pos-uti', titulo: 'Proporção internada em UTI no pós-operatório por especialidade', tipo: 'distribuicao', indicadorNomes: [] },
+          { id: 'internacao-pos-tempo', titulo: 'Tempo médio de internação pós-operatória por especialidade', tipo: 'distribuicao', indicadorNomes: [] },
+        ],
+      },
+      {
+        id: 'internacao-comparacao',
+        titulo: 'Comparação entre os três tipos',
+        descricao: 'Regular x pré-operatória x pós-operatória lado a lado.',
+        graficos: [
+          { id: 'internacao-cmp-proporcao', titulo: 'Comparação da proporção de internados em cada tipo', tipo: 'comparacao-proporcao', indicadorNomes: [] },
+          { id: 'internacao-cmp-tempo', titulo: 'Comparação do tempo médio de internação de cada tipo', tipo: 'comparacao-dias', indicadorNomes: [], unidade: 'dias' },
+          { id: 'internacao-cmp-participacao', titulo: 'Comparação da proporção de internações de cada tipo', tipo: 'comparacao-proporcao', indicadorNomes: [] },
+        ],
+      },
+    ],
   },
   {
     id: 'cirurgia',
     label: 'Cirurgia',
-    submodules: [
+    dataKey: 'cirurgias',
+    submodulos: [
       {
-        id: 'cirurgia-lec',
-        title: 'Inserção de paciente na LEC',
-        description: 'Volume e permanência na lista de espera cirúrgica.',
-        metric: 'Pacientes na LEC: 184',
-        insights: [
-          'Quantos pacientes são inseridos na LEC em um determinado período?',
-          'Qual o tempo médio de permanência do paciente na LEC?'
+        id: 'cirurgia-realizacao',
+        titulo: 'Realização de cirurgia',
+        descricao: 'Proporção de pacientes operados e tempo médio de cirurgia por especialidade.',
+        graficos: [
+          { id: 'cirurgia-proporcao-especialidade', titulo: 'Proporção de pacientes que passam por cirurgia, por especialidade', tipo: 'distribuicao', indicadorNomes: [] },
+          { id: 'cirurgia-tempo-especialidade', titulo: 'Tempo médio de cirurgia por especialidade', tipo: 'distribuicao', indicadorNomes: [] },
         ],
-        charts: [
-          {
-            id: 'lec-especialidades',
-            title: 'Pacientes por especialidade',
-            description: 'Distribuição de pacientes na LEC por especialidade cirúrgica.',
-            type: 'bar',
-            typeLabel: 'Barra',
-            labels: ['Ortopedia', 'Ginecologia', 'Urologia', 'Cirurgia Geral'],
-            values: [42, 29, 21, 18],
-            backgroundColor: ['rgba(59, 130, 246, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(236, 72, 153, 0.7)']
-          },
-          {
-            id: 'lec-permanencia',
-            title: 'Permanência na LEC',
-            description: 'Tempo médio de permanência do paciente na lista.',
-            type: 'line',
-            typeLabel: 'Linha',
-            labels: ['Jan', 'Fev', 'Mar', 'Abr'],
-            values: [34, 31, 29, 27],
-            backgroundColor: ['rgba(59, 130, 246, 0.3)']
-          }
-        ]
       },
-      {
-        id: 'cirurgia-realizada',
-        title: 'Realização de cirurgia',
-        description: 'Proporção de pacientes operados por especialidade.',
-        metric: 'Cirurgias realizadas: 67%',
-        insights: [
-          'Qual a proporção de pacientes que passam por cirurgia?',
-          'Qual o tempo médio de cirurgia por especialidade cirúrgica?'
-        ],
-        charts: [
-          {
-            id: 'cirurgias-especialidades',
-            title: 'Proporção por especialidade',
-            description: 'Participação das cirurgias nas principais especialidades.',
-            type: 'doughnut',
-            typeLabel: 'Rosca',
-            labels: ['Ortopedia', 'Ginecologia', 'Urologia', 'Cirurgia Geral'],
-            values: [31, 24, 21, 24],
-            backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(16, 185, 129, 0.8)', 'rgba(245, 158, 11, 0.8)', 'rgba(236, 72, 153, 0.8)']
-          },
-          {
-            id: 'tempo-cirurgia',
-            title: 'Tempo médio de cirurgia',
-            description: 'Tempo médio por procedimento cirúrgico.',
-            type: 'bar',
-            typeLabel: 'Barra',
-            labels: ['Ortopedia', 'Ginecologia', 'Urologia', 'Cirurgia Geral'],
-            values: [95, 72, 58, 84],
-            backgroundColor: ['rgba(59, 130, 246, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(236, 72, 153, 0.7)']
-          }
-        ]
-      }
-    ]
-  }
+    ],
+  },
 ];
 
-const activeModule = ref('entrada');
-const activeSubmodule = ref('entrada-criar-prontuario');
+// -------------------------------------------------------------------------
+// Seleção de módulo/subprocesso
+// -------------------------------------------------------------------------
 
-const selectedModule = computed(() => modules.find((module) => module.id === activeModule.value) ?? modules[0]);
-const selectedSubmodule = computed(() => selectedModule.value.submodules.find((submodule) => submodule.id === activeSubmodule.value) ?? selectedModule.value.submodules[0]);
+const activeModulo = ref(MODULOS[0].id);
+const activeSubmodulo = ref(MODULOS[0].submodulos[0].id);
 
-const selectModule = (moduleId: string) => {
-  activeModule.value = moduleId;
-  const nextModule = modules.find((module) => module.id === moduleId) ?? modules[0];
-  activeSubmodule.value = nextModule.submodules[0]?.id ?? '';
+const moduloSelecionado = computed(
+  () => MODULOS.find((m) => m.id === activeModulo.value) ?? MODULOS[0]
+);
+
+const submoduloSelecionado = computed(
+  () =>
+    moduloSelecionado.value.submodulos.find((s) => s.id === activeSubmodulo.value) ??
+    moduloSelecionado.value.submodulos[0]
+);
+
+const selecionarModulo = (moduloId: string) => {
+  activeModulo.value = moduloId;
+  const novoModulo = MODULOS.find((m) => m.id === moduloId) ?? MODULOS[0];
+  activeSubmodulo.value = novoModulo.submodulos[0]?.id ?? '';
 };
 
-const chartComponent = (type: string) => {
-  if (type === 'doughnut') return Doughnut;
-  if (type === 'line') return Line;
-  return Bar;
+// -------------------------------------------------------------------------
+// Normalização dos indicadores do bloco do backend correspondente ao módulo
+// -------------------------------------------------------------------------
+
+const indicadoresDoBloco = computed<Indicador[]>(() => {
+  const modulo = moduloSelecionado.value;
+  const bloco = props.dashboard?.[modulo.dataKey];
+  console.log(bloco)
+  const brutos = (bloco?.indicadores ?? []) as unknown[];
+
+  const normalizados: Indicador[] = [];
+  for (const item of brutos) {
+    if (item && typeof item === 'object' && 'nome' in (item as any) && 'valor' in (item as any)) {
+      normalizados.push(item as Indicador);
+    } else {
+      console.warn('Indicador fora do formato {nome, valor} recebido do backend:', item);
+    }
+  }
+  return normalizados;
+});
+
+// -------------------------------------------------------------------------
+// Resolução: cada gráfico da spec busca seus indicadores pelo "nome" exato
+// -------------------------------------------------------------------------
+
+type GraficoResolvido = {
+  spec: GraficoSpec;
+  indicadores: Indicador[];
+  faltando: string[];
+  indisponivel: boolean;
 };
 
-const buildChartData = (chart: ChartSpec) => {
-  const common = {
-    labels: chart.labels,
+const graficosResolvidos = computed<GraficoResolvido[]>(() => {
+  const lista = indicadoresDoBloco.value;
+  const sub = submoduloSelecionado.value;
+  if (!sub) return [];
+
+  return sub.graficos.map((spec) => {
+    const indicadores: Indicador[] = [];
+    const faltando: string[] = [];
+    for (const nome of spec.indicadorNomes) {
+      const encontrado = lista.find((i) => i.nome === nome);
+      if (encontrado) indicadores.push(encontrado);
+      else faltando.push(nome);
+    }
+    const indisponivel = spec.indicadorNomes.length === 0 || faltando.length > 0;
+    return { spec, indicadores, faltando, indisponivel };
+  });
+});
+
+// -------------------------------------------------------------------------
+// Helpers de formatação/render
+// -------------------------------------------------------------------------
+
+const PALETA = [
+  'rgba(59, 130, 246, 0.8)',
+  'rgba(16, 185, 129, 0.8)',
+  'rgba(245, 158, 11, 0.8)',
+  'rgba(236, 72, 153, 0.8)',
+  'rgba(139, 92, 246, 0.8)',
+  'rgba(148, 163, 184, 0.6)', // "Outros" costuma vir por último -> cinza neutro
+];
+
+const rotuloTipo = (tipo: TipoGrafico) => {
+  switch (tipo) {
+    case 'comparacao-proporcao': return 'Comparação';
+    case 'comparacao-dias': return 'Comparação';
+    case 'comparacao-mista': return 'Comparação';
+    case 'distribuicao': return 'Distribuição';
+    default: return 'Valor';
+  }
+};
+
+const numeroDoValor = (valor: number | string): number => {
+  if (typeof valor === 'number') return valor;
+  const limpo = valor.replace('%', '').replace(',', '.').trim();
+  const n = parseFloat(limpo);
+  return Number.isNaN(n) ? 0 : n;
+};
+
+const formatarValor = (valor: Indicador['valor'] | undefined): string => {
+  if (valor === undefined) return '—';
+  if (typeof valor === 'object') return '';
+  return String(valor);
+};
+
+// --- comparação de proporções (0-100%), com "Outros" residual opcional ---
+
+const buildComparacaoProporcaoData = (item: GraficoResolvido) => {
+  const labels = item.indicadores.map((i) => i.nome);
+  const valores = item.indicadores.map((i) => numeroDoValor(i.valor as number | string));
+
+  if (item.spec.incluirOutros) {
+    const soma = valores.reduce((a, b) => a + b, 0);
+    labels.push('Outros');
+    valores.push(Math.max(0, 100 - soma));
+  }
+
+  return {
+    labels,
     datasets: [
       {
-        label: chart.title,
-        data: chart.values,
-        backgroundColor: chart.backgroundColor ?? ['rgba(59, 130, 246, 0.7)'],
-        borderColor: chart.borderColor ?? ['rgba(255, 255, 255, 0.8)'],
-        borderWidth: 1
-      }
-    ]
+        data: valores,
+        backgroundColor: labels.map((_, i) => PALETA[i % PALETA.length]),
+        borderColor: '#0f172a',
+        borderWidth: 1,
+        borderRadius: 4,
+      },
+    ],
   };
-
-  if (chart.type === 'doughnut') {
-    return {
-      labels: chart.labels,
-      datasets: [
-        {
-          data: chart.values,
-          backgroundColor: chart.backgroundColor ?? ['rgba(59, 130, 246, 0.8)', 'rgba(100, 116, 139, 0.8)'],
-          borderColor: '#0f172a',
-          borderWidth: 2
-        }
-      ]
-    };
-  }
-
-  if (chart.type === 'line') {
-    return {
-      labels: chart.labels,
-      datasets: [
-        {
-          label: chart.title,
-          data: chart.values,
-          fill: true,
-          borderColor: '#38bdf8',
-          backgroundColor: 'rgba(56, 189, 248, 0.16)',
-          tension: 0.35,
-          pointRadius: 4,
-          pointHoverRadius: 5
-        }
-      ]
-    };
-  }
-
-  return common;
 };
 
-const buildChartOptions = (chart: ChartSpec) => {
-  const baseOptions = {
+const chartOptionsComparacaoProporcao = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: { label: (ctx: any) => `${ctx.raw}%` },
+    },
+  },
+  scales: {
+    x: { ticks: { color: '#cbd5e1' }, grid: { display: false } },
+    y: {
+      beginAtZero: true,
+      max: 100,
+      ticks: { color: '#94a3b8', callback: (v: string | number) => `${v}%` },
+      grid: { color: 'rgba(148, 163, 184, 0.15)' },
+    },
+  },
+};
+
+// --- comparação de valores na mesma unidade (dias/horas) ---
+
+const buildComparacaoValorData = (item: GraficoResolvido) => ({
+  labels: item.indicadores.map((i) => i.nome),
+  datasets: [
+    {
+      data: item.indicadores.map((i) => numeroDoValor(i.valor as number | string)),
+      backgroundColor: item.indicadores.map((_, i) => PALETA[i % PALETA.length]),
+      borderColor: '#0f172a',
+      borderWidth: 1,
+      borderRadius: 4,
+    },
+  ],
+});
+
+const chartOptionsComparacaoValor = (unidade?: string) => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: { label: (ctx: any) => `${ctx.raw}${unidade ? ' ' + unidade : ''}` },
+    },
+  },
+  scales: {
+    x: { ticks: { color: '#cbd5e1' }, grid: { display: false } },
+    y: {
+      beginAtZero: true,
+      ticks: { color: '#94a3b8' },
+      grid: { color: 'rgba(148, 163, 184, 0.15)' },
+    },
+  },
+});
+
+// --- distribuição (dict {categoria: contagem}) -> barra horizontal ---
+
+const MAX_CATEGORIAS = 5;
+
+const categoriasAgrupadas = (dist: IndicadorDistribuicao): [string, number][] => {
+  const entradas = Object.entries(dist);
+  if (entradas.length <= MAX_CATEGORIAS + 1) return entradas;
+  const principais = entradas.slice(0, MAX_CATEGORIAS);
+  const restante = entradas.slice(MAX_CATEGORIAS).reduce((soma, [, v]) => soma + v, 0);
+  return [...principais, ['Outros', restante]];
+};
+
+const alturaBarraDistribuicao = (indicador?: Indicador): number => {
+  if (!indicador) return 180;
+  const dist = indicador.valor as IndicadorDistribuicao;
+  const qtd = categoriasAgrupadas(dist).length;
+  return Math.max(180, qtd * 48);
+};
+
+const buildDistribuicaoData = (indicador: Indicador) => {
+  const dist = indicador.valor as IndicadorDistribuicao;
+  const entradas = categoriasAgrupadas(dist);
+  return {
+    labels: entradas.map(([nome]) => nome),
+    datasets: [
+      {
+        label: indicador.nome,
+        data: entradas.map(([, valor]) => valor),
+        backgroundColor: entradas.map((_, i) => PALETA[i % PALETA.length]),
+        borderColor: '#0f172a',
+        borderWidth: 1,
+        borderRadius: 4,
+      },
+    ],
+  };
+};
+
+const buildDistribuicaoOptions = (indicador: Indicador) => {
+  const dist = indicador.valor as IndicadorDistribuicao;
+  const total = Object.values(dist).reduce((a, b) => a + b, 0);
+  return {
+    indexAxis: 'y' as const,
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        labels: {
-          color: '#cbd5e1'
-        }
-      },
+      legend: { display: false },
       tooltip: {
-        enabled: true
-      }
+        callbacks: {
+          label: (ctx: any) => {
+            const valor = ctx.raw as number;
+            const pct = total > 0 ? Math.round((valor / total) * 100) : 0;
+            return `${valor} (${pct}%)`;
+          },
+        },
+      },
     },
     scales: {
       x: {
-        ticks: {
-          color: '#94a3b8'
-        },
-        grid: {
-          color: 'rgba(148, 163, 184, 0.15)'
-        }
+        beginAtZero: true,
+        ticks: { color: '#94a3b8', precision: 0 },
+        grid: { color: 'rgba(148, 163, 184, 0.15)' },
       },
       y: {
-        beginAtZero: true,
-        ticks: {
-          color: '#94a3b8'
-        },
-        grid: {
-          color: 'rgba(148, 163, 184, 0.15)'
-        }
-      }
-    }
+        ticks: { color: '#cbd5e1' },
+        grid: { display: false },
+      },
+    },
   };
-
-  if (chart.type === 'doughnut') {
-    return {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'bottom' as const,
-          labels: {
-            color: '#cbd5e1'
-          }
-        }
-      }
-    };
-  }
-
-  return baseOptions;
 };
 </script>

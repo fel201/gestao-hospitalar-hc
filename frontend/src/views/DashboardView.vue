@@ -197,7 +197,7 @@ onBeforeUnmount(cleanup);
           </div>
         </section>
 
-        <DashboardModuleAnalytics v-if="dashboard" />
+        <DashboardModuleAnalytics v-if="dashboard" :dashboard="dashboard" />
       </template>
     </main>
   </div>
