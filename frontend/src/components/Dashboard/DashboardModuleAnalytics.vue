@@ -71,12 +71,12 @@
 
           <!-- Comparação de proporções (2-4 categorias em %) -->
           <div v-else-if="item.spec.tipo === 'comparacao-proporcao'" class="mt-4 h-56">
-            <Bar :data="buildComparacaoProporcaoData(item)" :options="chartOptionsComparacaoProporcao" />
+            <Bar :data="buildComparacaoProporcaoData(item)" :options="chartOptionsComparacaoProporcao" :plugins="[ChartDataLabels]" />
           </div>
 
           <!-- Comparação de valores em dias/horas (mesma unidade) -->
           <div v-else-if="item.spec.tipo === 'comparacao-dias'" class="mt-4 h-56">
-            <Bar :data="buildComparacaoValorData(item)" :options="chartOptionsComparacaoValor(item.spec.unidade)" />
+            <Bar :data="buildComparacaoValorData(item)" :options="chartOptionsComparacaoValor(item.spec.unidade)" :plugins="[ChartDataLabels]" />
           </div>
 
           <!-- Comparação mista: unidades diferentes -> dois cards de estatística lado a lado -->
@@ -97,7 +97,7 @@
             class="mt-4"
             :style="{ height: alturaBarraDistribuicao(item.indicadores[0]) + 'px' }"
           >
-            <Bar :data="buildDistribuicaoData(item.indicadores[0])" :options="buildDistribuicaoOptions(item.indicadores[0])" />
+            <Bar :data="buildDistribuicaoData(item.indicadores[0])" :options="buildDistribuicaoOptions(item.indicadores[0])" :plugins="[ChartDataLabels]" />
           </div>
 
           <!-- Valor simples (número, string, dias, horas etc) -->
@@ -125,8 +125,12 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import type { DashboardInterface } from '../../interfaces/dashboard';
 
+// Registrado globalmente para que Tooltip/Legend continuem funcionando,
+// mas cada <Bar> também recebe o plugin explicitamente via :plugins="[ChartDataLabels]"
+// (necessário no vue-chartjs para habilitar os rótulos por gráfico).
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 // -------------------------------------------------------------------------
@@ -153,7 +157,7 @@ type GraficoSpec = {
   id: string;
   titulo: string;
   tipo: TipoGrafico;
-  // nomes exatos ("nome") dos indicadores do backend que compõem este gráfico
+  // nomes exatos ("nome") dos indicadores do backenfd que compõem este gráfico
   indicadorNomes: string[];
   // para 'comparacao-proporcao': adiciona categoria "Outros" = 100 - soma dos indicadores listados
   incluirOutros?: boolean;
@@ -230,9 +234,9 @@ const MODULOS: ModuloSpec[] = [
             titulo: 'Proporção de consultas reguladas, de retorno e interconsultas',
             tipo: 'comparacao-proporcao',
             indicadorNomes: [
-              'Proporção de consultas reguladas',
-              'Proporção de consultas de retorno',
-              'Proporção de interconsultas',
+              'Porcentagem de consultas reguladas',
+              'Porcentagem de consultas de retorno',
+              'Porcentagem de interconsultas',
             ],
             incluirOutros: true,
           },
@@ -272,13 +276,13 @@ const MODULOS: ModuloSpec[] = [
           },
           {
             id: 'consultas-retorno-interconsulta-paciente',
-            titulo: 'Consultas de retorno por paciente x pacientes com interconsulta',
-            tipo: 'comparacao-mista',
-            indicadorNomes: ['Média de retornos por paciente', 'Pacientes com interconsulta'],
+            titulo: 'Comparação de consultas por pacientes',
+            tipo: 'comparacao-dias',
+            indicadorNomes: ['Consultas reguladas por paciente', 'Consultas retorno por paciente', 'Interconsultas por paciente'],
           },
           {
             id: 'consultas-intervalo-retornos',
-            titulo: 'Intervalo: regulada → 1º retorno x retorno → retorno',
+            titulo: 'Intervalo: REGULADA → 1º RETORNO X RETORNO → RETORNO',
             tipo: 'comparacao-dias',
             indicadorNomes: [
               'Intervalo médio da consulta regulada ao primeiro retorno',
@@ -440,7 +444,6 @@ const selecionarModulo = (moduloId: string) => {
 const indicadoresDoBloco = computed<Indicador[]>(() => {
   const modulo = moduloSelecionado.value;
   const bloco = props.dashboard?.[modulo.dataKey];
-  console.log(bloco)
   const brutos = (bloco?.indicadores ?? []) as unknown[];
 
   const normalizados: Indicador[] = [];
@@ -488,11 +491,11 @@ const graficosResolvidos = computed<GraficoResolvido[]>(() => {
 // -------------------------------------------------------------------------
 
 const PALETA = [
-  'rgba(59, 130, 246, 0.8)',
-  'rgba(16, 185, 129, 0.8)',
-  'rgba(245, 158, 11, 0.8)',
-  'rgba(236, 72, 153, 0.8)',
-  'rgba(139, 92, 246, 0.8)',
+  'rgba(59, 130, 246, 0.85)',
+  'rgba(16, 185, 129, 0.85)',
+  'rgba(245, 158, 11, 0.85)',
+  'rgba(236, 72, 153, 0.85)',
+  'rgba(139, 92, 246, 0.85)',
   'rgba(148, 163, 184, 0.6)', // "Outros" costuma vir por último -> cinza neutro
 ];
 
@@ -519,6 +522,15 @@ const formatarValor = (valor: Indicador['valor'] | undefined): string => {
   return String(valor);
 };
 
+// Configuração base do datalabels, reaproveitada em todos os gráficos de barra.
+// Texto sempre visível, sem precisar passar o mouse por cima.
+const DATALABELS_BASE = {
+  color: '#f8fafc',
+  font: { weight: 'bold' as const, size: 12 },
+  textStrokeColor: 'rgba(15, 23, 42, 0.55)',
+  textStrokeWidth: 3,
+};
+
 // --- comparação de proporções (0-100%), com "Outros" residual opcional ---
 
 const buildComparacaoProporcaoData = (item: GraficoResolvido) => {
@@ -539,7 +551,8 @@ const buildComparacaoProporcaoData = (item: GraficoResolvido) => {
         backgroundColor: labels.map((_, i) => PALETA[i % PALETA.length]),
         borderColor: '#0f172a',
         borderWidth: 1,
-        borderRadius: 4,
+        borderRadius: 6,
+        maxBarThickness: 64,
       },
     ],
   };
@@ -548,10 +561,17 @@ const buildComparacaoProporcaoData = (item: GraficoResolvido) => {
 const chartOptionsComparacaoProporcao = {
   responsive: true,
   maintainAspectRatio: false,
+  layout: { padding: { top: 24 } },
   plugins: {
     legend: { display: false },
     tooltip: {
       callbacks: { label: (ctx: any) => `${ctx.raw}%` },
+    },
+    datalabels: {
+      ...DATALABELS_BASE,
+      anchor: 'end' as const,
+      align: 'end' as const,
+      formatter: (value: number) => `${value}%`,
     },
   },
   scales: {
@@ -575,7 +595,8 @@ const buildComparacaoValorData = (item: GraficoResolvido) => ({
       backgroundColor: item.indicadores.map((_, i) => PALETA[i % PALETA.length]),
       borderColor: '#0f172a',
       borderWidth: 1,
-      borderRadius: 4,
+      borderRadius: 6,
+      maxBarThickness: 64,
     },
   ],
 });
@@ -583,10 +604,17 @@ const buildComparacaoValorData = (item: GraficoResolvido) => ({
 const chartOptionsComparacaoValor = (unidade?: string) => ({
   responsive: true,
   maintainAspectRatio: false,
+  layout: { padding: { top: 24 } },
   plugins: {
     legend: { display: false },
     tooltip: {
       callbacks: { label: (ctx: any) => `${ctx.raw}${unidade ? ' ' + unidade : ''}` },
+    },
+    datalabels: {
+      ...DATALABELS_BASE,
+      anchor: 'end' as const,
+      align: 'end' as const,
+      formatter: (value: number) => `${value}${unidade ? ' ' + unidade : ''}`,
     },
   },
   scales: {
@@ -630,7 +658,7 @@ const buildDistribuicaoData = (indicador: Indicador) => {
         backgroundColor: entradas.map((_, i) => PALETA[i % PALETA.length]),
         borderColor: '#0f172a',
         borderWidth: 1,
-        borderRadius: 4,
+        borderRadius: 6,
       },
     ],
   };
@@ -643,6 +671,7 @@ const buildDistribuicaoOptions = (indicador: Indicador) => {
     indexAxis: 'y' as const,
     responsive: true,
     maintainAspectRatio: false,
+    layout: { padding: { right: 56 } },
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -652,6 +681,15 @@ const buildDistribuicaoOptions = (indicador: Indicador) => {
             const pct = total > 0 ? Math.round((valor / total) * 100) : 0;
             return `${valor} (${pct}%)`;
           },
+        },
+      },
+      datalabels: {
+        ...DATALABELS_BASE,
+        anchor: 'end' as const,
+        align: 'end' as const,
+        formatter: (value: number) => {
+          const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+          return `${value} (${pct}%)`;
         },
       },
     },

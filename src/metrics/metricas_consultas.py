@@ -57,8 +57,6 @@ def proporcao_consultas_reguladas(consultas: list[dict[str, Any]]) -> dict:
         "proporcao": round((reguladas/total)*100, 2),
     }
 
-
-# 2. taxa de faltas por parte do paciente
 def porcentagem_faltas_pacientes(consultas: list[dict[str, Any]]) -> dict:
     total = len(consultas)
     if total == 0:
@@ -171,47 +169,55 @@ def media_retornos_por_paciente(consultas: list[dict[str, Any]]) -> dict:
         "media_retornos_por_paciente": round(total_retornos / total_pacientes, 2),
     }
 
-def media_reguladas_interconsulta_retornos_por_paciente(consultas: list[dict[str, Any]]) -> dict:
-    """
-    Calcula o número médio de consultas de retorno por paciente.
-    """
-    retornos_por_paciente: dict[str, int] = defaultdict(int)
+def media_interconsultas_por_paciente(consultas: list[dict[str, Any]]) -> dict:
     interconsultas_por_paciente: dict[str, int] = defaultdict(int)
-    reguladas_por_paciente: dict[str, int] = defaultdict(int)
+
     for c in consultas:
-        prontuario = c.get("prontuario", "")
-        if not prontuario: continue
-        if CONDICAO_RETORNO in c.get("condicao", ""):
-            retornos_por_paciente[prontuario] += 1
-        elif CONDICAO_INTERCON in c.get("condicao", ""):
-            interconsultas_por_paciente[prontuario] += 1
-        elif CONDICAO_REGULADA in c.get("condicao", ""):
-            reguladas_por_paciente[prontuario] += 1
-            
-    total_pacientes = len(retornos_por_paciente)
-    total_retornos = sum(retornos_por_paciente.values())
+        if CONDICAO_INTERCON in c.get("condicao", ""):
+            pid = c.get("prontuario", "")
+            if pid:
+                interconsultas_por_paciente[pid] += 1
+
+    total_pacientes = len(interconsultas_por_paciente)
     total_interconsultas = sum(interconsultas_por_paciente.values())
+
+    if total_pacientes == 0:
+        return {
+            "total_pacientes": 0,
+            "total_interconsultas": 0,
+            "media_interconsultas_por_paciente": 0.0,
+        }
+
+    return {
+        "total_pacientes": total_pacientes,
+        "total_interconsultas": total_interconsultas,
+        "media_interconsultas_por_paciente": round(total_interconsultas / total_pacientes, 2),
+    }
+
+def media_reguladas_por_paciente(consultas: list[dict[str, Any]]) -> dict:
+    reguladas_por_paciente: dict[str, int] = defaultdict(int)
+
+    for c in consultas:
+        if CONDICAO_INTERCON in c.get("condicao", ""):
+            pid = c.get("prontuario", "")
+            if pid:
+                reguladas_por_paciente[pid] += 1
+
+    total_pacientes = len(reguladas_por_paciente)
     total_reguladas = sum(reguladas_por_paciente.values())
 
     if total_pacientes == 0:
         return {
             "total_pacientes": 0,
             "total_retornos": 0,
-            "media_retornos_por_paciente": 0.0,
+            "media_reguladas_por_paciente": 0.0,
         }
-    media_retornos_por_paciente = round(total_retornos / total_pacientes, 2)
-    media_interconsultas_por_paciente = round(total_interconsultas / total_pacientes, 2)
-    media_reguladas_por_paciente = round(total_reguladas / total_pacientes, 2)
+
     return {
         "total_pacientes": total_pacientes,
-        "total_retornos": total_retornos,
-        "media_por_paciente": {
-            "Retornos:": media_retornos_por_paciente,
-            "Interconsultas:": media_interconsultas_por_paciente,
-            "Reguladas:": media_reguladas_por_paciente
-        }
+        "total_reguladas": total_reguladas,
+        "media_reguladas_por_paciente": round(total_reguladas / total_pacientes, 2),
     }
-
 
 def intervalo_medio_regulada_primeiro_retorno(consultas: list[dict[str, Any]]) -> dict:
     """
@@ -306,38 +312,52 @@ def intervalo_medio_retornos_consecutivos(consultas: list[dict[str, Any]]) -> di
     }
 
 
-# essa é uma métrica mais geral, não deve estar dentro do módulo consultas.
-# ainda não foi utilizada
-def encaminhamentos_por_consulta_regulada(consultas: list[dict[str, Any]]) -> dict:
+def encaminhamentos_por_consulta_regulada(
+    consultas: list[dict[str, Any]]
+) -> dict:
     """
-    Após cada consulta regulada, verifica qual o próximo tipo de evento
-    do mesmo paciente (retorno, interconsulta, etc.) e conta as ocorrências.
+    para cada consulta regulada identifica o primeiro encaminhamento
+    subsequente do mesmo paciente.
     """
+
     por_paciente: dict[str, list[dict]] = defaultdict(list)
-    for c in consultas:
-        prontuario = c.get("prontuario", "")
+
+    for consulta in consultas:
+        prontuario = consulta.get("prontuario")
         if prontuario:
-            por_paciente[prontuario].append(c)
+            por_paciente[prontuario].append(consulta)
 
     encaminhamentos: dict[str, int] = defaultdict(int)
     total_reguladas = 0
 
-    for prontuario, eventos in por_paciente.items():
-        eventos_ord = sorted(
-            eventos,
-            key=lambda e: _parse_dt(e.get("data_hora_realizacao", "")) or datetime.max,
+    for eventos in por_paciente.values():
+
+        eventos.sort(
+            key=lambda e: _parse_dt(e.get("data_hora_realizacao", "")) or datetime.max
         )
-        for i, ev in enumerate(eventos_ord):
-            if CONDICAO_REGULADA not in ev.get("condicao", ""):
+
+        for i, evento in enumerate(eventos):
+
+            if CONDICAO_REGULADA not in evento.get("condicao", ""):
                 continue
+
             total_reguladas += 1
-            # Próximo evento do mesmo paciente
-            if i + 1 < len(eventos_ord):
-                proximo = eventos_ord[i + 1].get("condicao", "SEM SEGUIMENTO").strip()
-                encaminhamentos[proximo] += 1
-            else:
-                encaminhamentos["SEM SEGUIMENTO"] += 1
-                
+
+            for prox in eventos[i + 1:]:
+
+                condicao = prox.get("condicao", "").upper()
+
+                if CONDICAO_RETORNO in condicao:
+                    encaminhamentos["RETORNO"] += 1
+
+                    break
+
+                if CONDICAO_INTERCON in condicao:
+                    encaminhamentos["INTERCONSULTA"] += 1
+
+                    break
+
+
     return {
         "total_reguladas": total_reguladas,
         "encaminhamentos": dict(
@@ -400,7 +420,9 @@ def calcular_todas_metricas_consultas(consultas: list[dict[str, Any]]) -> dict:
         "proporcao_consultas_reguladas":                        proporcao_consultas_reguladas(consultas),
         "intervalo_medio_regulada_primeiro_retorno":            intervalo_medio_regulada_primeiro_retorno(consultas),
         "intervalo_medio_retornos_consecutivos":                intervalo_medio_retornos_consecutivos(consultas),
-        "media_reguladas_interconsulta_retornos_por_paciente":  media_reguladas_interconsulta_retornos_por_paciente(consultas),
+        "media_reguladas_por_paciente":                         media_reguladas_por_paciente(consultas),
+        "media_retornos_por_paciente":                          media_retornos_por_paciente(consultas),
+        "media_interconsultas_por_paciente":                    media_interconsultas_por_paciente(consultas),
         "proporcao_consultas_sem_prontuario":                   proporcao_consultas_sem_prontuario(consultas),
         "porcentagem_faltas_profissionais":                     porcentagem_faltas_profissional(consultas),          
         "encaminhamentos_por_consulta_regulada":                encaminhamentos_por_consulta_regulada(consultas),
@@ -422,7 +444,9 @@ _METRICAS_INDICADORES: list[tuple[str, str, str]] = [
     ("proporcao_consultas_reguladas",         "Porcentagem de consultas reguladas",       "proporcao"),
     ("proporcao_interconsultas",              "Porcentagem de interconsultas",             "proporcao"),
     ("proporcao_consultas_retorno",           "Porcentagem de consultas de retorno",       "proporcao"),
-    ("media_reguladas_interconsulta_retornos_por_paciente",           "Média de consultas por paciente",          "media_por_paciente"),
+    ("media_reguladas_por_paciente", "Consultas reguladas por paciente", "media_reguladas_por_paciente"),
+    ("media_retornos_por_paciente", "Consultas retorno por paciente", "media_retornos_por_paciente"),
+    ("media_interconsultas_por_paciente", "Interconsultas por paciente", "media_interconsultas_por_paciente"),
     ("encaminhamentos_por_consulta_regulada", "Encaminhamento frequente por consulta regulada", "encaminhamentos"),
     ("intervalo_medio_regulada_primeiro_retorno", "Intervalo médio da consulta regulada ao primeiro retorno", "media_dias"),
     ("intervalo_medio_retornos_consecutivos", "Intervalo médio de retornos consecutivos", "media_dias"),

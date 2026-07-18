@@ -10,7 +10,7 @@ from ..helpers.total_pacientes_eventos import total_pacientes_eventos
 from ..metrics.metricas_entradas import tempo_medio_cadastro_evento, taxa_prontuarios_inertes
 from ..metrics.metricas_consultas import metricas_consultas_como_indicadores
 from ..metrics.metricas_cirurgias import metricas_cirurgias
-from ..metrics.metricas_exames import tempo_medio_solicitacao_realizacao
+from ..metrics.metricas_exames import tempo_medio_solicitacao_realizacao, proporcao_exames, exames_por_paciente
 
 class DashboardController:
     def __init__(
@@ -85,7 +85,6 @@ class DashboardController:
             exames=exames_filtrados,
             internacoes=internacoes_filtradas,
             cirurgias=cirurgias_filtradas
-        
         )
         
         
@@ -127,9 +126,15 @@ class DashboardController:
             if c["condicao"].split()[0] == "Regulado"
         ]
 
-        #tempo médio entre solicitação e realização de exames
+        
         tempo_medio_soli_real = tempo_medio_solicitacao_realizacao(exames_filtrados) 
-        #proporção de exames pendentes
+        
+        proporcao_exames_ambulatoriais = \
+            (proporcao_exames(exames=exames_filtrados, tipo="ambulatorial"))["proporcao_exames"]
+            
+        exames_amb_por_pacientes = \
+            (exames_por_paciente(exames=exames_filtrados, tipo="ambulatorial"))["exames_por_pac"]
+        
         exames_pendentes_proporcao = round((len(exames_filtrados) - len(exames_concluidos))/len(exames_filtrados), 2)
         proporcao_exames_regulados = len(exames_regulados)/len(exames_filtrados)
         
@@ -181,6 +186,8 @@ class DashboardController:
                     {"nome": "Proporção de exames regulados", "valor": proporcao_exames_regulados},
                     {"nome": "Tempo médio de solicitação até realização", "valor": tempo_medio_soli_real},
                     {"nome": "Proporção de exames pendentes", "valor": exames_pendentes_proporcao},
+                    {"nome": "Exames ambulatoriais por paciente", "valor": exames_amb_por_pacientes},
+                    {"nome": "Proporção de exames ambulatoriais", "valor": proporcao_exames_ambulatoriais}
                 ],
             },
 
