@@ -87,7 +87,7 @@
               class="flex flex-col items-center justify-center rounded-lg bg-slate-900/50 p-3 text-center"
             >
               <span class="text-2xl font-bold text-white">{{ formatarValor(ind.valor) }}</span>
-              <span class="mt-1 text-xs text-slate-400">{{ ind.nome }}</span>
+              <span class="mt-1 text-xs text-slate-400">{{ rotuloIndicador(item.spec, ind.nome) }}</span>
             </div>
           </div>
 
@@ -157,12 +157,11 @@ type GraficoSpec = {
   id: string;
   titulo: string;
   tipo: TipoGrafico;
-  // nomes exatos ("nome") dos indicadores do backenfd que compõem este gráfico
   indicadorNomes: string[];
-  // para 'comparacao-proporcao': adiciona categoria "Outros" = 100 - soma dos indicadores listados
   incluirOutros?: boolean;
-  // para 'comparacao-dias': unidade exibida no eixo/tooltip (ex.: "dias", "horas")
   unidade?: string;
+  // NOVO: mapa opcional "nome real do indicador" -> "rótulo exibido no gráfico"
+  rotulos?: Record<string, string>;
 };
 
 type SubmoduloSpec = {
@@ -191,6 +190,8 @@ const props = defineProps<{
 // Estrutura de módulos/subprocessos/gráficos, seguindo o documento de
 // especificação e o mapeamento confirmado indicador-a-indicador.
 // -------------------------------------------------------------------------
+const rotuloIndicador = (spec: GraficoSpec, nomeReal: string): string =>
+  spec.rotulos?.[nomeReal] ?? nomeReal;
 
 const MODULOS: ModuloSpec[] = [
   {
@@ -239,6 +240,11 @@ const MODULOS: ModuloSpec[] = [
               'Porcentagem de interconsultas',
             ],
             incluirOutros: true,
+            rotulos: {
+              'Porcentagem de consultas reguladas': 'Reguladas',
+              'Porcentagem de consultas de retorno': 'Retornos',
+              'Porcentagem de interconsultas': 'Interconsultas',
+            },
           },
           {
             id: 'consultas-encaminhamentos',
@@ -534,7 +540,7 @@ const DATALABELS_BASE = {
 // --- comparação de proporções (0-100%), com "Outros" residual opcional ---
 
 const buildComparacaoProporcaoData = (item: GraficoResolvido) => {
-  const labels = item.indicadores.map((i) => i.nome);
+  const labels = item.indicadores.map((i) => rotuloIndicador(item.spec, i.nome));
   const valores = item.indicadores.map((i) => numeroDoValor(i.valor as number | string));
 
   if (item.spec.incluirOutros) {
@@ -588,7 +594,7 @@ const chartOptionsComparacaoProporcao = {
 // --- comparação de valores na mesma unidade (dias/horas) ---
 
 const buildComparacaoValorData = (item: GraficoResolvido) => ({
-  labels: item.indicadores.map((i) => i.nome),
+  labels: item.indicadores.map((i) => rotuloIndicador(item.spec, i.nome)),
   datasets: [
     {
       data: item.indicadores.map((i) => numeroDoValor(i.valor as number | string)),

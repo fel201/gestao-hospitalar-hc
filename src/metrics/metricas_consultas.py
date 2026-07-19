@@ -311,6 +311,57 @@ def intervalo_medio_retornos_consecutivos(consultas: list[dict[str, Any]]) -> di
         "media_dias": f"{media_dias} dias"
     }
 
+# Tempo médio entre a criação do prontuário e o agendamento da consulta
+def tempo_medio_criacao_prontuario_primeiro_agendamento(pacientes, consultas):
+    """
+    Calcula o tempo médio (em horas) entre a criação do prontuário
+    (data_cadastro do paciente) e a realização da primeira consulta
+    associada a esse prontuário.
+
+    pacientes: lista de dicts com, no mínimo, "prontuario" e "data_cadastro"
+    consultas: lista de dicts com, no mínimo, "prontuario" e "data_hora_realizacao"
+    """
+    # Agrupa as consultas por prontuário, guardando apenas a primeira
+    # (menor data_hora_realizacao) de cada uma.
+    primeira_consulta_por_prontuario = {}
+
+    for consulta in consultas:
+        prontuario = consulta["prontuario"]
+        data_hora = datetime.strptime(consulta["data_hora_realizacao"], "%d/%m/%Y, %H:%M")
+
+        atual = primeira_consulta_por_prontuario.get(prontuario)
+        if atual is None or data_hora < atual["data_hora_dt"]:
+            primeira_consulta_por_prontuario[prontuario] = {
+                "data_hora_realizacao": consulta["data_hora_realizacao"],
+                "data_hora_dt": data_hora,
+            }
+
+    tempo_total = 0
+    quantidade = 0
+
+    for paciente in pacientes:
+        prontuario = paciente["prontuario"]
+        primeiro_evento = primeira_consulta_por_prontuario.get(prontuario)
+
+        # paciente sem nenhuma consulta agendada/realizada -> não entra na média
+        if primeiro_evento is None:
+            continue
+
+        data_cadastro = f'{paciente["data_cadastro"]}, 00:00'
+
+        tempo_total += dias_entre(
+            data_cadastro,
+            primeiro_evento["data_hora_realizacao"]
+        )
+        quantidade += 1
+
+    if quantidade == 0:
+        return 0
+
+    return {
+        "tempo_medio": round(tempo_total / quantidade, 2)
+    }    
+    
 
 def encaminhamentos_por_consulta_regulada(
     consultas: list[dict[str, Any]]
@@ -412,7 +463,7 @@ def proporcao_pacientes_com_interconsulta(consultas: list[dict[str, Any]]) -> di
 
 
 # função de conveniência: roda todas as métricas de uma vez
-def calcular_todas_metricas_consultas(consultas: list[dict[str, Any]]) -> dict:
+def calcular_todas_metricas_consultas(consultas: list[dict[str, Any]], pacientes: list[dict[str, Any]]) -> dict:
     """
     executa todas as métricas acima e retorna um dicionário consolidado.
     """
@@ -424,6 +475,7 @@ def calcular_todas_metricas_consultas(consultas: list[dict[str, Any]]) -> dict:
         "media_retornos_por_paciente":                          media_retornos_por_paciente(consultas),
         "media_interconsultas_por_paciente":                    media_interconsultas_por_paciente(consultas),
         "proporcao_consultas_sem_prontuario":                   proporcao_consultas_sem_prontuario(consultas),
+        "tempo_medio_criacao_prontuario_primeiro_agendamento":  tempo_medio_criacao_prontuario_primeiro_agendamento(pacientes, consultas),
         "porcentagem_faltas_profissionais":                     porcentagem_faltas_profissional(consultas),          
         "encaminhamentos_por_consulta_regulada":                encaminhamentos_por_consulta_regulada(consultas),
         "porcentagem_faltas_pacientes":                         porcentagem_faltas_pacientes(consultas),
@@ -447,6 +499,7 @@ _METRICAS_INDICADORES: list[tuple[str, str, str]] = [
     ("media_reguladas_por_paciente", "Consultas reguladas por paciente", "media_reguladas_por_paciente"),
     ("media_retornos_por_paciente", "Consultas retorno por paciente", "media_retornos_por_paciente"),
     ("media_interconsultas_por_paciente", "Interconsultas por paciente", "media_interconsultas_por_paciente"),
+    ("tempo_medio_criacao_prontuario_primeiro_agendamento", "Tempo medio entre a criação de prontuário e o primeiro agendamento", "tempo_medio"),
     ("encaminhamentos_por_consulta_regulada", "Encaminhamento frequente por consulta regulada", "encaminhamentos"),
     ("intervalo_medio_regulada_primeiro_retorno", "Intervalo médio da consulta regulada ao primeiro retorno", "media_dias"),
     ("intervalo_medio_retornos_consecutivos", "Intervalo médio de retornos consecutivos", "media_dias"),
@@ -459,8 +512,8 @@ _METRICAS_INDICADORES: list[tuple[str, str, str]] = [
 
 # só pra não repetir isso dentro da função dnv
 
-def metricas_consultas_como_indicadores(consultas: list[dict[str, Any]]) -> list[dict]:
-    metricas = calcular_todas_metricas_consultas(consultas)
+def metricas_consultas_como_indicadores(consultas: list[dict[str, Any]], pacientes: list) -> list[dict]:
+    metricas = calcular_todas_metricas_consultas(consultas, pacientes)
 
     indicadores = []
 

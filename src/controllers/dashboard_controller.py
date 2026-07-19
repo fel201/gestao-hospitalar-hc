@@ -117,7 +117,7 @@ class DashboardController:
             cirurgias=cirurgias
         )
         # métricas de consultas calculadas
-        indicadores_consultas = metricas_consultas_como_indicadores(consultas_filtradas)
+        indicadores_consultas = metricas_consultas_como_indicadores(consultas_filtradas, pacientes=pacientes)
         indicadores_cirurgias = metricas_cirurgias(cirurgias_filtradas, total_pacientes)
         #proporção de exames regulados
         exames_regulados = [
