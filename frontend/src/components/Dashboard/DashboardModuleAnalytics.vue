@@ -271,7 +271,7 @@ const MODULOS: ModuloSpec[] = [
             id: 'consultas-tempo-prontuario-agendamento',
             titulo: 'Tempo médio entre a criação do prontuário e o agendamento da consulta',
             tipo: 'valor-simples',
-            indicadorNomes: ['Tempo médio entre prontuário e agendamento'], // ainda não existe no backend
+            indicadorNomes: ['Tempo medio entre a criação de prontuário e o primeiro agendamento'], // ainda não existe no backend
             unidade: 'horas',
           },
           {

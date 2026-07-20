@@ -30,6 +30,7 @@ class InternacoesCsvProvider:
             'unf_sigla': row.get('unf_sigla', ''),
             'especialidade': row.get('esp_nome_especialidade', ''),
             'ind_saida_pac': row.get('ind_saida_pac', ''),
+            'situacao': row.get('situacao', '')
         }
 
     async def listar_internacoes(self) -> List[Dict[str, Any]]:

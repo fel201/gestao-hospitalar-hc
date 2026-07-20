@@ -8,9 +8,9 @@ from ..helpers.jornada_utils import calcular_diferenca_horas
 from ..helpers.filtrar_eventos import filtrar_eventos
 from ..helpers.total_pacientes_eventos import total_pacientes_eventos
 from ..metrics.metricas_entradas import tempo_medio_cadastro_evento, taxa_prontuarios_inertes
-from ..metrics.metricas_consultas import metricas_consultas_como_indicadores
+from ..metrics.metricas_consultas import metricas_consultas_como_indicadores, eventos_consultas
 from ..metrics.metricas_cirurgias import metricas_cirurgias
-from ..metrics.metricas_exames import tempo_medio_solicitacao_realizacao, proporcao_exames, exames_por_paciente
+from ..metrics.metricas_exames import metricas_exames
 
 class DashboardController:
     def __init__(
@@ -47,18 +47,11 @@ class DashboardController:
         cirurgias_filtradas =   filtrar_eventos(evento="cirurgia", dados=cirurgias, especialidade=especialidade,
 )
         # consultas 
-        consultas_primeira_vez = [
-            c for c in consultas_filtradas
-            if "PRIMEIRA CONSULTA" in c["condicao"]
-        ]
-        consultas_concluidas = [
-            c for c in consultas_filtradas
-            if "PACIENTE ATENDIDO" in c["retorno"]
-        ]
-        consultas_com_diagnostico = [
-            c for c in consultas_concluidas
-            if c["cid"] != ""
-        ]
+
+        # consultas_com_diagnostico = [
+        #     c for c in consultas_concluidas
+        #     if c["cid"] != ""
+        # ]
 
         # exames 
         exames_concluidos = [
@@ -78,7 +71,6 @@ class DashboardController:
                 sum(int(i["tempo_permanencia_dias"]) for i in internacoes_concluidas)
                 / len(internacoes_concluidas)
             )
-
         # totais e KPIs 
         total_pacientes  = total_pacientes_eventos(
             consultas=consultas_filtradas,
@@ -94,12 +86,13 @@ class DashboardController:
         total_internacoes = len(internacoes_filtradas)
         total_eventos    = total_consultas + total_exames + total_internacoes + total_cirurgias
 
-        taxa_conclusao = (
-            (len(consultas_concluidas) + len(exames_concluidos) + len(internacoes_concluidas))
-            / (total_eventos or 1)
-        )
+        taxa_conclusao_exames = len(exames_concluidos)/len(exames_filtrados)
+        taxa_conclusao_internacoes = len(internacoes_concluidas)/len(internacoes_filtradas)
+        # taxa_conclusao = 
+        #     (len(consultas_concluidas) + len(exames_concluidos) + len(internacoes_concluidas)
+        #     / (total_eventos or 1)
+        # )
         
-        consultas_por_paciente = round(total_consultas / max(total_pacientes, 1), 2)
         # métricas de entrada
         
         tempo_medio_cad_evento = tempo_medio_cadastro_evento(
@@ -116,8 +109,9 @@ class DashboardController:
             pacientes=pacientes,
             cirurgias=cirurgias
         )
-        # métricas de consultas calculadas
+        # métricas e eventos de consultas calculados
         indicadores_consultas = metricas_consultas_como_indicadores(consultas_filtradas, pacientes=pacientes)
+        ev_consultas = eventos_consultas(consultas=consultas_filtradas)
         indicadores_cirurgias = metricas_cirurgias(cirurgias_filtradas, total_pacientes)
         #proporção de exames regulados
         exames_regulados = [
@@ -126,14 +120,7 @@ class DashboardController:
             if c["condicao"].split()[0] == "Regulado"
         ]
 
-        
-        tempo_medio_soli_real = tempo_medio_solicitacao_realizacao(exames_filtrados) 
-        
-        proporcao_exames_ambulatoriais = \
-            (proporcao_exames(exames=exames_filtrados, tipo="ambulatorial"))["proporcao_exames"]
-            
-        exames_amb_por_pacientes = \
-            (exames_por_paciente(exames=exames_filtrados, tipo="ambulatorial"))["exames_por_pac"]
+        m_exames = metricas_exames(exames=exames)        
         
         exames_pendentes_proporcao = round((len(exames_filtrados) - len(exames_concluidos))/len(exames_filtrados), 2)
         proporcao_exames_regulados = len(exames_regulados)/len(exames_filtrados)
@@ -146,7 +133,7 @@ class DashboardController:
                 "total_pacientes":    total_pacientes,
                 "total_eventos":      total_eventos,
                 "tempo_medio_jornada": tempo_medio_permanencia_internacao,
-                "taxa_conclusao":     taxa_conclusao,
+                # "taxa_conclusao":     taxa_conclusao,
             },
 
             "entrada": {
@@ -157,38 +144,31 @@ class DashboardController:
                 ],
                 "indicadores": [
                     tempo_medio_cad_evento,
-                    taxa_prontuarios_ausentes
+                    taxa_prontuarios_ausentes,
                 ],
             },
 
             "consultas": {
                 "titulo":       "Consultas",
                 "total_eventos": total_consultas,
-                "eventos": [
-                    {"nome": "Consultas", "valor": total_consultas},
-                    {"nome": "Primeiras consultas", "valor": len(consultas_primeira_vez)}
-                ],
-                "indicadores": [
-                    {"nome": "Consultas por paciente",  "valor": consultas_por_paciente},
-                    {"nome": "Consultas concluídas",    "valor": len(consultas_concluidas)},
-                    *indicadores_consultas,
-                ],
+                "eventos": ev_consultas,
+                "indicadores": [*indicadores_consultas],
             },
 
             "exames": {
                 "titulo":       "Exames",
                 "total_eventos": total_exames,
                 "eventos": [
-                    {"nome": "Exames", "valor": total_exames},
-                    {"nome": "Diagnósticos registrados", "valor": len(consultas_com_diagnostico)},
+                    {"nome": "Exames registrados", "valor": total_exames},
+                    {"nome": "Exames concluídos", "valor": len(exames_concluidos)}
                 ],
-                "indicadores": [
-                    {"nome": "Proporção de exames regulados", "valor": proporcao_exames_regulados},
-                    {"nome": "Tempo médio de solicitação até realização", "valor": tempo_medio_soli_real},
-                    {"nome": "Proporção de exames pendentes", "valor": exames_pendentes_proporcao},
-                    {"nome": "Exames ambulatoriais por paciente", "valor": exames_amb_por_pacientes},
-                    {"nome": "Proporção de exames ambulatoriais", "valor": proporcao_exames_ambulatoriais}
-                ],
+                "indicadores": m_exames
+                    # {"nome": "Taxa de conclusão de exames", "valor": taxa_conclusao_exames},
+                    # {"nome": "Proporção de exames regulados", "valor": proporcao_exames_regulados},
+                    # {"nome": "Tempo médio de solicitação até realização", "valor": tempo_medio_soli_real},
+                    # {"nome": "Proporção de exames pendentes", "valor": exames_pendentes_proporcao},
+                    # {"nome": "Exames ambulatoriais por paciente", "valor": exames_amb_por_pacientes},
+                    # {"nome": "Proporção de exames ambulatoriais", "valor": proporcao_exames_ambulatoriais}
             },
 
             "internacao": {
@@ -196,21 +176,20 @@ class DashboardController:
                 "total_eventos": total_internacoes,
                 "eventos": [
                     {"nome": "Internações", "valor": total_internacoes},
+                    {"nome": "Taxa de internações concluídas", "valor": taxa_conclusao_internacoes}
                 ],
                 "indicadores": [
                     {"nome": "Tempo médio de permanência (dias)", "valor": tempo_medio_permanencia_internacao},
+                    
                 ],
             },
             "cirurgias": {
                 "titulo": "Cirurgias",
                 "total_eventos": total_cirurgias,
                 "eventos": [
-                    {
-                        "nome": "Cirurgias",
-                        "valor": total_cirurgias,
-                    },
+                    {"nome": "Cirurgias registradas", "valor": total_cirurgias},
                 ],
-                "indicadores": indicadores_cirurgias,
+                "indicadores": indicadores_cirurgias
             },
         }
 
