@@ -100,8 +100,6 @@ def concentracao_exames_por_paciente_ativo(exames: list[dict, any], tipo: str) -
         
     qtd = qtd_exames_tipo(exames=exames, tipo=tipo)
     exames_amb_por_pac = round(qtd/len(pacientes), 2)
-    print(qtd, tipo)
-    print(len(pacientes),"pacientes")
     return exames_amb_por_pac
     
 def dicionario_metricas_exames(exames):

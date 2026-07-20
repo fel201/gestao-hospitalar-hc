@@ -11,7 +11,7 @@ from ..metrics.metricas_entradas import tempo_medio_cadastro_evento, taxa_prontu
 from ..metrics.metricas_consultas import metricas_consultas_como_indicadores, eventos_consultas
 from ..metrics.metricas_cirurgias import metricas_cirurgias
 from ..metrics.metricas_exames import metricas_exames
-
+from ..metrics.metricas_internacoes import tempo_medio_permanencia_por_especialidade
 class DashboardController:
     def __init__(
         self,
@@ -64,13 +64,14 @@ class DashboardController:
             i for i in internacoes_filtradas
             if i["ind_saida_pac"] == 'S'
         ]
-
+        
         tempo_medio_permanencia_internacao = 0
         if internacoes_concluidas:
             tempo_medio_permanencia_internacao = round(
                 sum(int(i["tempo_permanencia_dias"]) for i in internacoes_concluidas)
                 / len(internacoes_concluidas)
             )
+        
         # totais e KPIs 
         total_pacientes  = total_pacientes_eventos(
             consultas=consultas_filtradas,
@@ -85,7 +86,6 @@ class DashboardController:
         total_exames     = len(exames_filtrados)
         total_internacoes = len(internacoes_filtradas)
         total_eventos    = total_consultas + total_exames + total_internacoes + total_cirurgias
-
         taxa_conclusao_exames = len(exames_concluidos)/len(exames_filtrados)
         taxa_conclusao_internacoes = len(internacoes_concluidas)/len(internacoes_filtradas)
         # taxa_conclusao = 
@@ -114,16 +114,10 @@ class DashboardController:
         ev_consultas = eventos_consultas(consultas=consultas_filtradas)
         indicadores_cirurgias = metricas_cirurgias(cirurgias_filtradas, total_pacientes)
         #proporção de exames regulados
-        exames_regulados = [
-            c 
-            for c in exames_filtrados
-            if c["condicao"].split()[0] == "Regulado"
-        ]
 
         m_exames = metricas_exames(exames=exames)        
         
         exames_pendentes_proporcao = round((len(exames_filtrados) - len(exames_concluidos))/len(exames_filtrados), 2)
-        proporcao_exames_regulados = len(exames_regulados)/len(exames_filtrados)
         
         # Dashboard 
         dashboard = {
@@ -163,24 +157,19 @@ class DashboardController:
                     {"nome": "Exames concluídos", "valor": len(exames_concluidos)}
                 ],
                 "indicadores": m_exames
-                    # {"nome": "Taxa de conclusão de exames", "valor": taxa_conclusao_exames},
-                    # {"nome": "Proporção de exames regulados", "valor": proporcao_exames_regulados},
-                    # {"nome": "Tempo médio de solicitação até realização", "valor": tempo_medio_soli_real},
-                    # {"nome": "Proporção de exames pendentes", "valor": exames_pendentes_proporcao},
-                    # {"nome": "Exames ambulatoriais por paciente", "valor": exames_amb_por_pacientes},
-                    # {"nome": "Proporção de exames ambulatoriais", "valor": proporcao_exames_ambulatoriais}
+                    # {"nome": "Proporção de exames pendentes", "valor": exames_pendentes_proporcao}
             },
 
             "internacao": {
                 "titulo":       "Internações",
                 "total_eventos": total_internacoes,
                 "eventos": [
-                    {"nome": "Internações", "valor": total_internacoes},
-                    {"nome": "Taxa de internações concluídas", "valor": taxa_conclusao_internacoes}
+                    {"nome": "Internações registradas", "valor": total_internacoes},
+                    {"nome": "Internações concluidas", "valor": len(internacoes_concluidas)}
                 ],
                 "indicadores": [
                     {"nome": "Tempo médio de permanência (dias)", "valor": tempo_medio_permanencia_internacao},
-                    
+                                
                 ],
             },
             "cirurgias": {
