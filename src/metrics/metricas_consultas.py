@@ -36,8 +36,14 @@ def _parse_dt(s: str) -> datetime | None:
         return None
 
 
-def consultas_por_paciente(consultas, total_pacientes):
-    return len(consultas) / total_pacientes
+def concentracao_consultas_paciente_ativo(consultas):
+    pacientes = set()
+    for c in consultas:
+        prontuario = c["prontuario"]
+        if prontuario:
+            pacientes.add(prontuario)
+    
+    return len(consultas) / len(pacientes)
 
 def consultas_primeira_vez(consultas):
     c = [
@@ -436,7 +442,7 @@ def dicionario_metricas_consultas(consultas: list[dict[str, Any]], pacientes: li
     executa todas as métricas acima e retorna um dicionário consolidado.
     """
     return {
-        "consultas_por_paciente":                               consultas_por_paciente(consultas, len(pacientes)),
+        "concentracao_consultas_paciente_ativo":                concentracao_consultas_paciente_ativo(consultas),
         "porcentagem_consultas_concluidas":                     porcentagem_consultas_concluidas(consultas),
         "porcentagem_consultas_reguladas":                      porcentagem_consultas_reguladas(consultas),
         "intervalo_medio_regulada_primeiro_retorno":            intervalo_medio_regulada_primeiro_retorno(consultas),
@@ -461,9 +467,9 @@ def dicionario_metricas_consultas(consultas: list[dict[str, Any]], pacientes: li
 # Flatten: converte o dict de métricas em lista de {nome, valor}
 # compatível com DashboardIndicadorInterface
 # Mapeamento explícito: (chave_metrica, nome_display, chave_valor)
-# Permite escolher exatamente qual campo de cada métrica expor ao frontend.
+# Permite escolher exatamente qual campo de cada métrica expor aco frontend.
 _METRICAS_INDICADORES: list[tuple[str, str]] = [
-    ("consultas_por_paciente", "Consultas por paciente"),
+    ("concentracao_consultas_paciente_ativo", "Concentração de consultas por paciente ativo"),
     ("porcentagem_consultas_concluidas", "Porcentagem de consultas concluídas em relação ao total"),
     ("porcentagem_consultas_reguladas",         "Porcentagem de consultas reguladas"),
     ("porcentagem_interconsultas",              "Porcentagem de interconsultas"),
