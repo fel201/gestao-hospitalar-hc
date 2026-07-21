@@ -5,7 +5,8 @@ from ..providers.implementations.internacoes_csv_provider import InternacoesCsvP
 from ..providers.implementations.cirurgias_csv_provider import CirurgiasCsvProvider
 from ..providers.implementations.paciente_csv_provider import PacienteCsvProvider
 from ..helpers.jornada_utils import calcular_diferenca_horas
-from ..helpers.filtrar_eventos import filtrar_eventos
+from ..helpers.filtrar_eventos import filtrar_eventos, filtrar_eventos_por_periodo
+from ..helpers.math_utils import divisao_segura
 from ..helpers.total_pacientes_eventos import total_pacientes_eventos
 from ..metrics.metricas_entradas import tempo_medio_cadastro_evento, taxa_prontuarios_inertes
 from ..metrics.metricas_consultas import metricas_consultas_como_indicadores, eventos_consultas
@@ -40,17 +41,24 @@ class DashboardController:
             self.paciente_provider.listar_pacientes()
         )
         #  filtros por especialidade 
-        consultas_filtradas   = filtrar_eventos(evento='consulta',   dados=consultas,   especialidade=especialidade)
-        exames_filtrados      = filtrar_eventos(evento='exame',      dados=exames,      especialidade=especialidade)
-        internacoes_filtradas = filtrar_eventos(evento='internacao',  dados=internacoes, especialidade=especialidade)
-        cirurgias_filtradas =   filtrar_eventos(evento="cirurgia", dados=cirurgias, especialidade=especialidade,
-)
-        # consultas 
 
-        # consultas_com_diagnostico = [
-        #     c for c in consultas_concluidas
-        #     if c["cid"] != ""
-        # ]
+
+        consultas_filtradas = filtrar_eventos_por_periodo(
+            filtrar_eventos(evento='consulta', dados=consultas, especialidade=especialidade),
+            data_inicio, data_fim
+        )
+        exames_filtrados = filtrar_eventos_por_periodo(
+            filtrar_eventos(evento='exame', dados=exames, especialidade=especialidade),
+            data_inicio, data_fim
+        )
+        internacoes_filtradas = filtrar_eventos_por_periodo(
+            filtrar_eventos(evento='internacao', dados=internacoes, especialidade=especialidade),
+            data_inicio, data_fim
+        )
+        cirurgias_filtradas = filtrar_eventos_por_periodo(
+            filtrar_eventos(evento="cirurgia", dados=cirurgias, especialidade=especialidade),
+            data_inicio, data_fim
+        )
 
         # exames 
         exames_concluidos = [
@@ -79,14 +87,12 @@ class DashboardController:
             cirurgias=cirurgias_filtradas
         )
         
-        
         total_cirurgias = len(cirurgias_filtradas)
         total_consultas  = len(consultas_filtradas)
         total_exames     = len(exames_filtrados)
         total_internacoes = len(internacoes_filtradas)
         total_eventos    = total_consultas + total_exames + total_internacoes + total_cirurgias
-        taxa_conclusao_exames = len(exames_concluidos)/len(exames_filtrados)
-        taxa_conclusao_internacoes = len(internacoes_concluidas)/len(internacoes_filtradas)
+        print(total_eventos)
         # taxa_conclusao = 
         #     (len(consultas_concluidas) + len(exames_concluidos) + len(internacoes_concluidas)
         #     / (total_eventos or 1)
@@ -115,7 +121,10 @@ class DashboardController:
         #proporção de exames regulados
         m_exames = metricas_exames(exames=exames)        
         
-        exames_pendentes_proporcao = round((len(exames_filtrados) - len(exames_concluidos))/len(exames_filtrados), 2)
+        exames_pendentes_proporcao = round(
+            divisao_segura(len(exames_filtrados) - len(exames_concluidos), len(exames_filtrados)),
+            2
+        )
         
         # Dashboard 
         dashboard = {

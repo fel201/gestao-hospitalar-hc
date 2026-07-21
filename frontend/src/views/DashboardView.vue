@@ -11,8 +11,8 @@ import type { DashboardInterface } from "../interfaces/dashboard.ts";
 // são apenas placeholders
 
 const specialty = ref("Cardiologia");
-const startDate = ref("2024-01-01");
-const endDate = ref("2024-06-30");
+const startDate = ref("2025-01-01");
+const endDate = ref("2026-06-30");
 
 const dashboard = ref<DashboardInterface>();
 const loading = ref(false);

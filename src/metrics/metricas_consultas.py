@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 from ..helpers.jornada_utils import calcular_diferenca_horas, dias_entre
+from ..helpers.math_utils import divisao_segura
 from datetime import datetime
 from collections import defaultdict
 from typing import Any
@@ -42,8 +43,8 @@ def concentracao_consultas_paciente_ativo(consultas):
         prontuario = c["prontuario"]
         if prontuario:
             pacientes.add(prontuario)
-    
-    return len(consultas) / len(pacientes)
+
+    return divisao_segura(len(consultas), len(pacientes))
 
 def consultas_primeira_vez(consultas):
     c = [
@@ -61,48 +62,31 @@ def consultas_concluidas(consultas):
 
 def porcentagem_consultas_concluidas(consultas):
     consultas_con = consultas_concluidas(consultas=consultas)
-    taxa = round(len(consultas_con)/len(consultas)*100, 2)
+    taxa = round(divisao_segura(len(consultas_con), len(consultas)) * 100, 2)
     return f"{taxa}%"
     
 
-def porcentagem_consultas_reguladas(consultas: list[dict[str, Any]]) -> dict:
-    """
-    Calcula a proporção de consultas com Condição = 'CONSULTA REGULADA'
-    em relação ao total.
-    """
+def porcentagem_consultas_reguladas(consultas: list[dict[str, Any]]) -> str:
     total = len(consultas)
-    if total == 0:
-        return {"total": 0, "reguladas": 0, "proporcao": 0.0}
-
     reguladas = sum(
         1 for c in consultas
-        if CONDICAO_REGULADA in c.get("condicao", "") 
+        if CONDICAO_REGULADA in c.get("condicao", "")
     )
-    proporcao = round((reguladas/total)*100, 2)
+    proporcao = round(divisao_segura(reguladas, total) * 100, 2)
     return f"{proporcao}%"
 
-def porcentagem_faltas_pacientes(consultas: list[dict[str, Any]]) -> dict:
+def porcentagem_faltas_pacientes(consultas: list[dict[str, Any]]) -> str:
     total = len(consultas)
-    if total == 0:
-        return {
-            "total": 0, "porcentagem_faltas_pacientes": 0.0,
-        }
-
     faltas = sum(1 for c in consultas if RETORNO_PACIENTE_FALTOU in c.get("retorno", ""))
-    porcentagem_faltas_pacientes = round((faltas / total)*100, 2)
-    return f"{porcentagem_faltas_pacientes}%"
+    porcentagem = round(divisao_segura(faltas, total) * 100, 2)
+    return f"{porcentagem}%"
 
 
-def porcentagem_faltas_profissional(consultas: list[dict[str, Any]]) -> dict:
+def porcentagem_faltas_profissional(consultas: list[dict[str, Any]]) -> str:
     total = len(consultas)
-    if total == 0:
-        return {
-            "total": 0, "porcentagem_faltas_profissionais": 0
-        }
-    
     faltas = sum(1 for c in consultas if RETORNO_PROFISSIONAL_FALTOU in c.get("retorno", ""))
-    porcentagem_faltas_profissionais = round((faltas / total)*100, 2)
-    return f"{porcentagem_faltas_profissionais}%"
+    porcentagem = round(divisao_segura(faltas, total) * 100, 2)
+    return f"{porcentagem}%"
 
 def tempo_medio_agendamento_realizacao(consultas: list[dict[str, Any]]) -> dict:
     """
@@ -125,36 +109,20 @@ def tempo_medio_agendamento_realizacao(consultas: list[dict[str, Any]]) -> dict:
     media_horas = round(media, 4)
     return media_horas
 
-def porcentagem_consultas_sem_prontuario(consultas: list[dict[str, Any]]) -> dict:
+def porcentagem_consultas_sem_prontuario(consultas: list[dict[str, Any]]) -> str:
     total = len(consultas)
-    if total == 0: return {"total": 0, "proporcao_sem_prontuario": 0}
-    
-    consultas_sem_prontuario = []
-    for c in consultas:
-        if c["prontuario"] == "":
-            consultas_sem_prontuario.append(c)
-
-    proporcao = round((len(consultas_sem_prontuario)/total)*100, 2)
+    consultas_sem_prontuario = [c for c in consultas if c["prontuario"] == ""]
+    proporcao = round(divisao_segura(len(consultas_sem_prontuario), total) * 100, 2)
     return f"{proporcao}%"
     
-def porcentagem_consultas_retorno(consultas: list[dict[str, Any]]) -> dict:
-    """
-    Proporção de consultas com Condição = 'RETORNO' sobre o total.
-    """
+def porcentagem_consultas_retorno(consultas: list[dict[str, Any]]) -> str:
     total = len(consultas)
-    if total == 0:
-        return {"total": 0, "retornos": 0, "proporcao": 0.0}
-
     retornos = sum(1 for c in consultas if CONDICAO_RETORNO in c.get("condicao", ""))
-    proporcao = round((retornos/total)*100, 2)
+    proporcao = round(divisao_segura(retornos, total) * 100, 2)
     return f"{proporcao}%"
 
-def media_retornos_por_paciente(consultas: list[dict[str, Any]]) -> dict:
-    """
-    Calcula o número médio de consultas de retorno por paciente.
-    """
+def media_retornos_por_paciente(consultas: list[dict[str, Any]]) -> float:
     retornos_por_paciente: dict[str, int] = defaultdict(int)
-
     for c in consultas:
         if CONDICAO_RETORNO in c.get("condicao", ""):
             pid = c.get("prontuario", "")
@@ -163,16 +131,7 @@ def media_retornos_por_paciente(consultas: list[dict[str, Any]]) -> dict:
 
     total_pacientes = len(retornos_por_paciente)
     total_retornos = sum(retornos_por_paciente.values())
-
-    if total_pacientes == 0:
-        return {
-            "total_pacientes": 0,
-            "total_retornos": 0,
-            "media_retornos_por_paciente": 0.0,
-        }
-    media_retornos_por_paciente = round(total_retornos / total_pacientes, 2)
-    
-    return media_retornos_por_paciente
+    return round(divisao_segura(total_retornos, total_pacientes), 2)
 
 def media_interconsultas_por_paciente(consultas: list[dict[str, Any]]) -> dict:
     interconsultas_por_paciente: dict[str, int] = defaultdict(int)
@@ -402,36 +361,20 @@ def encaminhamentos_por_consulta_regulada(
 
 
 
-def porcentagem_interconsultas(consultas: list[dict[str, Any]]) -> dict:
-    """
-    Proporção de consultas com Condição = 'INTERCONSULTA' sobre o total.
-    """
+def porcentagem_interconsultas(consultas: list[dict[str, Any]]) -> str:
     total = len(consultas)
-    if total == 0:
-        return {"total": 0, "interconsultas": 0, "proporcao": 0.0}
-
-    interconsultas = sum(
-        1 for c in consultas if CONDICAO_INTERCON in c.get("condicao", "")
-    )
-    proporcao = round((interconsultas/total)*100, 2)
+    interconsultas = sum(1 for c in consultas if CONDICAO_INTERCON in c.get("condicao", ""))
+    proporcao = round(divisao_segura(interconsultas, total) * 100, 2)
     return f"{proporcao}%"
 
-def porcentagem_pacientes_com_interconsulta(consultas: list[dict[str, Any]]) -> dict:
-    """
-    Calcula a proporção de pacientes únicos que possuem ao menos uma
-    consulta com Condição = 'INTERCONSULTA'.
-    """
+def porcentagem_pacientes_com_interconsulta(consultas: list[dict[str, Any]]) -> str:
     todos = {c.get("prontuario") for c in consultas if c.get("prontuario")}
     com_intercon = {
         c.get("prontuario")
         for c in consultas
         if CONDICAO_INTERCON in c.get("condicao", "") and c.get("prontuario")
     }
-
-    total = len(todos)
-    if total == 0:
-        return {"total_pacientes": 0, "pacientes_com_interconsulta": 0, "proporcao": 0.0}
-    proporcao = round(len(com_intercon) / total, 2)
+    proporcao = round(divisao_segura(len(com_intercon), len(todos)) * 100, 2)
     return f"{proporcao}%"
 
 

@@ -327,13 +327,6 @@ const MODULOS: ModuloSpec[] = [
             indicadorNomes: ["Encaminhamento frequente por consulta regulada"],
           },
           {
-            id: "consultas-probabilidade-desfecho",
-            titulo:
-              "Probabilidade de a consulta regulada resultar em exame, retorno, internação ou cirurgia",
-            tipo: "distribuicao",
-            indicadorNomes: ["Probabilidade de desfecho da consulta regulada"], // ainda não existe no backend
-          },
-          {
             id: "consultas-faltas",
             titulo: "Faltas: pacientes x profissionais",
             tipo: "comparacao-proporcao",

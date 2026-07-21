@@ -1,6 +1,7 @@
 from collections import defaultdict
 SUMARIO_ALTA_INFORMATIZADO = "INFORMATIZADO"
-
+from .metricas_consultas import _parse_dt
+from datetime import datetime
 def internacoes_concluidas(internacoes):
     i_concluidas = [
         i for i in internacoes
@@ -27,7 +28,7 @@ def porcentagem_sumario_altas_informatizados(internacoes):
     porcentagem = round((informatizados/len(concluidas))*100, 2)
     print(porcentagem)
     return porcentagem
-    
+
 def tempo_medio_permanencia_por_especialidade(internacoes):
     internacoes_por_especialidade = defaultdict(list)
 
@@ -53,7 +54,6 @@ def tempo_medio_permanencia_por_especialidade(internacoes):
     )
     print(tempo_medio_por_especialidade)
     return tempo_medio_por_especialidade
-
 
 def porcentagem_pacientes_internados_especialidade_clinica(internacoes):
     pacientes_por_especialidade = defaultdict(set)
@@ -89,3 +89,5 @@ def porcentagem_pacientes_internados_especialidade_clinica(internacoes):
     )[:5]
     print(top5)    
 
+    
+            

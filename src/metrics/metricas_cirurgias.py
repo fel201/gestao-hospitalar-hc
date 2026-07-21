@@ -1,15 +1,17 @@
 from collections import defaultdict
+from ..helpers.math_utils import divisao_segura
 _METRICAS_INDICADORES: list[tuple[str, str]] = [
     ("taxa_cirurgias_concluidas", "Taxa de cirurgias concluídas"),
     ("pacientes_operados", "Pacientes únicos operados"),
     ("proporcao_pacientes_operados", "Proporção de pacientes operados"),
     ("tempo_medio_cirurgia", "Tempo médio de cirurgia (min)"),
     ("cirurgias_concluidas", "Número de cirurgias concluídas"),
-    ("cirurgias_por_especialidade", "Cirurgias por especialidade")
+    ("cirurgias_por_especialidade", "Cirurgias por especialidade"),
+    ("porcentagem_cirurgias_origem_internacao", "Porcentagem de cirurgias que tiveram sua origem na internação")
 ]
-
+ORIGEM_INTERNACAO = "INTERNAÇÃO"
 def cirurgias_concluidas(cirurgias):
-    if len(cirurgias) == 0: return
+    if len(cirurgias) == 0: return []
      
     cirurgias_concluidas = [
         c for c in cirurgias
@@ -19,7 +21,7 @@ def cirurgias_concluidas(cirurgias):
 
 def taxa_cirurgias_concluidas(cirurgias):
     c_concluidas = cirurgias_concluidas(cirurgias=cirurgias)
-    taxa = len(c_concluidas)/len(cirurgias)
+    taxa = divisao_segura(len(c_concluidas), len(cirurgias))
     return taxa
 
 def pacientes_operados(cirurgias):
@@ -46,19 +48,30 @@ def tempo_medio_cirurgia(cirurgias):
 
     if not tempos:
         return 0
-
-    return round(sum(tempos) / len(tempos), 2)
+    media = round(divisao_segura(sum(tempos), len(tempos)), 2)
+    return media
 
 
 def proporcao_pacientes_operados(cirurgias, total_pacientes):
     if total_pacientes == 0:
         return 0
 
-    return round(
-        pacientes_operados(cirurgias) / total_pacientes,
-        4,
-    )
+    proporcao = round(divisao_segura(pacientes_operados(cirurgias), total_pacientes), 4)
+    return proporcao
 
+def porcentagem_cirurgias_origem_internacao(cirurgias):
+    total_cirurgias = len(cirurgias)
+
+    if total_cirurgias == 0:
+        return 0
+
+    cirurgias_internacao = sum(
+        1
+        for cirurgia in cirurgias
+        if ORIGEM_INTERNACAO in cirurgia["origem"] 
+    )
+    taxa = round((divisao_segura(cirurgias_internacao, total_cirurgias))*100, 2)
+    return f"{taxa}%"
 
 def cirurgias_por_especialidade(cirurgias):
     resultado = defaultdict(int)
@@ -78,7 +91,8 @@ def dicionario_metricas_cirurgias(cirurgias, numero_pacientes):
         "proporcao_pacientes_operados": proporcao_pacientes_operados(cirurgias=cirurgias, total_pacientes=numero_pacientes),
         "tempo_medio_cirurgia": tempo_medio_cirurgia(cirurgias=cirurgias),
         "cirurgias_concluidas": len(cirurgias_concluidas(cirurgias=cirurgias)),
-        "cirurgias_por_especialidade": cirurgias_por_especialidade(cirurgias=cirurgias)
+        "cirurgias_por_especialidade": cirurgias_por_especialidade(cirurgias=cirurgias),
+        "porcentagem_cirurgias_origem_internacao": porcentagem_cirurgias_origem_internacao(cirurgias=cirurgias)
     }
     
 def metricas_cirurgias(cirurgias, total_pacientes):

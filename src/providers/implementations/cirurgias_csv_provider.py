@@ -16,6 +16,7 @@ class CirurgiasCsvProvider:
             cirurgia_id = 0
 
         return {
+            "atendimento": row.get("Atendimento", ""),
             "cid": row.get("CID", ""),
             "prontuario": row.get("Prontuário", ""),
             "id": cirurgia_id,
@@ -26,6 +27,7 @@ class CirurgiasCsvProvider:
             "data_fim_cirurgia": row.get("data_fim_cirurgia", ""),
             "cancelada": row.get("cancelada", ""),
             "situacao": row.get("situacao", ""),
+            "origem": row.get("origem", "")
         }
 
     async def listar_cirurgias(self) -> List[Dict[str, Any]]:
