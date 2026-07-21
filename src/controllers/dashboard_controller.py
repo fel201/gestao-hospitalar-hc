@@ -11,7 +11,6 @@ from ..metrics.metricas_entradas import tempo_medio_cadastro_evento, taxa_prontu
 from ..metrics.metricas_consultas import metricas_consultas_como_indicadores, eventos_consultas
 from ..metrics.metricas_cirurgias import metricas_cirurgias
 from ..metrics.metricas_exames import metricas_exames
-from ..metrics.metricas_internacoes import tempo_medio_permanencia_por_especialidade
 class DashboardController:
     def __init__(
         self,
@@ -114,7 +113,6 @@ class DashboardController:
         ev_consultas = eventos_consultas(consultas=consultas_filtradas)
         indicadores_cirurgias = metricas_cirurgias(cirurgias_filtradas, total_pacientes)
         #proporção de exames regulados
-
         m_exames = metricas_exames(exames=exames)        
         
         exames_pendentes_proporcao = round((len(exames_filtrados) - len(exames_concluidos))/len(exames_filtrados), 2)
