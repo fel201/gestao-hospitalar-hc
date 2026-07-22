@@ -159,7 +159,18 @@
               :plugins="[ChartDataLabels]"
             />
           </div>
-
+          
+          <!-- Serie temporal -->
+          <div
+            v-else-if="item.spec.tipo === 'serie-temporal'"
+            class="mt-4 h-72"
+          >
+            <Bar
+              :data="buildSerieTemporalData(item.indicadores[0])"
+              :options="buildSerieTemporalOptions()"
+              :plugins="[ChartDataLabels]"
+            />
+          </div>
           <!-- Valor simples (número, string, dias, horas etc) -->
           <div v-else class="mt-4 flex h-40 items-center justify-center">
             <p class="text-3xl font-bold text-white">
@@ -212,11 +223,12 @@ type Indicador = {
 };
 
 type TipoGrafico =
-  | "comparacao-proporcao" // N indicadores em % lado a lado (0-100), pode incluir "Outros" residual
-  | "comparacao-dias" // N indicadores numéricos na mesma unidade (dias/horas)
-  | "comparacao-mista" // 2 indicadores com unidades diferentes -> cards lado a lado
-  | "distribuicao" // 1 indicador cujo valor é um dict {categoria: contagem}
-  | "valor-simples"; // 1 indicador numérico/textual isolado
+  | "comparacao-proporcao"
+  | "comparacao-dias"
+  | "comparacao-mista"
+  | "distribuicao"
+  | "serie-temporal"
+  | "valor-simples";
 
 type GraficoSpec = {
   id: string;
@@ -235,6 +247,7 @@ type SubmoduloSpec = {
   descricao: string;
   graficos: GraficoSpec[];
 };
+
 
 type ModuloSpec = {
   id: string;
@@ -260,6 +273,76 @@ const props = defineProps<{
 // -------------------------------------------------------------------------
 const rotuloIndicador = (spec: GraficoSpec, nomeReal: string): string =>
   spec.rotulos?.[nomeReal] ?? nomeReal;
+
+
+const buildSerieTemporalData = (indicador: Indicador) => {
+  console.log(indicador.valor);
+  const dados = indicador.valor as Record<string, number>;
+
+  return {
+    labels: Object.keys(dados),
+    datasets: [
+      {
+        label: indicador.nome,
+        data: Object.values(dados).map(numeroDoValor),
+        backgroundColor: "rgba(59,130,246,0.85)",
+        borderRadius: 6,
+        maxBarThickness: 60,
+      },
+    ],
+  };
+};
+
+const buildSerieTemporalOptions = () => ({
+  responsive: true,
+  maintainAspectRatio: false,
+
+  plugins: {
+    legend: {
+      display: false,
+    },
+
+    tooltip: {
+      callbacks: {
+        label: (ctx: any) => `${ctx.raw} horas`,
+      },
+    },
+
+    datalabels: {
+      ...DATALABELS_BASE,
+
+      anchor: "end" as const,
+      align: "top" as const,
+
+      formatter: (value: number) =>
+        value === 0 ? "0" : `${value} h`,
+    },
+  },
+
+  scales: {
+    x: {
+      ticks: {
+        color: "#cbd5e1",
+      },
+      grid: {
+        display: false,
+      },
+    },
+
+    y: {
+      beginAtZero: true,
+
+      ticks: {
+        color: "#94a3b8",
+        callback: (v: any) => `${v} h`,
+      },
+
+      grid: {
+        color: "rgba(148,163,184,0.15)",
+      },
+    },
+  },
+});
 
 const MODULOS: ModuloSpec[] = [
   {
@@ -323,7 +406,7 @@ const MODULOS: ModuloSpec[] = [
           {
             id: "consultas-encaminhamentos",
             titulo: "Encaminhamentos mais frequentes após consulta regulada",
-            tipo: "distribuicao",
+            tipo: "serie-temporal",
             indicadorNomes: ["Encaminhamento frequente por consulta regulada"],
           },
           {
@@ -406,7 +489,7 @@ const MODULOS: ModuloSpec[] = [
           { // Concentração de Exames Emergenciais por paciente ativo de cada mês
             id: "exames-amb-volume",
             titulo: "Exames Ambulatoriais por paciente ativo em cada um dos últimos 5 meses",
-            tipo: "distribuicao",
+            tipo: "serie-temporal",
             indicadorNomes: [
               "Concentração de Exames Ambulatoriais por paciente ativo de cada mês"
             ],
@@ -414,16 +497,18 @@ const MODULOS: ModuloSpec[] = [
           { 
             id: "exames-amb-volume",
             titulo: "Exames Emergenciais por paciente ativo em cada um dos últimos 5 meses",
-            tipo: "distribuicao",
+            tipo: "serie-temporal",
             indicadorNomes: [
               "Concentração de Exames Emergenciais por paciente ativo de cada mês"
             ],
           },
           {
-            id: "exames-amb-tempo-agendamento",
-            titulo: "Tempo médio de solicitação até a realização do exame",
-            tipo: "valor-simples",
-            indicadorNomes: ["Tempo médio de solicitação até a realização do exame"],
+            id: "exames-amb-tempo-solicitacao",
+            titulo: "Tempo médio de solicitação até a realização do exame nos últimos 5 meses",
+            tipo: "serie-temporal",
+            indicadorNomes: [
+              "Tempo médio de solicitação até a realização do exame por mês"
+            ],
           },
           {
             id: "exames-amb-gargalos",
@@ -809,8 +894,18 @@ const rotuloTipo = (tipo: TipoGrafico) => {
 
 const numeroDoValor = (valor: number | string): number => {
   if (typeof valor === "number") return valor;
-  const limpo = valor.replace("%", "").replace(",", ".").trim();
+
+  const limpo = valor
+    .replace("%", "")
+    .replace("horas", "")
+    .replace("hora", "")
+    .replace("dias", "")
+    .replace("dia", "")
+    .replace(",", ".")
+    .trim();
+
   const n = parseFloat(limpo);
+
   return Number.isNaN(n) ? 0 : n;
 };
 
@@ -960,7 +1055,14 @@ const alturaBarraDistribuicao = (indicador?: Indicador): number => {
 
 const buildDistribuicaoData = (indicador: Indicador) => {
   const dist = indicador.valor as IndicadorDistribuicao;
+
+  console.log(indicador.nome);
+  console.log(dist);
+
   const entradas = categoriasAgrupadas(dist);
+
+  console.log(entradas);
+
   return {
     labels: entradas.map(([nome]) => nome),
     datasets: [
@@ -968,9 +1070,6 @@ const buildDistribuicaoData = (indicador: Indicador) => {
         label: indicador.nome,
         data: entradas.map(([, valor]) => valor),
         backgroundColor: entradas.map((_, i) => PALETA[i % PALETA.length]),
-        borderColor: "#0f172a",
-        borderWidth: 1,
-        borderRadius: 6,
       },
     ],
   };

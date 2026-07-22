@@ -1,5 +1,6 @@
-from ..helpers.jornada_utils import calcular_diferenca_horas
+from ..helpers.jornada_utils import calcular_diferenca_horas, _mes_anterior
 from ..helpers.formatacao import remover_acentos
+from datetime import datetime
 from typing import Any
 
 import unicodedata
@@ -14,7 +15,7 @@ SITUACAO_LIBERADO = "LIBERADO"
 SITUACAO_A_COLETAR = "A COLETAR"
 
 _METRICAS_INDICADORES: list[tuple[str, str]] = [
-    ("tempo_medio_solicitacao_realizacao", "Tempo médio de solicitação até a realização do exame"),
+    ("tempo_medio_solicitacao_realizacao_mensal", "Tempo médio de solicitação até a realização do exame por mês"),
     ("concentracao_exames_ambulatoriais_paciente_ativo_mensal", "Concentração de Exames Ambulatoriais por paciente ativo de cada mês"),
     ("concentracao_exames_emergenciais_paciente_ativo_mensal", "Concentração de Exames Emergenciais por paciente ativo de cada mês"),
     ("porcentagem_exames_ambulatoriais", "Porcentagem de exames ambulatoriais"),
@@ -75,7 +76,6 @@ def tempo_medio_solicitacao_realizacao(exames):
         return 0
 
     soma = 0
-    outliers = []
 
     for exame in exames:
         diff = calcular_diferenca_horas(
@@ -85,22 +85,55 @@ def tempo_medio_solicitacao_realizacao(exames):
 
         soma += diff
 
-        if diff <= 12:
-            outliers.append(
-                (
-                    exame["prontuario"],
-                    exame["data_hora_solicitacao"],
-                    exame["data_hora_realizacao"],
-                    diff,
-                )
-            )
-
     tempo_medio = round((soma / len(exames)), 2)
 
-    for o in sorted(outliers, key=lambda x: x[3])[:20]:
-        print(o)
-
     return f"{tempo_medio} horas"
+
+
+
+
+def tempo_medio_solicitacao_realizacao_mensal(
+    exames: list[dict],
+    data_inicio: str,
+    data_fim: str,
+) -> dict:
+    """
+    Calcula o tempo médio entre solicitação e realização, mês a mês,
+    olhando para os últimos 5 meses (ou menos, se o intervalo for menor).
+    """
+    dt_inicio = datetime.strptime(data_inicio, "%Y-%m-%d")
+    dt_fim = datetime.strptime(data_fim, "%Y-%m-%d")
+
+    ano_inicio, mes_inicio = dt_inicio.year, dt_inicio.month
+    ano_atual, mes_atual = dt_fim.year, dt_fim.month
+
+    meses_alvo = []
+    while len(meses_alvo) < 5:
+        meses_alvo.append((ano_atual, mes_atual))
+        if (ano_atual, mes_atual) == (ano_inicio, mes_inicio):
+            break
+        ano_atual, mes_atual = _mes_anterior(ano_atual, mes_atual)
+
+    meses_alvo.reverse()
+
+    resultado = {}
+    for ano, mes in meses_alvo:
+        chave = f"{mes:02d}/{ano}"
+
+        exames_do_mes = []
+        for e in exames:
+            data_exame = datetime.strptime(e["data_hora_realizacao"], "%d/%m/%Y, %H:%M")
+            if data_exame.year == ano and data_exame.month == mes:
+                exames_do_mes.append(e)
+
+        if not exames_do_mes:
+            resultado[chave] = 0
+            continue
+
+        resultado[chave] = tempo_medio_solicitacao_realizacao(exames_do_mes)
+
+    return resultado
+
 
 def porcentagem_exames_do_tipo(exames: list[dict, any], tipo: str) -> dict:
     total_exames = len(exames)
@@ -112,7 +145,6 @@ def porcentagem_exames_do_tipo(exames: list[dict, any], tipo: str) -> dict:
     return f"{proporcao}%"
 
 # total de exames realizados / numero de pacientes atendidos
-# Calcula a intensidade de investigação por paciente ativo
 # paciente ativo: aquele que já realizou pelo menos um exame no hospital
 def concentracao_exames_por_paciente_ativo(exames: list[dict, any], tipo: str) -> dict:
     pacientes = set()
@@ -124,14 +156,6 @@ def concentracao_exames_por_paciente_ativo(exames: list[dict, any], tipo: str) -
     exames_amb_por_pac = round(qtd/len(pacientes), 2)
     return exames_amb_por_pac
     
-    
-from datetime import datetime
-
-def _mes_anterior(ano: int, mes: int) -> tuple[int, int]:
-    """Retorna (ano, mes) do mês anterior."""
-    if mes == 1:
-        return ano - 1, 12
-    return ano, mes - 1
 
 def concentracao_exames_por_paciente_ativo_mensal(
     exames: list[dict],
@@ -180,12 +204,15 @@ def concentracao_exames_por_paciente_ativo_mensal(
         resultado[chave] = concentracao_exames_por_paciente_ativo(
             exames=exames_do_mes, tipo=tipo
         )
-    print(resultado)
     return resultado    
 
 def dicionario_metricas_exames(exames, data_inicio, data_fim):
     return {
-        "tempo_medio_solicitacao_realizacao": tempo_medio_solicitacao_realizacao(exames=exames),
+        "tempo_medio_solicitacao_realizacao_mensal": tempo_medio_solicitacao_realizacao_mensal(
+            exames=exames,
+            data_inicio=data_inicio,
+            data_fim=data_fim
+        ),
         "concentracao_exames_ambulatoriais_paciente_ativo_mensal":
             concentracao_exames_por_paciente_ativo_mensal(
                 exames=exames,

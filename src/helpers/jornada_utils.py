@@ -77,3 +77,8 @@ def dias_entre(inicio: str, fim: str) -> float | None:
         raise ValueError("Formato de data inválido. Esperado: 'DD/MM/YYYY, HH:MM' (ex: 13/1/2026, 08:56)")
 
 
+def _mes_anterior(ano: int, mes: int) -> tuple[int, int]:
+    """Retorna (ano, mes) do mês anterior."""
+    if mes == 1:
+        return ano - 1, 12
+    return ano, mes - 1
