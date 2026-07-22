@@ -12,6 +12,8 @@ from ..metrics.metricas_entradas import tempo_medio_cadastro_evento, taxa_prontu
 from ..metrics.metricas_consultas import metricas_consultas_como_indicadores, eventos_consultas
 from ..metrics.metricas_cirurgias import metricas_cirurgias
 from ..metrics.metricas_exames import metricas_exames
+
+
 class DashboardController:
     def __init__(
         self,
@@ -40,7 +42,6 @@ class DashboardController:
             self.cirurgia_provider.listar_cirurgias(),
             self.paciente_provider.listar_pacientes()
         )
-        #  filtros por especialidade 
 
 
         consultas_filtradas = filtrar_eventos_por_periodo(
@@ -60,7 +61,7 @@ class DashboardController:
             data_inicio, data_fim
         )
 
-        # exames 
+        # exames
         exames_concluidos = [
             c for c in exames_filtrados
             if "liberado" in c["situacao"].lower()
@@ -71,35 +72,28 @@ class DashboardController:
             i for i in internacoes_filtradas
             if i["ind_saida_pac"] == 'S'
         ]
-        
+
         tempo_medio_permanencia_internacao = 0
         if internacoes_concluidas:
             tempo_medio_permanencia_internacao = round(
                 sum(int(i["tempo_permanencia_dias"]) for i in internacoes_concluidas)
                 / len(internacoes_concluidas)
             )
-        
-        # totais e KPIs 
-        total_pacientes  = total_pacientes_eventos(
+
+        # totais e KPIs
+        total_pacientes = total_pacientes_eventos(
             consultas=consultas_filtradas,
             exames=exames_filtrados,
             internacoes=internacoes_filtradas,
             cirurgias=cirurgias_filtradas
         )
-        
+
         total_cirurgias = len(cirurgias_filtradas)
-        total_consultas  = len(consultas_filtradas)
-        total_exames     = len(exames_filtrados)
+        total_consultas = len(consultas_filtradas)
+        total_exames = len(exames_filtrados)
         total_internacoes = len(internacoes_filtradas)
-        total_eventos    = total_consultas + total_exames + total_internacoes + total_cirurgias
-        
-        # taxa_conclusao = 
-        #     (len(consultas_concluidas) + len(exames_concluidos) + len(internacoes_concluidas)
-        #     / (total_eventos or 1)
-        # )
-        
-        # métricas de entrada
-        
+        total_eventos = total_consultas + total_exames + total_internacoes + total_cirurgias
+
         tempo_medio_cad_evento = tempo_medio_cadastro_evento(
             consultas=consultas,
             exames=exames,
@@ -114,31 +108,27 @@ class DashboardController:
             pacientes=pacientes,
             cirurgias=cirurgias
         )
+
         # métricas e eventos de consultas calculados
         indicadores_consultas = metricas_consultas_como_indicadores(consultas_filtradas, pacientes=pacientes)
         ev_consultas = eventos_consultas(consultas=consultas_filtradas)
         indicadores_cirurgias = metricas_cirurgias(cirurgias_filtradas, total_pacientes)
-        #proporção de exames regulados
-        m_exames = metricas_exames(exames=exames, data_inicio=data_inicio, data_fim=data_fim)        
-        
-        exames_pendentes_proporcao = round(
-            divisao_segura(len(exames_filtrados) - len(exames_concluidos), len(exames_filtrados)),
-            2
-        )
-        
-        # Dashboard 
+
+        # métricas de exames 
+        m_exames = metricas_exames(exames=exames_filtrados, data_inicio=data_inicio, data_fim=data_fim)
+
+        # Dashboard
         dashboard = {
             "especialidade": especialidade,
 
             "kpis": {
-                "total_pacientes":    total_pacientes,
-                "total_eventos":      total_eventos,
+                "total_pacientes": total_pacientes,
+                "total_eventos": total_eventos,
                 "tempo_medio_jornada": tempo_medio_permanencia_internacao,
-                # "taxa_conclusao":     taxa_conclusao,
             },
 
             "entrada": {
-                "titulo":       "Entrada",
+                "titulo": "Entrada",
                 "total_eventos": total_pacientes,
                 "eventos": [
                     {"nome": "Pacientes cadastrados", "valor": total_pacientes},
@@ -150,25 +140,24 @@ class DashboardController:
             },
 
             "consultas": {
-                "titulo":       "Consultas",
+                "titulo": "Consultas",
                 "total_eventos": total_consultas,
                 "eventos": ev_consultas,
                 "indicadores": [*indicadores_consultas],
             },
 
             "exames": {
-                "titulo":       "Exames",
+                "titulo": "Exames",
                 "total_eventos": total_exames,
                 "eventos": [
                     {"nome": "Exames registrados", "valor": total_exames},
                     {"nome": "Exames concluídos", "valor": len(exames_concluidos)}
                 ],
-                "indicadores": m_exames
-                    # {"nome": "Proporção de exames pendentes", "valor": exames_pendentes_proporcao}
+                "indicadores": m_exames,
             },
 
             "internacao": {
-                "titulo":       "Internações",
+                "titulo": "Internações",
                 "total_eventos": total_internacoes,
                 "eventos": [
                     {"nome": "Internações registradas", "valor": total_internacoes},
@@ -176,9 +165,9 @@ class DashboardController:
                 ],
                 "indicadores": [
                     {"nome": "Tempo médio de permanência (dias)", "valor": tempo_medio_permanencia_internacao},
-                                
                 ],
             },
+
             "cirurgias": {
                 "titulo": "Cirurgias",
                 "total_eventos": total_cirurgias,
