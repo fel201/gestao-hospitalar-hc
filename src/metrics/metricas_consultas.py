@@ -309,55 +309,48 @@ def tempo_medio_criacao_prontuario_primeiro_agendamento(pacientes, consultas):
     tempo_medio = round(tempo_total / quantidade, 2)
     return tempo_medio
 
-def encaminhamentos_por_consulta_regulada(
-    consultas: list[dict[str, Any]]
-) -> dict:
+def encaminhamentos_por_consulta_regulada(consultas: list[dict[str, Any]]) -> dict:
     """
-    para cada consulta regulada identifica o primeiro encaminhamento
-    subsequente do mesmo paciente.
-    """
+    Após cada consulta regulada, verifica qual o próximo tipo de evento
+    do mesmo paciente (retorno, interconsulta, etc.) e conta as ocorrências.
 
+    Retorna:
+        {
+            "total_reguladas": int,
+            "encaminhamentos": {tipo: contagem, ...}   # ordenado por contagem desc
+        }
+    """
+    
     por_paciente: dict[str, list[dict]] = defaultdict(list)
-
-    for consulta in consultas:
-        prontuario = consulta.get("prontuario")
-        if prontuario:
-            por_paciente[prontuario].append(consulta)
+    for c in consultas:
+        pid = c.get("paciente_id", "")
+        if pid:
+            por_paciente[pid].append(c)
 
     encaminhamentos: dict[str, int] = defaultdict(int)
     total_reguladas = 0
-
-    for eventos in por_paciente.values():
-
-        eventos.sort(
-            key=lambda e: _parse_dt(e.get("data_hora_realizacao", "")) or datetime.max
+    encaminhamentos["SEM SEGUIMENTO"] = 0
+    encaminhamentos[CONDICAO_RETORNO] = 0
+    encaminhamentos[CONDICAO_INTERCON] = 0
+    for pid, eventos in por_paciente.items():
+        eventos_ord = sorted(
+            eventos,
+            key=lambda e: _parse_dt(e.get("data_hora_consulta", "")) or datetime.max,
         )
-
-        for i, evento in enumerate(eventos):
-
-            if CONDICAO_REGULADA not in evento.get("condicao", ""):
+        for i, ev in enumerate(eventos_ord):
+            if CONDICAO_REGULADA not in ev.get("condicao", ""):
                 continue
-
             total_reguladas += 1
-
-            for prox in eventos[i + 1:]:
-
-                condicao = prox.get("condicao", "").upper()
-
-                if CONDICAO_RETORNO in condicao:
-                    encaminhamentos["RETORNO"] += 1
-
-                    break
-
-                if CONDICAO_INTERCON in condicao:
-                    encaminhamentos["INTERCONSULTA"] += 1
-
-                    break
-                
-    resultado = dict(
+            # Próximo evento do mesmo paciente
+            if i + 1 < len(eventos_ord):
+                proximo = eventos_ord[i + 1].get("condicao", "SEM SEGUIMENTO").strip()
+                encaminhamentos[proximo] += 1
+            else:
+                encaminhamentos["SEM SEGUIMENTO"] += 1
+    res = dict(
         sorted(encaminhamentos.items(), key=lambda x: x[1], reverse=True)
     )
-    return resultado
+    return res
 
 
 
