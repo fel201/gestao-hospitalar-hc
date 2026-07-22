@@ -79,7 +79,6 @@ def filtrar_eventos_por_periodo(eventos: list[dict], data_inicio: str, data_fim:
             # data do evento em formato inválido/inesperado -> ignora o evento
             continue
         
-        print(data_evento if "2024" in data_evento else "")
         if dias_desde_inicio >= 0 and dias_ate_fim >= 0:
             eventos_filtrados.append(evento)
 

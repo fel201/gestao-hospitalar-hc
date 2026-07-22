@@ -392,25 +392,38 @@ const MODULOS: ModuloSpec[] = [
             id: "exames-amb-proporcao",
             titulo: "Comparação da porcentagem de exames de cada tipo",
             tipo: "comparacao-proporcao",
-            indicadorNomes: ["Porcentagem de exames ambulatoriais", "Porcentagem de exames emergenciais"],
+            indicadorNomes: [
+              "Porcentagem de exames ambulatoriais",
+              "Porcentagem de exames emergenciais",
+              "Porcentagem de exames pré-operatórios",
+            ],
+            rotulos: {
+              "Porcentagem de exames ambulatoriais": "Exames Ambulatoriais",
+              "Porcentagem de exames emergenciais": "Exames Emergenciais",
+              "Porcentagem de exames pré-operatórios": "Exames Pré-Operatórios"
+            },
           },
-          {
+          { // Concentração de Exames Emergenciais por paciente ativo de cada mês
             id: "exames-amb-volume",
-            titulo: "Concentração de Exames Ambulatoriais por paciente ativo",
-            tipo: "valor-simples",
-            indicadorNomes: ["Concentração de Exames Ambulatoriais por paciente ativo"],
+            titulo: "Exames Ambulatoriais por paciente ativo em cada um dos últimos 5 meses",
+            tipo: "distribuicao",
+            indicadorNomes: [
+              "Concentração de Exames Ambulatoriais por paciente ativo de cada mês"
+            ],
+          },
+          { 
+            id: "exames-amb-volume",
+            titulo: "Exames Emergenciais por paciente ativo em cada um dos últimos 5 meses",
+            tipo: "distribuicao",
+            indicadorNomes: [
+              "Concentração de Exames Emergenciais por paciente ativo de cada mês"
+            ],
           },
           {
             id: "exames-amb-tempo-agendamento",
-            titulo: "Tempo médio entre solicitação e agendamento",
+            titulo: "Tempo médio de solicitação até a realização do exame",
             tipo: "valor-simples",
-            indicadorNomes: [],
-          },
-          {
-            id: "exames-amb-tempo-realizacao",
-            titulo: "Tempo médio entre agendamento e realização",
-            tipo: "valor-simples",
-            indicadorNomes: [],
+            indicadorNomes: ["Tempo médio de solicitação até a realização do exame"],
           },
           {
             id: "exames-amb-gargalos",

@@ -119,7 +119,7 @@ class DashboardController:
         ev_consultas = eventos_consultas(consultas=consultas_filtradas)
         indicadores_cirurgias = metricas_cirurgias(cirurgias_filtradas, total_pacientes)
         #proporção de exames regulados
-        m_exames = metricas_exames(exames=exames)        
+        m_exames = metricas_exames(exames=exames, data_inicio=data_inicio, data_fim=data_fim)        
         
         exames_pendentes_proporcao = round(
             divisao_segura(len(exames_filtrados) - len(exames_concluidos), len(exames_filtrados)),

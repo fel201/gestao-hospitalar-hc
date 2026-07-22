@@ -310,16 +310,6 @@ def tempo_medio_criacao_prontuario_primeiro_agendamento(pacientes, consultas):
     return tempo_medio
 
 def encaminhamentos_por_consulta_regulada(consultas: list[dict[str, Any]]) -> dict:
-    """
-    Após cada consulta regulada, verifica qual o próximo tipo de evento
-    do mesmo paciente (retorno, interconsulta, etc.) e conta as ocorrências.
-
-    Retorna:
-        {
-            "total_reguladas": int,
-            "encaminhamentos": {tipo: contagem, ...}   # ordenado por contagem desc
-        }
-    """
     
     por_paciente: dict[str, list[dict]] = defaultdict(list)
     for c in consultas:
