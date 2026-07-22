@@ -390,9 +390,9 @@ const MODULOS: ModuloSpec[] = [
         graficos: [
           {
             id: "exames-amb-proporcao",
-            titulo: "Proporção de exames ambulatoriais em relação ao total",
-            tipo: "valor-simples",
-            indicadorNomes: ["Porcentagem de exames ambulatoriais"],
+            titulo: "Comparação da porcentagem de exames de cada tipo",
+            tipo: "comparacao-proporcao",
+            indicadorNomes: ["Porcentagem de exames ambulatoriais", "Porcentagem de exames emergenciais"],
           },
           {
             id: "exames-amb-volume",

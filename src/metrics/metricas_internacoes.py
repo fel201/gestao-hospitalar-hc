@@ -26,7 +26,6 @@ def porcentagem_sumario_altas_informatizados(internacoes):
         if SUMARIO_ALTA_INFORMATIZADO in c["situacao_sumario_alta"]:
             informatizados += 1
     porcentagem = round((informatizados/len(concluidas))*100, 2)
-    print(porcentagem)
     return porcentagem
 
 def tempo_medio_permanencia_por_especialidade(internacoes):
@@ -52,7 +51,6 @@ def tempo_medio_permanencia_por_especialidade(internacoes):
             reverse=True
         )[:5]
     )
-    print(tempo_medio_por_especialidade)
     return tempo_medio_por_especialidade
 
 def porcentagem_pacientes_internados_especialidade_clinica(internacoes):
@@ -86,8 +84,7 @@ def porcentagem_pacientes_internados_especialidade_clinica(internacoes):
         porcentagens,
         key=lambda x: x["porcentagem"],
         reverse=True
-    )[:5]
-    print(top5)    
+    )[:5] 
 
     
             

@@ -1,5 +1,6 @@
 TIPO_AMBULATORIAL = "AMBULATÓRIO"
-TIPO_EMERGENCIAL = "UTI"
+ESPECIALIDADE_UTI = "UTI"
+ESPECIALIDADE_URGENCIA = "URGENCIA"
 CONDICAO_REGULADO = "REGULADO"
 SITUACAO_CANCELADO = "CANCELADO"
 SITUACAO_LIBERADO = "LIBERADO"
@@ -20,17 +21,18 @@ _METRICAS_INDICADORES: list[tuple[str, str]] = [
 
     
 def qtd_exames_tipo(exames, tipo):
-    if tipo == "ambulatorial": 
-        condicao = TIPO_AMBULATORIAL
-    else:
-        condicao = TIPO_EMERGENCIAL
     total_exames_condicao = 0
     
     for e in exames:
-        if condicao in e["especialidade_solicitante_nome"]:
+        
+        if tipo == "ambulatorial" and TIPO_AMBULATORIAL in e["especialidade_solicitante_nome"]:
             total_exames_condicao += 1
-            
+        
+        elif tipo == "emergencial" and ESPECIALIDADE_UTI in e["especialidade_solicitante_nome"] \
+            or ESPECIALIDADE_URGENCIA in e["especialidade_solicitante_nome"]:
+            total_exames_condicao += 1
     return total_exames_condicao
+
 def exames_cancelados(exames):
     e = [c for c in exames if SITUACAO_CANCELADO in c["situacao"].upper()]
     return e
@@ -89,14 +91,9 @@ def porcentagem_exames_do_tipo(exames: list[dict, any], tipo: str) -> dict:
 # paciente ativo: aquele que já realizou pelo menos um exame no hospital
 def concentracao_exames_por_paciente_ativo(exames: list[dict, any], tipo: str) -> dict:
     pacientes = set()
-    if tipo == "ambulatorial": 
-        condicao = TIPO_AMBULATORIAL
-    else:
-        condicao = TIPO_EMERGENCIAL
         
     for e in exames:
-        if condicao in e["especialidade_solicitante_nome"]:
-            pacientes.add(e["prontuario"])
+        pacientes.add(e["prontuario"])
         
     qtd = qtd_exames_tipo(exames=exames, tipo=tipo)
     exames_amb_por_pac = round(qtd/len(pacientes), 2)

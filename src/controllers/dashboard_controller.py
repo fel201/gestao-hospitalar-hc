@@ -92,7 +92,7 @@ class DashboardController:
         total_exames     = len(exames_filtrados)
         total_internacoes = len(internacoes_filtradas)
         total_eventos    = total_consultas + total_exames + total_internacoes + total_cirurgias
-        print(total_eventos)
+        
         # taxa_conclusao = 
         #     (len(consultas_concluidas) + len(exames_concluidos) + len(internacoes_concluidas)
         #     / (total_eventos or 1)
