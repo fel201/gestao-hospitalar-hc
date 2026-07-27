@@ -1,0 +1,14 @@
+[Unit]
+Description=Gestao Hospitalar HC - Jornada T3 (Podman Compose)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/app/hc-jornada-t3
+ExecStart=/usr/bin/podman-compose up
+ExecStop=/usr/bin/podman-compose down
+Restart=always
+User=adm-local
+
+[Install]
+WantedBy=multi-user.target
