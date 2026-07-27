@@ -174,7 +174,7 @@
             >
               <Bar
                 :data="buildSerieTemporalData(item.indicadores[0])"
-                :options="buildSerieTemporalOptions()"
+                :options="buildSerieTemporalOptions(item.spec.unidade)"
                 :plugins="[ChartDataLabels]"
               />
             </div>
@@ -384,7 +384,7 @@ const buildSerieTemporalData = (indicador: Indicador) => {
   };
 };
 
-const buildSerieTemporalOptions = () => ({
+const buildSerieTemporalOptions = (unidade?: string) => ({
   responsive: true,
   maintainAspectRatio: false,
 
@@ -395,7 +395,8 @@ const buildSerieTemporalOptions = () => ({
 
     tooltip: {
       callbacks: {
-        label: (ctx: any) => `${ctx.raw} horas`,
+        label: (ctx: any) =>
+          `${ctx.raw}${unidade ? " " + unidade : ""}`,
       },
     },
 
@@ -405,7 +406,10 @@ const buildSerieTemporalOptions = () => ({
       anchor: "end" as const,
       align: "top" as const,
 
-      formatter: (value: number) => (value === 0 ? "0" : `${value} h`),
+      formatter: (value: number) =>
+        value === 0
+          ? "0"
+          : `${value}${unidade ? " " + unidade : ""}`,
     },
   },
 
@@ -426,7 +430,8 @@ const buildSerieTemporalOptions = () => ({
       ticks: {
         color: "#767c8a",
         font: { family: "'IBM Plex Mono', monospace", size: 11 },
-        callback: (v: any) => `${v} h`,
+        callback: (v: any) =>
+          `${v}${unidade ? " " + unidade : ""}`,
       },
 
       grid: {
@@ -516,12 +521,6 @@ const MODULOS: ModuloSpec[] = [
     dataKey: "entrada",
     submodulos: [
       {
-        id: "entrada-especialidade",
-        titulo: "Indicadores da especialidade correspondente",
-        descricao: "Métricas de entrada filtradas pela especialidade atual.",
-        graficos: [], // ainda não existe filtragem por especialidade no back-end
-      },
-      {
         id: "entrada-geral",
         titulo: "Indicadores gerais",
         descricao:
@@ -559,7 +558,7 @@ const MODULOS: ModuloSpec[] = [
           {
             id: "consultas-proporcao-tipos",
             titulo:
-              "Proporção de consultas reguladas, de retorno e interconsultas",
+            "Proporção de consultas reguladas, de retorno e interconsultas",
             tipo: "comparacao-proporcao",
             indicadorNomes: [
               "Porcentagem de consultas reguladas",
@@ -574,12 +573,6 @@ const MODULOS: ModuloSpec[] = [
             },
           },
           {
-            id: "consultas-encaminhamentos",
-            titulo: "Encaminhamentos mais frequentes após consulta regulada",
-            tipo: "distribuicao",
-            indicadorNomes: ["Encaminhamento frequente por consulta regulada"],
-          },
-          {
             id: "consultas-faltas",
             titulo: "Comparação de faltas",
             tipo: "comparacao-proporcao",
@@ -591,6 +584,12 @@ const MODULOS: ModuloSpec[] = [
               "Porcentagem de faltas por parte do profissional": "Por parte do profissional",
               "Porcentagem de faltas por parte do paciente": "Por parte do paciente"
             }
+          },
+          {
+            id: "consultas-encaminhamentos",
+            titulo: "Encaminhamentos mais frequentes após consulta regulada",
+            tipo: "distribuicao",
+            indicadorNomes: ["Encaminhamento frequente por consulta regulada"],
           },
           {
             id: "consultas-retorno-interconsulta-paciente",
@@ -758,29 +757,23 @@ const MODULOS: ModuloSpec[] = [
             id: "internacao-pre-especialidade",
             titulo:
               "Porcentagem de internações concluídas com sumário de alta informatizado",
-            tipo: "distribuicao",
+            tipo: "serie-temporal-percentual",
             indicadorNomes: ["Porcentagem de sumários de alta informatizados"],
-          },
-          {
-            id: "internacao-pre-participacao",
-            titulo: "Participação da pré-operatória no total de internações",
-            tipo: "comparacao-proporcao",
-            indicadorNomes: [],
-            incluirOutros: true,
           },
           {
             id: "internacao-pos-uti",
             titulo:
-              "Proporção internada em UTI no pós-operatório por especialidade",
-            tipo: "distribuicao",
-            indicadorNomes: [],
+              "Porcentagem dos desfechos mais comuns de uma internação",
+            tipo: "serie-temporal-percentual",
+            indicadorNomes: ["Porcentagem dos desfechos mais comuns"],
           },
           {
             id: "internacao-pos-tempo",
             titulo:
-              "Tempo médio de internação pós-operatória por especialidade",
-            tipo: "distribuicao",
-            indicadorNomes: [],
+              "Tempo médio de permanência de internação nos últimos 5 meses",
+            tipo: "serie-temporal",
+            indicadorNomes: ["Tempo médio de permanência de internação nos últimos 5 meses"],
+            unidade: "dias"
           },
         ],
       },
@@ -798,22 +791,10 @@ const MODULOS: ModuloSpec[] = [
             indicadorNomes: ["Tempo médio de permanência por especialidade"],
           },
           {
-            id: "internacao-sumario-alta-global",
-            titulo: "Porcentagem global de sumários de alta informatizados",
-            tipo: "valor-simples",
-            indicadorNomes: ["Porcentagem global de sumários de alta informatizados"],
-          },
-          {
             id: "internacao-sumario-alta-mes",
             titulo: "Porcentagem de sumários de alta informatizados por mês",
             tipo: "serie-temporal-percentual",
             indicadorNomes: ["Porcentagem de sumários de alta informatizados"],
-          },
-          {
-            id: "internacao-tempo-solicitacao",
-            titulo: "Tempo médio entre solicitação e internação",
-            tipo: "valor-simples",
-            indicadorNomes: ["Tempo médio de permanência (dias)"],
           },
           {
             id: "internacao-cmp-proporcao",
@@ -823,17 +804,23 @@ const MODULOS: ModuloSpec[] = [
           },
           {
             id: "internacao-cmp-tempo",
-            titulo: "Comparação do tempo médio de internação de cada tipo",
-            tipo: "comparacao-dias",
-            indicadorNomes: [],
-            unidade: "dias",
+            titulo: "Especialidades com maior número de internações",
+            tipo: "serie-temporal-percentual",
+            indicadorNomes: ["Especialidades com maior percentual de internações"],
           },
           {
             id: "internacao-cmp-participacao",
-            titulo: "Comparação da proporção de internações de cada tipo",
-            tipo: "comparacao-proporcao",
-            indicadorNomes: [],
+            titulo: "Porcentagem geral dos desfechos mais comuns",
+            tipo: "serie-temporal-percentual",
+            indicadorNomes: ["Porcentagem geral dos desfechos mais comuns"],
           },
+          {
+            id: "internacao-tempo-medio",
+            titulo: "Tempo médio global de permanência de internação nos últimos 5 meses",
+            tipo: "serie-temporal",
+            indicadorNomes: ["Tempo médio global de permanência de internação nos últimos 5 meses"],
+            unidade: "dias"
+          }
         ],
       },
     ],
