@@ -834,7 +834,20 @@ const MODULOS: ModuloSpec[] = [
         id: "cirurgia-especialidade",
         titulo: "Indicadores da especialidade correspondente",
         descricao: "Métricas de cirurgia filtradas pela especialidade atual.",
-        graficos: [], // ainda não existe filtragem por especialidade no back-end
+        graficos: [
+          {
+            id: "cirurgia-tempo",
+            titulo: "Tempo médio de cirurgia",
+            tipo: "valor-simples",
+            indicadorNomes: ["Tempo médio de cirurgia"],
+          },
+          {
+            id: "cirurgia-porcentagem-origem",
+            titulo: "Porcentagem de cirurgias por origem",
+            tipo: "serie-temporal-percentual",
+            indicadorNomes: ["Porcentagem de cirurgias por origem"]
+          }
+        ],
       },
       {
         id: "cirurgia-geral",
@@ -843,18 +856,33 @@ const MODULOS: ModuloSpec[] = [
           "Proporção de pacientes operados e tempo médio de cirurgia, por especialidade.",
         graficos: [
           {
-            id: "cirurgia-proporcao-especialidade",
-            titulo:
-              "Proporção de pacientes que passam por cirurgia, por especialidade",
-            tipo: "distribuicao",
-            indicadorNomes: [],
+            id: "cirurgia-porcentagem-global",
+            titulo: "Porcentagem global de cirurgias concluidas",
+            tipo: "valor-simples",
+            indicadorNomes: ["Porcentagem global de cirurgias concluidas"],
+            unidade: "%"
           },
           {
             id: "cirurgia-tempo-especialidade",
-            titulo: "Tempo médio de cirurgia por especialidade",
-            tipo: "distribuicao",
-            indicadorNomes: [],
+            titulo:
+              "Tempo médio de cirurgia por especialidade",
+            tipo: "serie-temporal",
+            indicadorNomes: ["Tempo médio de cirurgia por especialidade"],
+            unidade: "min"
           },
+          {
+            id: "cirurgia-por-especialidade",
+            titulo:
+              "Cirurgias por especialidade",
+            tipo: "serie-temporal-percentual",
+            indicadorNomes: ["Cirurgias por especialidade"],
+          },
+          {
+            id: "cirurgia-porcentagem-origem-global",
+            titulo: "Porcentagem global de cirurgia por origem",
+            tipo: "serie-temporal",
+            indicadorNomes: ["Porcentagem global de cirurgias por origem"]
+          }
         ],
       },
     ],

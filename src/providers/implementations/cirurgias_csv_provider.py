@@ -27,7 +27,8 @@ class CirurgiasCsvProvider:
             "data_fim_cirurgia": row.get("data_fim_cirurgia", ""),
             "cancelada": row.get("cancelada", ""),
             "situacao": row.get("situacao", ""),
-            "origem": row.get("origem", "")
+            "origem": row.get("origem", ""),
+            "duracao_cirurgia": row.get("duracao_cirurgia", "")
         }
 
     async def listar_cirurgias(self) -> List[Dict[str, Any]]:
