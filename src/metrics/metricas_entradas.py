@@ -4,6 +4,18 @@ from .metricas_consultas import _parse_dt
 from ..helpers.jornada_utils import calcular_diferenca_horas
 
 
+_METRICAS_INDICADORES: list[tuple[str, str]] = [
+    (
+        "tempo_medio_cadastro_evento",
+        "Tempo médio da data de cadastro até o primeiro evento",
+    ),
+    (
+        "taxa_prontuarios_inertes",
+        "Taxa de prontuários inertes",
+    ),
+]
+
+
 def tempo_medio_cadastro_evento(
     consultas,
     exames,
@@ -42,52 +54,107 @@ def tempo_medio_cadastro_evento(
             continue
 
         _, primeiro_evento = primeiros_eventos[prontuario]
-        # modificando o formato pra ficar compatível com a função
+
         data_cadastro = f'{paciente["data_cadastro"]}, 00:00'
 
         tempo_total += calcular_diferenca_horas(
             data_cadastro,
-            primeiro_evento["data_hora_realizacao"]
+            primeiro_evento["data_hora_realizacao"],
         )
 
         pacientes_com_evento += 1
 
     tempo_medio = (
         tempo_total / pacientes_com_evento
-        if pacientes_com_evento > 0 
+        if pacientes_com_evento > 0
         else 0
     )
-    valor_final = ""
+
     if tempo_medio > 24:
-        tempo_medio = round(tempo_medio/24)
-        valor_final = f"{tempo_medio} dias"
-    return {
-        "nome": "Tempo médio da data de cadastro até o primeiro evento",
-        "valor": valor_final
-    }
-    
+        valor_final = f"{round(tempo_medio / 24)} dias"
+    else:
+        valor_final = f"{round(tempo_medio, 2)} horas"
+
+    return valor_final
+
+
 def taxa_prontuarios_inertes(
     consultas,
     exames,
     internacoes,
     pacientes,
-    cirurgias
+    cirurgias,
 ):
     prontuarios_com_evento = set()
-    count = 0
+
     for evento in chain(consultas, exames, internacoes, cirurgias):
         if evento["prontuario"]:
-            prontuarios_com_evento.add(evento["prontuario"])    
-            count+=1
-    inertes = 0
+            prontuarios_com_evento.add(evento["prontuario"])
 
-    for paciente in pacientes:
-        if paciente["prontuario"] not in prontuarios_com_evento:
-            inertes += 1
+    if not pacientes:
+        return "0%"
 
-        
-    taxa_prontuarios_inertes = round((inertes/len(pacientes))*100, 2)
+    inertes = sum(
+        1
+        for paciente in pacientes
+        if paciente["prontuario"] not in prontuarios_com_evento
+    )
+
+    taxa = round((inertes / len(pacientes)) * 100, 2)
+    return f"{taxa}%"
+
+
+def dicionario_metricas_entradas(
+    consultas,
+    exames,
+    internacoes,
+    pacientes,
+    cirurgias,
+):
     return {
-        "nome": "Taxa de prontuários inertes",
-        "valor": f"{taxa_prontuarios_inertes}%",
+        "tempo_medio_cadastro_evento": tempo_medio_cadastro_evento(
+            consultas=consultas,
+            exames=exames,
+            internacoes=internacoes,
+            pacientes=pacientes,
+            cirurgias=cirurgias,
+        ),
+        "taxa_prontuarios_inertes": taxa_prontuarios_inertes(
+            consultas=consultas,
+            exames=exames,
+            internacoes=internacoes,
+            pacientes=pacientes,
+            cirurgias=cirurgias,
+        ),
     }
+
+
+def metricas_entradas(
+    consultas,
+    exames,
+    internacoes,
+    pacientes,
+    cirurgias,
+):
+    metricas_key = dicionario_metricas_entradas(
+        consultas=consultas,
+        exames=exames,
+        internacoes=internacoes,
+        pacientes=pacientes,
+        cirurgias=cirurgias,
+    )
+
+    indicadores = []
+
+    for metrica, nome_display in _METRICAS_INDICADORES:
+        if metrica not in metricas_key:
+            continue
+
+        indicadores.append(
+            {
+                "nome": nome_display,
+                "valor": metricas_key[metrica],
+            }
+        )
+
+    return indicadores

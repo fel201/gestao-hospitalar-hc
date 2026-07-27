@@ -1,5 +1,7 @@
 from collections import defaultdict
 from ..helpers.math_utils import divisao_segura
+from .helpers.filtrar_eventos import filtrar_eventos, filtrar_eventos_por_periodo
+
 _METRICAS_INDICADORES: list[tuple[str, str]] = [
     ("taxa_cirurgias_concluidas", "Taxa de cirurgias concluídas"),
     ("pacientes_operados", "Pacientes únicos operados"),
@@ -10,6 +12,16 @@ _METRICAS_INDICADORES: list[tuple[str, str]] = [
     ("porcentagem_cirurgias_origem_internacao", "Porcentagem de cirurgias que tiveram sua origem na internação")
 ]
 ORIGEM_INTERNACAO = "INTERNAÇÃO"
+
+
+def filtrar_cirurgias(cirurgias, especialidade, data_inicio, data_fim):
+    return filtrar_eventos_por_periodo(
+        filtrar_eventos(evento="cirurgia", dados=cirurgias, especialidade=especialidade),
+        data_inicio,
+        data_fim,
+    )
+
+
 def cirurgias_concluidas(cirurgias):
     if len(cirurgias) == 0: return []
      
@@ -81,7 +93,6 @@ def cirurgias_por_especialidade(cirurgias):
             continue
 
         resultado[c["especialidade"]] += 1
-
     return dict(resultado)
 
 def dicionario_metricas_cirurgias(cirurgias, numero_pacientes):
@@ -95,8 +106,9 @@ def dicionario_metricas_cirurgias(cirurgias, numero_pacientes):
         "porcentagem_cirurgias_origem_internacao": porcentagem_cirurgias_origem_internacao(cirurgias=cirurgias)
     }
     
-def metricas_cirurgias(cirurgias, total_pacientes):
-    metricas_key = dicionario_metricas_cirurgias(cirurgias=cirurgias, numero_pacientes=total_pacientes)
+def metricas_cirurgias(cirurgias, especialidade, data_inicio, data_fim, total_pacientes):
+    cirurgias_filtradas = filtrar_cirurgias(cirurgias, especialidade, data_inicio, data_fim)
+    metricas_key = dicionario_metricas_cirurgias(cirurgias=cirurgias_filtradas, numero_pacientes=total_pacientes)
     indicadores = []
     for metrica, nome_display in _METRICAS_INDICADORES:
         if metrica not in metricas_key:

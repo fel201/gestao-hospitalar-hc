@@ -1,9 +1,8 @@
 from ..helpers.jornada_utils import calcular_diferenca_horas, _mes_anterior
-from ..helpers.formatacao import remover_acentos
+from .helpers.filtrar_eventos import filtrar_eventos, filtrar_eventos_por_periodo
+from ..helpers.formatacao import remover_acentos, padronizar_casas_decimais
 from datetime import datetime
 from typing import Any
-
-import unicodedata
 
 ESPECIALIDADE_AMBULATORIAL = "AMBULATORIO"
 ESPECIALIDADE_UTI = "UTI"
@@ -16,257 +15,294 @@ SITUACAO_A_COLETAR = "A COLETAR"
 
 _METRICAS_INDICADORES: list[tuple[str, str]] = [
     ("tempo_medio_solicitacao_realizacao_mensal", "Tempo médio de solicitação até a realização do exame por mês"),
-    ("concentracao_exames_ambulatoriais_paciente_ativo_mensal", "Concentração de Exames Ambulatoriais por paciente ativo de cada mês"),
-    ("concentracao_exames_emergenciais_paciente_ativo_mensal", "Concentração de Exames Emergenciais por paciente ativo de cada mês"),
-    ("porcentagem_exames_ambulatoriais", "Porcentagem de exames ambulatoriais"),
-    ("porcentagem_exames_emergenciais", "Porcentagem de exames emergenciais"),
-    ("porcentagem_exames_preoperatorios", "Porcentagem de exames pré-operatórios"),
-    ("porcentagem_exames_regulados", "Porcentagem de exames regulados em relação ao total"),
-    ("porcentagem_exames_concluidos", "Porcentagem de exames concluidos em relação ao total"),
+    ("porcentagem_exames_ambulatoriais_emergenciais", "Porcentagem de exames ambulatoriais e emergenciais/pré-operatórios"),
+    ("porcentagem_exames_ambulatoriais_emergenciais_global", "Porcentagem de exames ambulatoriais e emergenciais/pré-operatórios global"),
+    ("porcentagem_exames_regulados", "Porcentagem de exames regulados"),
+    ("porcentagem_global_exames_regulados", "Porcentagem global de exames regulados"),
+    ("porcentagem_exames_concluidos", "Porcentagem de exames concluídos"),
+    ("porcentagem_global_exames_concluidos", "Porcentagem global de exames concluídos"),
     ("porcentagem_exames_cancelados", "Porcentagem de exames marcados como pendentes"),
+    ("porcentagem_global_exames_cancelados", "Porcentagem global de exames marcados como pendentes"),
 ]
 
-    
+# exames com umas das maiores taxas de conclusão
+#
+
+
 def qtd_exames_tipo(exames, tipo):
     total_exames_condicao = 0
-    
+
     for e in exames:
         especialidade = remover_acentos(e["especialidade_solicitante_nome"])
-        
-        if tipo == "ambulatorial" and ESPECIALIDADE_AMBULATORIAL in especialidade:
-            total_exames_condicao += 1
-        
-        elif tipo == "emergencial" and ESPECIALIDADE_UTI in e["especialidade_solicitante_nome"] \
-            or ESPECIALIDADE_URGENCIA in e["especialidade_solicitante_nome"]:
-            total_exames_condicao += 1
-        
-        elif tipo == "pre-operatorio" and ESPECIALIDADE_CIRURGIA in e["especialidade_solicitante_nome"]:
+        if tipo == "ambulatorial":
+            if ESPECIALIDADE_AMBULATORIAL in especialidade:
+                total_exames_condicao += 1
+        elif tipo == "emergencial-preoperatorio" and (
+            ESPECIALIDADE_UTI in especialidade
+            or ESPECIALIDADE_URGENCIA in especialidade
+            or ESPECIALIDADE_CIRURGIA in especialidade
+        ):
             total_exames_condicao += 1
     return total_exames_condicao
+
 
 def exames_cancelados(exames):
     e = [c for c in exames if SITUACAO_CANCELADO in c["situacao"].upper()]
     return e
 
+
 def exames_concluidos(exames):
-    e = [c for c in exames if SITUACAO_LIBERADO in c["situacao"].upper()]    
+    e = [c for c in exames if SITUACAO_LIBERADO in c["situacao"].upper()]
     return e
+
 
 def exames_regulados(exames):
     e = [c for c in exames if CONDICAO_REGULADO in c["condicao"].upper()]
     return e
 
+
 def porcentagem_exames_cancelados(exames):
+    if not exames:
+        return "0%"
     tamanho_exames_c = len(exames_cancelados(exames=exames))
-    taxa = round((tamanho_exames_c/len(exames))*100, 2)
+    taxa = round((tamanho_exames_c / len(exames)) * 100, 2)
     return f"{taxa}%"
-    
+
+
 def porcentagem_exames_regulados(exames):
-    p_exames_regulados = round(len(exames_regulados(exames=exames))/len(exames)*100, 2)
+    if not exames:
+        return "0%"
+    p_exames_regulados = round(len(exames_regulados(exames=exames)) / len(exames) * 100, 2)
     return f"{p_exames_regulados}%"
 
+
 def porcentagem_exames_concluidos(exames):
+    if not exames:
+        return "0%"
     n_exames_concluidos = len(exames_concluidos(exames=exames))
-    p_exames_concluidos = round((n_exames_concluidos/len(exames))*100, 2)
+    p_exames_concluidos = round((n_exames_concluidos / len(exames)) * 100, 2)
     return f"{p_exames_concluidos}%"
-    
+
 
 def tempo_medio_solicitacao_realizacao(exames):
     if not exames:
         return 0
 
     soma = 0
-
     for exame in exames:
-        diff = calcular_diferenca_horas(
+        soma += calcular_diferenca_horas(
             exame["data_hora_solicitacao"],
             exame["data_hora_realizacao"],
         )
 
-        soma += diff
-
-    tempo_medio = round((soma / len(exames)), 2)
-
-    return f"{tempo_medio} horas"
+    tempo_medio = soma / len(exames)
+    res = padronizar_casas_decimais(tempo_medio) + " horas"
+    return res
 
 
+def porcentagem_exames_do_tipo(exames: list[dict], tipo: str):
+    total_exames = len(exames)
+    if total_exames == 0:
+        return "0%"
+
+    qtd_exames = qtd_exames_tipo(exames=exames, tipo=tipo)
+    proporcao = round((qtd_exames / total_exames) * 100, 2)
+    return f"{proporcao}%"
+
+
+def porcentagem_exames_ambulatoriais_emergenciais(exames: list[dict]) -> dict:
+    """
+    Retorna a porcentagem de exames ambulatoriais e, por complemento (100 - x),
+    a porcentagem de exames emergenciais/pré-operatórios, já que as duas
+    categorias são mutuamente exclusivas e cobrem o total de exames.
+    """
+    if not exames:
+        return {
+            "Ambulatoriais": "0%",
+            "Pré-operatórios e Emergenciais": "0%",
+        }
+
+    qtd_ambulatorial = qtd_exames_tipo(exames=exames, tipo="ambulatorial")
+    pct_ambulatorial = round((qtd_ambulatorial / len(exames)) * 100, 2)
+    pct_emergencial = round(100 - pct_ambulatorial, 2)
+
+    return {
+        "Ambulatoriais": f"{pct_ambulatorial}%",
+        "Pré-operatórios e Emergenciais": f"{pct_emergencial}%",
+    }
+
+
+# total de exames realizados / numero de pacientes atendidos
+# paciente ativo: aquele que já realizou pelo menos um exame no hospital
+def concentracao_exames_por_paciente_ativo(exames: list[dict], tipo: str):
+    if not exames:
+        return 0
+
+    pacientes = set()
+    for e in exames:
+        pacientes.add(e["prontuario"])
+
+    qtd = qtd_exames_tipo(exames=exames, tipo=tipo)
+    exames_amb_por_pac = round(qtd / len(pacientes), 2)
+    print(exames_amb_por_pac)
+    return exames_amb_por_pac
+
+
+def _contadores_globais(exames: list[dict]) -> dict[str, int]:
+    contadores = {
+        "total": len(exames),
+        "cancelados": 0,
+        "concluidos": 0,
+        "regulados": 0,
+        "ambulatorial": 0,
+        "emergencial_preoperatorio": 0,
+    }
+
+    for e in exames:
+        if SITUACAO_CANCELADO in e["situacao"].upper():
+            contadores["cancelados"] += 1
+        if SITUACAO_LIBERADO in e["situacao"].upper():
+            contadores["concluidos"] += 1
+        if CONDICAO_REGULADO in e["condicao"].upper():
+            contadores["regulados"] += 1
+
+        especialidade = remover_acentos(e["especialidade_solicitante_nome"])
+        if (
+            ESPECIALIDADE_UTI in especialidade
+            or ESPECIALIDADE_URGENCIA in especialidade
+            or ESPECIALIDADE_CIRURGIA in especialidade
+        ):
+            contadores["emergencial_preoperatorio"] += 1
+        if ESPECIALIDADE_AMBULATORIAL in especialidade:
+            contadores["ambulatorial"] += 1
+
+    return contadores
+
+def _formatar_percentual(qtd: int, total: int) -> str:
+    if total == 0:
+        return "0%"
+    return f"{round((qtd / total) * 100, 2)}%"
+
+
+def _calcular_meses_alvo(data_inicio: str, data_fim: str, quantidade: int = 5) -> list[tuple[int, int]]:
+    dt_inicio = datetime.strptime(data_inicio, "%Y-%m-%d")
+    dt_fim = datetime.strptime(data_fim, "%Y-%m-%d")
+
+    ano_inicio, mes_inicio = dt_inicio.year, dt_inicio.month
+    ano_atual, mes_atual = dt_fim.year, dt_fim.month
+
+    meses_alvo = []
+    while len(meses_alvo) < quantidade:
+        meses_alvo.append((ano_atual, mes_atual))
+        if (ano_atual, mes_atual) == (ano_inicio, mes_inicio):
+            break
+        ano_atual, mes_atual = _mes_anterior(ano_atual, mes_atual)
+
+    meses_alvo.reverse()
+    return meses_alvo
+
+
+def _agrupar_exames_por_mes(
+    exames: list[dict], meses_alvo: list[tuple[int, int]]
+) -> dict[tuple[int, int], list[dict]]:
+    meses_validos = set(meses_alvo)
+    grupos: dict[tuple[int, int], list[dict]] = {chave: [] for chave in meses_alvo}
+
+    for e in exames:
+        data_exame = datetime.strptime(e["data_hora_realizacao"], "%d/%m/%Y, %H:%M")
+        chave = (data_exame.year, data_exame.month)
+        if chave in meses_validos:
+            grupos[chave].append(e)
+
+    return grupos
 
 
 def tempo_medio_solicitacao_realizacao_mensal(
     exames: list[dict],
     data_inicio: str,
     data_fim: str,
+    _grupos: dict[tuple[int, int], list[dict]] | None = None,
 ) -> dict:
     """
-    Calcula o tempo médio entre solicitação e realização, mês a mês,
-    olhando para os últimos 5 meses (ou menos, se o intervalo for menor).
+    Calcula o tempo médio entre solicitação e realização, mês a mês, olhando
+    para os últimos 5 meses (ou menos, se o intervalo for menor).
     """
-    dt_inicio = datetime.strptime(data_inicio, "%Y-%m-%d")
-    dt_fim = datetime.strptime(data_fim, "%Y-%m-%d")
-
-    ano_inicio, mes_inicio = dt_inicio.year, dt_inicio.month
-    ano_atual, mes_atual = dt_fim.year, dt_fim.month
-
-    meses_alvo = []
-    while len(meses_alvo) < 5:
-        meses_alvo.append((ano_atual, mes_atual))
-        if (ano_atual, mes_atual) == (ano_inicio, mes_inicio):
-            break
-        ano_atual, mes_atual = _mes_anterior(ano_atual, mes_atual)
-
-    meses_alvo.reverse()
+    meses_alvo = _calcular_meses_alvo(data_inicio, data_fim)
+    grupos = _grupos if _grupos is not None else _agrupar_exames_por_mes(exames, meses_alvo)
 
     resultado = {}
     for ano, mes in meses_alvo:
         chave = f"{mes:02d}/{ano}"
-
-        exames_do_mes = []
-        for e in exames:
-            data_exame = datetime.strptime(e["data_hora_realizacao"], "%d/%m/%Y, %H:%M")
-            if data_exame.year == ano and data_exame.month == mes:
-                exames_do_mes.append(e)
-
-        if not exames_do_mes:
-            resultado[chave] = 0
-            continue
-
-        resultado[chave] = tempo_medio_solicitacao_realizacao(exames_do_mes)
+        exames_do_mes = grupos.get((ano, mes), [])
+        resultado[chave] = tempo_medio_solicitacao_realizacao(exames_do_mes) if exames_do_mes else 0
 
     return resultado
 
-
-def porcentagem_exames_do_tipo(exames: list[dict, any], tipo: str) -> dict:
-    total_exames = len(exames)
-    if total_exames == 0: return 0
-    
-    qtd_exames = qtd_exames_tipo(exames=exames, tipo=tipo)
-    proporcao = round((qtd_exames/total_exames)*100, 2)
-    
-    return f"{proporcao}%"
-
-# total de exames realizados / numero de pacientes atendidos
-# paciente ativo: aquele que já realizou pelo menos um exame no hospital
-def concentracao_exames_por_paciente_ativo(exames: list[dict, any], tipo: str) -> dict:
-    pacientes = set()
-        
-    for e in exames:
-        pacientes.add(e["prontuario"])
-        
-    qtd = qtd_exames_tipo(exames=exames, tipo=tipo)
-    exames_amb_por_pac = round(qtd/len(pacientes), 2)
-    return exames_amb_por_pac
-    
 
 def concentracao_exames_por_paciente_ativo_mensal(
     exames: list[dict],
     tipo: str,
     data_inicio: str,
     data_fim: str,
+    _grupos: dict[tuple[int, int], list[dict]] | None = None,
 ) -> dict:
-    """
-    Calcula a concentração de exames por paciente ativo, mês a mês,
-    olhando para os últimos 5 meses (ou menos, se o intervalo for menor).
-
-    data_inicio e data_fim no formato "%Y-%m-%d" (ex: "2026-04-30").
-    Retorna um dict {"MM/YYYY": valor, ...} em ordem cronológica crescente.
-    """
-    dt_inicio = datetime.strptime(data_inicio, "%Y-%m-%d")
-    dt_fim = datetime.strptime(data_fim, "%Y-%m-%d")
-
-    ano_inicio, mes_inicio = dt_inicio.year, dt_inicio.month
-    ano_atual, mes_atual = dt_fim.year, dt_fim.month
-
-    
-    meses_alvo = []
-    while len(meses_alvo) < 5:
-        meses_alvo.append((ano_atual, mes_atual))
-        if (ano_atual, mes_atual) == (ano_inicio, mes_inicio):
-            break
-        ano_atual, mes_atual = _mes_anterior(ano_atual, mes_atual)
-
-    # Ordena do mais antigo para o mais recente
-    meses_alvo.reverse()
+    meses_alvo = _calcular_meses_alvo(data_inicio, data_fim)
+    grupos = _grupos if _grupos is not None else _agrupar_exames_por_mes(exames, meses_alvo)
 
     resultado = {}
     for ano, mes in meses_alvo:
         chave = f"{mes:02d}/{ano}"
-
-        exames_do_mes = []
-        for e in exames:
-            data_exame = datetime.strptime(e["data_hora_realizacao"], "%d/%m/%Y, %H:%M")
-            if data_exame.year == ano and data_exame.month == mes:
-                exames_do_mes.append(e)
-
-        if not exames_do_mes:
-            resultado[chave] = 0
-            continue
-
-        resultado[chave] = concentracao_exames_por_paciente_ativo(
-            exames=exames_do_mes, tipo=tipo
+        exames_do_mes = grupos.get((ano, mes), [])
+        resultado[chave] = (
+            concentracao_exames_por_paciente_ativo(exames=exames_do_mes, tipo=tipo) if exames_do_mes else 0
         )
-    return resultado    
 
-def dicionario_metricas_exames(exames, data_inicio, data_fim):
+    return resultado
+
+
+def filtrar_exames(exames, especialidade, data_inicio, data_fim):
+    return filtrar_eventos_por_periodo(
+        filtrar_eventos(evento="exame", dados=exames, especialidade=especialidade),
+        data_inicio,
+        data_fim,
+    )
+
+def dicionario_metricas_exames(exames, especialidade, data_inicio, data_fim):
+    exames_filtrados = filtrar_exames(exames, especialidade, data_inicio, data_fim)
+    meses_alvo = _calcular_meses_alvo(data_inicio=data_inicio, data_fim=data_fim)
+    grupos = _agrupar_exames_por_mes(exames=exames_filtrados, meses_alvo=meses_alvo)
+    contadores = _contadores_globais(exames=exames_filtrados)
+    contadores_sem_filtro = _contadores_globais(exames=exames)
     return {
         "tempo_medio_solicitacao_realizacao_mensal": tempo_medio_solicitacao_realizacao_mensal(
-            exames=exames,
-            data_inicio=data_inicio,
-            data_fim=data_fim
+            exames=exames, data_inicio=data_inicio, data_fim=data_fim, _grupos=grupos
         ),
-        "concentracao_exames_ambulatoriais_paciente_ativo_mensal":
-            concentracao_exames_por_paciente_ativo_mensal(
-                exames=exames,
-                tipo="ambulatorial",
-                data_inicio=data_inicio,
-                data_fim=data_fim
-            ),
-        "concentracao_exames_emergenciais_paciente_ativo_mensal":
-            concentracao_exames_por_paciente_ativo_mensal(
-                exames=exames,
-                tipo="emergencial",
-                data_inicio=data_inicio,
-                data_fim=data_fim
-            ),
-        "porcentagem_exames_ambulatoriais":
-            porcentagem_exames_do_tipo(
-                exames=exames,
-                tipo="ambulatorial"
-            ),
-        "porcentagem_exames_emergenciais":
-            porcentagem_exames_do_tipo(
-                exames=exames, tipo="emergencial"
-            ),
-        "porcentagem_exames_preoperatorios":
-            porcentagem_exames_do_tipo(
-                exames=exames,
-                tipo="pre-operatorio"
-            ),
-        "porcentagem_exames_regulados":
-            porcentagem_exames_regulados(
-                exames=exames
-            ),
-        "porcentagem_exames_concluidos":
-            porcentagem_exames_concluidos(
-                exames=exames
-            ),
-        "porcentagem_exames_cancelados":
-            porcentagem_exames_cancelados(
-                exames=exames
-            )
+        "porcentagem_exames_ambulatoriais_emergenciais": porcentagem_exames_ambulatoriais_emergenciais(
+            exames=exames_filtrados
+        ),
+        "porcentagem_exames_ambulatoriais_emergenciais_global": porcentagem_exames_ambulatoriais_emergenciais(
+            exames=exames
+        ),
+        "porcentagem_exames_regulados": _formatar_percentual(contadores["regulados"], contadores["total"]),
+        "porcentagem_global_exames_regulados": _formatar_percentual(contadores_sem_filtro["regulados"], contadores_sem_filtro["total"]),
+        "porcentagem_exames_concluidos": _formatar_percentual(contadores["concluidos"], contadores["total"]),
+        "porcentagem_global_exames_concluidos": _formatar_percentual(contadores_sem_filtro["concluidos"], contadores_sem_filtro["total"]),
+        "porcentagem_exames_cancelados": _formatar_percentual(contadores["cancelados"], contadores["total"]),
+        "porcentagem_global_exames_cancelados": _formatar_percentual(contadores_sem_filtro["cancelados"], contadores_sem_filtro["total"])
     }
-    
-def metricas_exames(exames, data_inicio, data_fim):
-    metricas_key = dicionario_metricas_exames(exames=exames, data_inicio=data_inicio, data_fim=data_fim)
+
+def metricas_exames(exames, especialidade, data_inicio, data_fim):
+    metricas_key = dicionario_metricas_exames(exames, especialidade, data_inicio, data_fim)
     indicadores = []
-    
+
     for metrica, nome_display in _METRICAS_INDICADORES:
         if metrica not in metricas_key:
             continue
-        
+
         valor = metricas_key[metrica]
         indicadores.append({
             "nome": nome_display,
             "valor": valor
         })
-        
+
     return indicadores

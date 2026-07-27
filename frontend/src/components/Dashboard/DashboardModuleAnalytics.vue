@@ -1,189 +1,209 @@
 <template>
   <section
-    class="mt-10 rounded-2xl border border-slate-700/80 bg-slate-800/70 p-6 shadow-2xl shadow-slate-950/30"
+    class="mt-10 rounded-lg border border-[#2c3140] bg-[#181c25] p-6"
   >
     <div
-      class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between"
+      class="flex flex-col gap-3 border-b border-[#2c3140] pb-5 md:flex-row md:items-end md:justify-between"
     >
       <div>
-        <p class="text-[11px] uppercase tracking-[0.35em] text-slate-500">
+        <p class="font-mono text-[11px] uppercase tracking-[0.16em] text-[#8b8f9c]">
           Fluxo assistencial
         </p>
-        <h2 class="text-xl font-semibold text-white">
+        <h2 class="mt-1 font-serif text-2xl font-medium text-[#ece8df]">
           Análise por módulo e subprocesso
         </h2>
-        <p class="mt-2 max-w-2xl text-sm text-slate-400">
-          Selecione um módulo e um subprocesso para visualizar os gráficos
+        <p class="mt-2 max-w-2xl text-sm leading-relaxed text-[#9096a3]">
+          Selecione um módulo e um subprocesso para visualizar os indicadores
           correspondentes.
         </p>
       </div>
     </div>
 
-    <div class="mt-6 flex flex-wrap gap-2">
+    <!-- Abas de módulo, no estilo de divisórias de prontuário: cada módulo
+         carrega sua própria cor de identidade, usada depois nos gráficos. -->
+    <div class="mt-6 flex flex-wrap gap-1">
       <button
         v-for="modulo in MODULOS"
         :key="modulo.id"
-        class="rounded-full border px-3 py-2 text-sm font-medium transition"
-        :class="
-          activeModulo === modulo.id
-            ? 'border-blue-500 bg-blue-500/20 text-blue-200'
-            : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-slate-500 hover:text-white'
-        "
+        class="rounded-t-md border border-b-0 px-4 py-2.5 text-sm font-medium transition-colors"
+        :style="tabStyle(modulo.id)"
         @click="selecionarModulo(modulo.id)"
       >
+        <span
+          class="mr-2 inline-block h-1.5 w-1.5 rounded-full align-middle"
+          :style="{ backgroundColor: MODULO_COLORS[modulo.id]?.base ?? '#6b7280' }"
+        />
         {{ modulo.label }}
       </button>
     </div>
 
-    <div v-if="moduloSelecionado" class="mt-6 grid gap-3 lg:grid-cols-3">
-      <button
-        v-for="sub in moduloSelecionado.submodulos"
-        :key="sub.id"
-        class="rounded-xl border p-4 text-left transition"
-        :class="
-          activeSubmodulo === sub.id
-            ? 'border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-900/20'
-            : 'border-slate-700 bg-slate-900/70 hover:border-slate-500'
-        "
-        @click="activeSubmodulo = sub.id"
-      >
-        <p class="text-sm font-semibold text-white">{{ sub.titulo }}</p>
-        <p class="mt-2 text-sm text-slate-400">{{ sub.descricao }}</p>
-      </button>
-    </div>
-
     <div
-      v-if="submoduloSelecionado"
-      class="mt-8 rounded-2xl border border-slate-700/70 bg-slate-900/60 p-5"
+      class="rounded-b-md rounded-tr-md border border-[#2c3140] bg-[#15181f] p-5"
     >
-      <div
-        class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
-      >
-        <div>
-          <p class="text-[11px] uppercase tracking-[0.3em] text-slate-500">
-            Subprocesso ativo
+      <div v-if="moduloSelecionado" class="grid gap-3 lg:grid-cols-3">
+        <button
+          v-for="sub in moduloSelecionado.submodulos"
+          :key="sub.id"
+          class="rounded-md border p-4 text-left transition-colors"
+          :style="submoduloCardStyle(sub.id)"
+          @click="activeSubmodulo = sub.id"
+        >
+          <p class="font-serif text-[15px] font-medium text-[#ece8df]">
+            {{ sub.titulo }}
           </p>
-          <h3 class="text-lg font-semibold text-white">
-            {{ submoduloSelecionado.titulo }}
-          </h3>
-          <p class="mt-1 text-sm text-slate-400">
+          <p class="mt-1.5 text-sm leading-relaxed text-[#8b8f9c]">
+            {{ sub.descricao }}
+          </p>
+        </button>
+      </div>
+
+      <div
+        v-if="submoduloSelecionado"
+        class="mt-6 border-t border-[#252a35] pt-6"
+      >
+        <div
+          class="flex flex-col gap-1 border-l-2 pl-3 md:flex-row md:items-baseline md:justify-between md:gap-3"
+          :style="{ borderColor: corAtiva }"
+        >
+          <div>
+            <p class="font-mono text-[10px] uppercase tracking-[0.14em] text-[#767c8a]">
+              Subprocesso ativo
+            </p>
+            <h3 class="font-serif text-lg font-medium text-[#ece8df]">
+              {{ submoduloSelecionado.titulo }}
+            </h3>
+          </div>
+          <p class="text-sm text-[#8b8f9c] md:max-w-sm md:text-right">
             {{ submoduloSelecionado.descricao }}
           </p>
         </div>
-      </div>
 
-      <div class="mt-6 grid gap-6 xl:grid-cols-2">
-        <div
-          v-for="item in graficosResolvidos"
-          :key="item.spec.id"
-          class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4"
-          :class="{ 'xl:col-span-2': item.spec.tipo === 'distribuicao' }"
-        >
-          <div class="flex items-start justify-between gap-2">
-            <h4 class="text-sm font-semibold text-white">
-              {{ item.spec.titulo }}
-            </h4>
-            <span
-              class="rounded-full bg-slate-700 px-2 py-1 text-[11px] uppercase tracking-[0.25em] text-slate-300"
-            >
-              {{ rotuloTipo(item.spec.tipo) }}
-            </span>
-          </div>
-
-          <!-- Gráfico ainda não implementado no backend, ou faltam indicadores -->
+        <div class="mt-6 grid gap-5 xl:grid-cols-2">
           <div
-            v-if="item.indisponivel"
-            class="mt-4 flex h-40 items-center justify-center rounded-lg border border-dashed border-slate-700 bg-slate-900/40 p-4 text-center"
+            v-for="item in graficosResolvidos"
+            :key="item.spec.id"
+            class="rounded-md border border-[#252a35] bg-[#1b1f29] p-4"
+            :class="{ 'xl:col-span-2': item.spec.tipo === 'distribuicao' }"
           >
-            <p class="text-xs text-slate-500">
-              Ainda não disponível no backend{{
-                item.faltando.length ? ": " + item.faltando.join(", ") : ""
-              }}.
-            </p>
-          </div>
+            <div class="flex items-start justify-between gap-3">
+              <h4 class="font-serif text-[15px] font-medium leading-snug text-[#ece8df]">
+                {{ item.spec.titulo }}
+              </h4>
+              <span
+                class="shrink-0 rounded-sm border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-[#8b8f9c]"
+                style="border-color: #313847"
+              >
+                {{ rotuloTipo(item.spec.tipo) }}
+              </span>
+            </div>
 
-          <!-- Comparação de proporções (2-4 categorias em %) -->
-          <div
-            v-else-if="item.spec.tipo === 'comparacao-proporcao'"
-            class="mt-4 h-56"
-          >
-            <Bar
-              :data="buildComparacaoProporcaoData(item)"
-              :options="chartOptionsComparacaoProporcao"
-              :plugins="[ChartDataLabels]"
-            />
-          </div>
-
-          <!-- Comparação de valores em dias/horas (mesma unidade) -->
-          <div
-            v-else-if="item.spec.tipo === 'comparacao-dias'"
-            class="mt-4 h-56"
-          >
-            <Bar
-              :data="buildComparacaoValorData(item)"
-              :options="chartOptionsComparacaoValor(item.spec.unidade)"
-              :plugins="[ChartDataLabels]"
-            />
-          </div>
-
-          <!-- Comparação mista: unidades diferentes -> dois cards de estatística lado a lado -->
-          <div
-            v-else-if="item.spec.tipo === 'comparacao-mista'"
-            class="mt-4 grid h-40 grid-cols-2 gap-3"
-          >
+            <!-- Gráfico ainda não implementado no backend, ou faltam indicadores -->
             <div
-              v-for="ind in item.indicadores"
-              :key="ind.nome"
-              class="flex flex-col items-center justify-center rounded-lg bg-slate-900/50 p-3 text-center"
+              v-if="item.indisponivel"
+              class="mt-4 flex h-40 items-center justify-center rounded-md border border-dashed border-[#2c3140] bg-[#151820] p-4 text-center"
             >
-              <span class="text-2xl font-bold text-white">{{
-                formatarValor(ind.valor)
-              }}</span>
-              <span class="mt-1 text-xs text-slate-400">{{
-                rotuloIndicador(item.spec, ind.nome)
-              }}</span>
+              <p class="font-mono text-xs text-[#666c79]">
+                Ainda não disponível no backend{{
+                  item.faltando.length ? ": " + item.faltando.join(", ") : ""
+                }}.
+              </p>
+            </div>
+
+            <!-- Comparação de proporções (2-4 categorias em %) -->
+            <div
+              v-else-if="item.spec.tipo === 'comparacao-proporcao'"
+              class="mt-4 h-56"
+            >
+              <Bar
+                :data="buildComparacaoProporcaoData(item)"
+                :options="chartOptionsComparacaoProporcao"
+                :plugins="[ChartDataLabels]"
+              />
+            </div>
+
+            <!-- Comparação de valores em dias/horas (mesma unidade) -->
+            <div
+              v-else-if="item.spec.tipo === 'comparacao-dias'"
+              class="mt-4 h-56"
+            >
+              <Bar
+                :data="buildComparacaoValorData(item)"
+                :options="chartOptionsComparacaoValor(item.spec.unidade)"
+                :plugins="[ChartDataLabels]"
+              />
+            </div>
+
+            <!-- Comparação mista: unidades diferentes -> dois cards de estatística lado a lado -->
+            <div
+              v-else-if="item.spec.tipo === 'comparacao-mista'"
+              class="mt-4 grid h-40 grid-cols-2 gap-3"
+            >
+              <div
+                v-for="ind in item.indicadores"
+                :key="ind.nome"
+                class="flex flex-col items-center justify-center rounded-md border border-[#252a35] bg-[#15181f] p-3 text-center"
+              >
+                <span class="font-mono text-2xl font-semibold text-[#ece8df]">{{
+                  formatarValor(ind.valor)
+                }}</span>
+                <span class="mt-1 text-xs text-[#8b8f9c]">{{
+                  rotuloIndicador(item.spec, ind.nome)
+                }}</span>
+              </div>
+            </div>
+
+            <!-- Distribuição (dict {categoria: contagem}) -> gráfico de barras horizontal -->
+            <div
+              v-else-if="item.spec.tipo === 'distribuicao'"
+              class="mt-4"
+              :style="{
+                height: alturaBarraDistribuicao(item.indicadores[0]) + 'px',
+              }"
+            >
+              <Bar
+                :data="buildDistribuicaoData(item.indicadores[0])"
+                :options="buildDistribuicaoOptions(item.indicadores[0])"
+                :plugins="[ChartDataLabels]"
+              />
+            </div>
+
+            <!-- Serie temporal (horas) -->
+            <div
+              v-else-if="item.spec.tipo === 'serie-temporal'"
+              class="mt-4 h-72"
+            >
+              <Bar
+                :data="buildSerieTemporalData(item.indicadores[0])"
+                :options="buildSerieTemporalOptions()"
+                :plugins="[ChartDataLabels]"
+              />
+            </div>
+
+            <!-- Serie temporal percentual (0-100%) -->
+            <div
+              v-else-if="item.spec.tipo === 'serie-temporal-percentual'"
+              class="mt-4 h-72"
+            >
+              <Bar
+                :data="buildSerieTemporalPercentualData(item.indicadores[0])"
+                :options="buildSerieTemporalPercentualOptions()"
+                :plugins="[ChartDataLabels]"
+              />
+            </div>
+            <!-- Valor simples (número, string, dias, horas etc) -->
+            <div v-else class="mt-4 flex h-40 flex-col items-center justify-center gap-1">
+              <p class="font-mono text-3xl font-semibold" :style="{ color: corAtiva }">
+                {{ formatarValor(item.indicadores[0]?.valor) }}
+              </p>
             </div>
           </div>
 
-          <!-- Distribuição (dict {categoria: contagem}) -> gráfico de barras horizontal -->
           <div
-            v-else-if="item.spec.tipo === 'distribuicao'"
-            class="mt-4"
-            :style="{
-              height: alturaBarraDistribuicao(item.indicadores[0]) + 'px',
-            }"
+            v-if="graficosResolvidos.length === 0"
+            class="col-span-full text-sm text-[#8b8f9c]"
           >
-            <Bar
-              :data="buildDistribuicaoData(item.indicadores[0])"
-              :options="buildDistribuicaoOptions(item.indicadores[0])"
-              :plugins="[ChartDataLabels]"
-            />
+            Nenhum gráfico configurado para este subprocesso ainda.
           </div>
-          
-          <!-- Serie temporal -->
-          <div
-            v-else-if="item.spec.tipo === 'serie-temporal'"
-            class="mt-4 h-72"
-          >
-            <Bar
-              :data="buildSerieTemporalData(item.indicadores[0])"
-              :options="buildSerieTemporalOptions()"
-              :plugins="[ChartDataLabels]"
-            />
-          </div>
-          <!-- Valor simples (número, string, dias, horas etc) -->
-          <div v-else class="mt-4 flex h-40 items-center justify-center">
-            <p class="text-3xl font-bold text-white">
-              {{ formatarValor(item.indicadores[0]?.valor) }}
-            </p>
-          </div>
-        </div>
-
-        <div
-          v-if="graficosResolvidos.length === 0"
-          class="col-span-full text-sm text-slate-400"
-        >
-          Nenhum gráfico configurado para este subprocesso ainda.
         </div>
       </div>
     </div>
@@ -217,9 +237,15 @@ ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 // desc, ex.: encaminhamentos_por_consulta_regulada -> {"RETORNO": 12, "SEM SEGUIMENTO": 5, ...}
 type IndicadorDistribuicao = Record<string, number>;
 
+// Dicionário de categorias fixas que somam 100% (ex.: Ambulatoriais / Pré-operatórios
+// e Emergenciais), com valores já formatados como string ("45.2%") ou numéricos.
+// Difere de IndicadorDistribuicao (contagens abertas): aqui as chaves são fixas
+// e o conjunto é tratado como uma comparação de proporções, não uma distribuição.
+type IndicadorProporcaoDict = Record<string, number | string>;
+
 type Indicador = {
   nome: string;
-  valor: number | string | IndicadorDistribuicao;
+  valor: number | string | IndicadorDistribuicao | IndicadorProporcaoDict;
 };
 
 type TipoGrafico =
@@ -228,6 +254,7 @@ type TipoGrafico =
   | "comparacao-mista"
   | "distribuicao"
   | "serie-temporal"
+  | "serie-temporal-percentual"
   | "valor-simples";
 
 type GraficoSpec = {
@@ -248,7 +275,6 @@ type SubmoduloSpec = {
   graficos: GraficoSpec[];
 };
 
-
 type ModuloSpec = {
   id: string;
   label: string;
@@ -268,15 +294,80 @@ const props = defineProps<{
 }>();
 
 // -------------------------------------------------------------------------
+// Identidade visual por módulo. Cada etapa do fluxo assistencial recebe uma
+// cor própria e discreta, usada de forma consistente na aba, no card de
+// subprocesso e nos gráficos daquele módulo — a cor passa a significar algo
+// (a etapa do fluxo), em vez de ser decoração aleatória.
+// -------------------------------------------------------------------------
+
+const MODULO_COLORS: Record<string, { base: string }> = {
+  entrada: { base: "#4f8a8b" }, // recepção / triagem — teal contido
+  consultas: { base: "#c99a3e" }, // consultas / retornos — ocre
+  exames: { base: "#b1615b" }, // exames — terracota apagado
+  internacao: { base: "#5a7599" }, // internação — azul-ardósia
+  cirurgia: { base: "#8a5a86" }, // cirurgia — ameixa
+};
+
+const NEUTRO_OUTROS = "#5c6270";
+
+const corAtiva = computed(
+  () => MODULO_COLORS[activeModulo.value]?.base ?? "#5c6270",
+);
+
+// Mistura um hex com branco na proporção `ratio` (0 = cor original, 1 = branco).
+const misturarComBranco = (hex: string, ratio: number): string => {
+  const n = parseInt(hex.replace("#", ""), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  const mix = (c: number) => Math.round(c + (255 - c) * ratio);
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+};
+
+// Paleta derivada da cor do módulo ativo: tons do mesmo matiz, do mais
+// saturado ao mais claro, com um cinza neutro reservado para "Outros".
+const paletaDoModulo = (moduloId: string): string[] => {
+  const base = MODULO_COLORS[moduloId]?.base ?? NEUTRO_OUTROS;
+  return [0, 0.2, 0.4, 0.58, 0.74].map((r) => misturarComBranco(base, r)).concat(NEUTRO_OUTROS);
+};
+
+const tabStyle = (moduloId: string) => {
+  const cor = MODULO_COLORS[moduloId]?.base ?? NEUTRO_OUTROS;
+  const ativo = activeModulo.value === moduloId;
+  return {
+    borderColor: ativo ? "#2c3140" : "#22262f",
+    borderTopWidth: "3px",
+    borderTopColor: ativo ? cor : "transparent",
+    backgroundColor: ativo ? "#15181f" : "#181b22",
+    color: ativo ? "#ece8df" : "#8b8f9c",
+  };
+};
+
+const submoduloCardStyle = (subId: string) => {
+  const ativo = activeSubmodulo.value === subId;
+  return {
+    borderColor: ativo ? corAtiva.value : "#252a35",
+    backgroundColor: ativo ? misturarComBrancoBg(corAtiva.value) : "#181b22",
+  };
+};
+
+// Fundo bem sutil (quase imperceptível) na cor do módulo, só para o card ativo.
+const misturarComBrancoBg = (hex: string): string => {
+  const n = parseInt(hex.replace("#", ""), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return `rgba(${r}, ${g}, ${b}, 0.08)`;
+};
+
+// -------------------------------------------------------------------------
 // Estrutura de módulos/subprocessos/gráficos, seguindo o documento de
 // especificação e o mapeamento confirmado indicador-a-indicador.
 // -------------------------------------------------------------------------
 const rotuloIndicador = (spec: GraficoSpec, nomeReal: string): string =>
   spec.rotulos?.[nomeReal] ?? nomeReal;
 
-
 const buildSerieTemporalData = (indicador: Indicador) => {
-  console.log(indicador.valor);
   const dados = indicador.valor as Record<string, number>;
 
   return {
@@ -285,9 +376,9 @@ const buildSerieTemporalData = (indicador: Indicador) => {
       {
         label: indicador.nome,
         data: Object.values(dados).map(numeroDoValor),
-        backgroundColor: "rgba(59,130,246,0.85)",
-        borderRadius: 6,
-        maxBarThickness: 60,
+        backgroundColor: corAtiva.value,
+        borderRadius: 3,
+        maxBarThickness: 52,
       },
     ],
   };
@@ -314,15 +405,15 @@ const buildSerieTemporalOptions = () => ({
       anchor: "end" as const,
       align: "top" as const,
 
-      formatter: (value: number) =>
-        value === 0 ? "0" : `${value} h`,
+      formatter: (value: number) => (value === 0 ? "0" : `${value} h`),
     },
   },
 
   scales: {
     x: {
       ticks: {
-        color: "#cbd5e1",
+        color: "#8b8f9c",
+        font: { family: "'IBM Plex Mono', monospace", size: 11 },
       },
       grid: {
         display: false,
@@ -333,12 +424,86 @@ const buildSerieTemporalOptions = () => ({
       beginAtZero: true,
 
       ticks: {
-        color: "#94a3b8",
+        color: "#767c8a",
+        font: { family: "'IBM Plex Mono', monospace", size: 11 },
         callback: (v: any) => `${v} h`,
       },
 
       grid: {
-        color: "rgba(148,163,184,0.15)",
+        color: "rgba(140, 148, 163, 0.08)",
+      },
+    },
+  },
+});
+
+// Série temporal em percentual (0-100%): mesmo espírito da série temporal em
+// horas, mas com escala travada em 0-100 e rótulos com "%" em vez de "h" —
+// evita o eixo Y sem teto e o sufixo de hora que não fazem sentido aqui.
+const buildSerieTemporalPercentualData = (indicador: Indicador) => {
+  const dados = indicador.valor as Record<string, number | string>;
+
+  return {
+    labels: Object.keys(dados),
+    datasets: [
+      {
+        label: indicador.nome,
+        data: Object.values(dados).map(numeroDoValor),
+        backgroundColor: corAtiva.value,
+        borderRadius: 3,
+        maxBarThickness: 52,
+      },
+    ],
+  };
+};
+
+const buildSerieTemporalPercentualOptions = () => ({
+  responsive: true,
+  maintainAspectRatio: false,
+
+  plugins: {
+    legend: {
+      display: false,
+    },
+
+    tooltip: {
+      callbacks: {
+        label: (ctx: any) => `${ctx.raw}%`,
+      },
+    },
+
+    datalabels: {
+      ...DATALABELS_BASE,
+
+      anchor: "end" as const,
+      align: "top" as const,
+
+      formatter: (value: number) => `${value}%`,
+    },
+  },
+
+  scales: {
+    x: {
+      ticks: {
+        color: "#8b8f9c",
+        font: { family: "'IBM Plex Mono', monospace", size: 11 },
+      },
+      grid: {
+        display: false,
+      },
+    },
+
+    y: {
+      beginAtZero: true,
+      max: 100,
+
+      ticks: {
+        color: "#767c8a",
+        font: { family: "'IBM Plex Mono', monospace", size: 11 },
+        callback: (v: any) => `${v}%`,
+      },
+
+      grid: {
+        color: "rgba(140, 148, 163, 0.08)",
       },
     },
   },
@@ -351,10 +516,16 @@ const MODULOS: ModuloSpec[] = [
     dataKey: "entrada",
     submodulos: [
       {
-        id: "entrada-prontuario",
-        titulo: "Criação de prontuário",
+        id: "entrada-especialidade",
+        titulo: "Indicadores da especialidade correspondente",
+        descricao: "Métricas de entrada filtradas pela especialidade atual.",
+        graficos: [], // ainda não existe filtragem por especialidade no back-end
+      },
+      {
+        id: "entrada-geral",
+        titulo: "Indicadores gerais",
         descricao:
-          "Tempo até o primeiro evento assistencial e prontuários inertes.",
+          "Tempo até o primeiro evento assistencial e prontuários inertes, considerando todas as especialidades.",
         graficos: [
           {
             id: "entrada-tempo-primeiro-evento",
@@ -381,10 +552,9 @@ const MODULOS: ModuloSpec[] = [
     dataKey: "consultas",
     submodulos: [
       {
-        id: "consultas-realizacao",
-        titulo: "Realização de consultas",
-        descricao:
-          "Reguladas, retornos e interconsultas: proporções, encaminhamentos, faltas e intervalos.",
+        id: "consultas-especialidade",
+        titulo: "Indicadores da especialidade correspondente",
+        descricao: "Métricas de consultas filtradas pela especialidade atual.",
         graficos: [
           {
             id: "consultas-proporcao-tipos",
@@ -406,35 +576,21 @@ const MODULOS: ModuloSpec[] = [
           {
             id: "consultas-encaminhamentos",
             titulo: "Encaminhamentos mais frequentes após consulta regulada",
-            tipo: "serie-temporal",
+            tipo: "distribuicao",
             indicadorNomes: ["Encaminhamento frequente por consulta regulada"],
           },
           {
             id: "consultas-faltas",
-            titulo: "Faltas: pacientes x profissionais",
+            titulo: "Comparação de faltas",
             tipo: "comparacao-proporcao",
             indicadorNomes: [
               "Porcentagem de faltas por parte do profissional",
               "Porcentagem de faltas por parte do paciente",
             ],
-          },
-          {
-            id: "consultas-tempo-prontuario-agendamento",
-            titulo:
-              "Tempo médio entre a criação do prontuário e o agendamento da consulta",
-            tipo: "valor-simples",
-            indicadorNomes: [
-              "Tempo medio entre a criação de prontuário e o primeiro agendamento",
-            ], // ainda não existe no backend
-            unidade: "horas",
-          },
-          {
-            id: "consultas-tempo-agendamento-realizacao",
-            titulo: "Tempo médio entre agendamento e realização da consulta",
-            tipo: "valor-simples",
-            indicadorNomes: [
-              "Tempo médio de agendamento até realização (horas)",
-            ],
+            rotulos: {
+              "Porcentagem de faltas por parte do profissional": "Por parte do profissional",
+              "Porcentagem de faltas por parte do paciente": "Por parte do paciente"
+            }
           },
           {
             id: "consultas-retorno-interconsulta-paciente",
@@ -445,16 +601,51 @@ const MODULOS: ModuloSpec[] = [
               "Consultas retorno por paciente",
               "Interconsultas por paciente",
             ],
+            rotulos: {
+              "Consultas reguladas por paciente": "Consultas Reguladas",
+              "Consultas retorno por paciente": "Consultas de Retorno",
+              "Interconsultas por paciente": "Interconsultas"
+            }
           },
           {
             id: "consultas-intervalo-retornos",
-            titulo: "Intervalo: REGULADA → 1º RETORNO X RETORNO → RETORNO",
+            titulo: "Intervalo médio entre consultas",
             tipo: "comparacao-dias",
             indicadorNomes: [
               "Intervalo médio da consulta regulada ao primeiro retorno",
               "Intervalo médio de retornos consecutivos",
             ],
+            rotulos: {
+              "Intervalo médio da consulta regulada ao primeiro retorno": "Consulta regulada ao primeiro retorno",
+              "Intervalo médio de retornos consecutivos": "Retornos consecutivos"
+            },
             unidade: "dias",
+          },
+        ], 
+      },
+      {
+        id: "consultas-geral",
+        titulo: "Indicadores gerais",
+        descricao:
+          "Reguladas, retornos e interconsultas: proporções, encaminhamentos, faltas e intervalos, considerando todas as especialidades.",
+        graficos: [
+          {
+            id: "consultas-tempo-prontuario-agendamento",
+            titulo:
+              "Tempo médio entre a criação do prontuário e o agendamento da consulta",
+            tipo: "valor-simples",
+            indicadorNomes: [
+              "Tempo medio global entre a criação de prontuário e o primeiro agendamento",
+            ], 
+            unidade: "horas",
+          },
+          {
+            id: "consultas-tempo-agendamento-realizacao",
+            titulo: "Tempo médio global do agendamento até realização da consulta",
+            tipo: "valor-simples",
+            indicadorNomes: [
+              "Tempo médio de agendamento até realização (horas)",
+            ],
           },
         ],
       },
@@ -466,177 +657,87 @@ const MODULOS: ModuloSpec[] = [
     dataKey: "exames",
     submodulos: [
       {
-        id: "exames-ambulatoriais",
-        titulo: "Exames Ambulatoriais",
-        descricao:
-          "Proporção, volume por paciente, tempos e gargalos dos exames ambulatoriais.",
+        id: "exames-especialidade",
+        titulo: "Indicadores da especialidade correspondente",
+        descricao: "Tudo sobre a especialidade atual.",
         graficos: [
           {
             id: "exames-amb-proporcao",
-            titulo: "Comparação da porcentagem de exames de cada tipo",
+            titulo: "Porcentagem de exames concluídos",
+            tipo: "valor-simples",
+            indicadorNomes: [
+              "Porcentagem de exames concluídos",
+            ],
+          },
+          {
+            id: "exames-amb-proporcao",
+            titulo: "Porcentagem de exames regulados",
+            tipo: "valor-simples",
+            indicadorNomes: [
+              "Porcentagem de exames regulados",
+            ],
+          },
+          {
+            id: "exames-amb-proporcao",
+            titulo: "Porcentagem de exames marcados como pendentes",
+            tipo: "valor-simples",
+            indicadorNomes: [
+              "Porcentagem de exames marcados como pendentes",
+            ],
+          },
+          {
+            id: "exames-amb-proporcao",
+            titulo: "Comparação dos tipos de exames nos últimos 5 meses",
             tipo: "comparacao-proporcao",
             indicadorNomes: [
-              "Porcentagem de exames ambulatoriais",
-              "Porcentagem de exames emergenciais",
-              "Porcentagem de exames pré-operatórios",
+              "Porcentagem de exames ambulatoriais e emergenciais/pré-operatórios",
             ],
             rotulos: {
               "Porcentagem de exames ambulatoriais": "Exames Ambulatoriais",
-              "Porcentagem de exames emergenciais": "Exames Emergenciais",
-              "Porcentagem de exames pré-operatórios": "Exames Pré-Operatórios"
+              "Porcentagem de exames emergenciais e pré-operatórios":
+              "Emergenciais e Pré-Operatórios",
             },
-          },
-          { // Concentração de Exames Emergenciais por paciente ativo de cada mês
-            id: "exames-amb-volume",
-            titulo: "Exames Ambulatoriais por paciente ativo em cada um dos últimos 5 meses",
-            tipo: "serie-temporal",
-            indicadorNomes: [
-              "Concentração de Exames Ambulatoriais por paciente ativo de cada mês"
-            ],
-          },
-          { 
-            id: "exames-amb-volume",
-            titulo: "Exames Emergenciais por paciente ativo em cada um dos últimos 5 meses",
-            tipo: "serie-temporal",
-            indicadorNomes: [
-              "Concentração de Exames Emergenciais por paciente ativo de cada mês"
-            ],
           },
           {
             id: "exames-amb-tempo-solicitacao",
-            titulo: "Tempo médio de solicitação até a realização do exame nos últimos 5 meses",
+            titulo:
+              "Tempo médio de solicitação até a realização do exame nos últimos 5 meses",
             tipo: "serie-temporal",
             indicadorNomes: [
-              "Tempo médio de solicitação até a realização do exame por mês"
+              "Tempo médio de solicitação até a realização do exame por mês",
             ],
           },
-          {
-            id: "exames-amb-gargalos",
-            titulo: "Exames que são gargalos recorrentes",
-            tipo: "distribuicao",
-            indicadorNomes: [],
-          },
         ],
       },
       {
-        id: "exames-hospitalares",
-        titulo: "Exames Hospitalares",
+        id: "exames-geral",
+        titulo: "Indicadores gerais",
         descricao:
-          "Proporção, tipos predominantes, tempos e gargalos dos exames na internação.",
+          "Métricas gerais sobre exames, agregando todas as especialidades.",
         graficos: [
           {
-            id: "exames-hosp-proporcao",
-            titulo: "Proporção de exames de internação em relação ao total",
-            tipo: "valor-simples",
-            indicadorNomes: [],
-          },
-          {
-            id: "exames-hosp-tipos",
-            titulo: "Tipos de exame mais predominantes na internação",
-            tipo: "distribuicao",
-            indicadorNomes: [],
-          },
-          {
-            id: "exames-hosp-volume",
-            titulo: "Volume médio de exames por paciente internado",
-            tipo: "valor-simples",
-            indicadorNomes: [],
-          },
-          {
-            id: "exames-hosp-tempo-agendamento",
-            titulo: "Tempo médio entre solicitação e agendamento",
-            tipo: "valor-simples",
-            indicadorNomes: [],
-          },
-          {
-            id: "exames-hosp-tempo-realizacao",
-            titulo: "Tempo médio entre agendamento e realização",
-            tipo: "valor-simples",
-            indicadorNomes: [],
-          },
-          {
-            id: "exames-hosp-gargalos",
-            titulo: "Exames que são gargalos recorrentes",
-            tipo: "distribuicao",
-            indicadorNomes: [],
-          },
-        ],
-      },
-      {
-        id: "exames-pre-operatorios",
-        titulo: "Exames Pré-operatórios",
-        descricao:
-          "Proporção, tipos predominantes, tempos e gargalos dos exames pré-operatórios.",
-        graficos: [
-          {
-            id: "exames-pre-proporcao",
-            titulo: "Proporção de exames pré-operatórios em relação ao total",
-            tipo: "valor-simples",
-            indicadorNomes: [],
-          },
-          {
-            id: "exames-pre-tipos",
-            titulo: "Tipos de exame mais predominantes no pré-operatório",
-            tipo: "distribuicao",
-            indicadorNomes: [],
-          },
-          {
-            id: "exames-pre-tempo-agendamento",
-            titulo: "Tempo médio entre solicitação e agendamento",
-            tipo: "valor-simples",
-            indicadorNomes: [],
-          },
-          {
-            id: "exames-pre-tempo-realizacao",
-            titulo: "Tempo médio entre agendamento e realização",
-            tipo: "valor-simples",
-            indicadorNomes: [],
-          },
-          {
-            id: "exames-pre-gargalos",
-            titulo: "Exames que são gargalos recorrentes",
-            tipo: "distribuicao",
-            indicadorNomes: [],
-          },
-        ],
-      },
-      {
-        id: "exames-comparacao",
-        titulo: "Comparação entre os três",
-        descricao:
-          "Ambulatoriais x Hospitalares x Pré-operatórios lado a lado.",
-        graficos: [
-          {
-            id: "exames-cmp-proporcao",
-            titulo: "Comparação de proporção por natureza de exame",
+            id: "exames-amb-proporcao",
+            titulo: "Comparação dos tipos de exames nos últimos 5 meses",
             tipo: "comparacao-proporcao",
-            indicadorNomes: [],
-          },
-          {
-            id: "exames-cmp-tipos",
-            titulo: "Comparação de tipos mais predominantes",
-            tipo: "distribuicao",
-            indicadorNomes: [],
+            indicadorNomes: [
+              "Porcentagem de exames ambulatoriais e emergenciais/pré-operatórios global",
+            ],
+            rotulos: {
+              "Ambulatoriais": "Exames Ambulatoriais",
+              "Pré-operatórios e Emergenciais": "Emergenciais e Pré-Operatórios",
+            },
           },
           {
             id: "exames-cmp-tempo-agendamento",
-            titulo: "Comparação de tempo até agendamento",
-            tipo: "comparacao-dias",
-            indicadorNomes: [],
-            unidade: "horas",
+            titulo: "Porcentagem global de exames marcados como pendentes",
+            tipo: "valor-simples",
+            indicadorNomes: ["Porcentagem global de exames marcados como pendentes"],
           },
           {
             id: "exames-cmp-tempo-realizacao",
-            titulo: "Comparação de tempo até realização",
-            tipo: "comparacao-dias",
-            indicadorNomes: [],
-            unidade: "horas",
-          },
-          {
-            id: "exames-cmp-gargalos",
-            titulo: "Comparação de gargalos recorrentes",
-            tipo: "distribuicao",
-            indicadorNomes: [],
+            titulo: "Porcentagem global de exames concluídos",
+            tipo: "valor-simples",
+            indicadorNomes: ["Porcentagem global de exames concluídos"],
           },
         ],
       },
@@ -648,50 +749,17 @@ const MODULOS: ModuloSpec[] = [
     dataKey: "internacao",
     submodulos: [
       {
-        id: "internacao-realizacao",
-        titulo: "Realização de Internação",
+        id: "internacao-especialidade",
+        titulo: "Indicadores da especialidade correspondente",
         descricao:
-          "Por especialidade clínica, tempo médio e proporção ambulatorial x regulada.",
-        graficos: [
-          {
-            id: "internacao-especialidade",
-            titulo:
-              "Proporção de pacientes internados por especialidade clínica",
-            tipo: "distribuicao",
-            indicadorNomes: [],
-          },
-          {
-            id: "internacao-tempo-especialidade",
-            titulo: "Tempo médio de internação por especialidade clínica",
-            tipo: "distribuicao",
-            indicadorNomes: [],
-          },
-          {
-            id: "internacao-tipo-solicitacao",
-            titulo: "Ambulatorial x regulada em relação ao total",
-            tipo: "comparacao-proporcao",
-            indicadorNomes: [],
-          },
-          {
-            id: "internacao-tempo-solicitacao",
-            titulo: "Tempo médio entre solicitação e internação",
-            tipo: "valor-simples",
-            indicadorNomes: ["Tempo médio de permanência (dias)"],
-          },
-        ],
-      },
-      {
-        id: "internacao-pre-operatoria",
-        titulo: "Internação Pré-operatória",
-        descricao:
-          "Proporção por especialidade cirúrgica e participação no total de internações.",
+          "Internações pré e pós-operatórias, filtradas pela especialidade cirúrgica/clínica atual.",
         graficos: [
           {
             id: "internacao-pre-especialidade",
             titulo:
-              "Proporção de internados para pré-operatório por especialidade cirúrgica",
+              "Porcentagem de internações concluídas com sumário de alta informatizado",
             tipo: "distribuicao",
-            indicadorNomes: [],
+            indicadorNomes: ["Porcentagem de sumários de alta informatizados"],
           },
           {
             id: "internacao-pre-participacao",
@@ -700,14 +768,6 @@ const MODULOS: ModuloSpec[] = [
             indicadorNomes: [],
             incluirOutros: true,
           },
-        ],
-      },
-      {
-        id: "internacao-pos-operatoria",
-        titulo: "Internação Pós-operatória",
-        descricao:
-          "Proporção em UTI por especialidade e tempo médio de internação pós-operatória.",
-        graficos: [
           {
             id: "internacao-pos-uti",
             titulo:
@@ -725,15 +785,41 @@ const MODULOS: ModuloSpec[] = [
         ],
       },
       {
-        id: "internacao-comparacao",
-        titulo: "Comparação entre os três tipos",
-        descricao: "Regular x pré-operatória x pós-operatória lado a lado.",
+        id: "internacao-geral",
+        titulo: "Indicadores gerais",
+        descricao:
+          "Por especialidade clínica, tempo médio e comparação entre os três tipos de internação.",
         graficos: [
           {
+            id: "internacao-especialidade-clinica",
+            titulo:
+              "Tempo médio de internação por especialidade clínica",
+            tipo: "serie-temporal",
+            indicadorNomes: ["Tempo médio de permanência por especialidade"],
+          },
+          {
+            id: "internacao-sumario-alta-global",
+            titulo: "Porcentagem global de sumários de alta informatizados",
+            tipo: "valor-simples",
+            indicadorNomes: ["Porcentagem global de sumários de alta informatizados"],
+          },
+          {
+            id: "internacao-sumario-alta-mes",
+            titulo: "Porcentagem de sumários de alta informatizados por mês",
+            tipo: "serie-temporal-percentual",
+            indicadorNomes: ["Porcentagem de sumários de alta informatizados"],
+          },
+          {
+            id: "internacao-tempo-solicitacao",
+            titulo: "Tempo médio entre solicitação e internação",
+            tipo: "valor-simples",
+            indicadorNomes: ["Tempo médio de permanência (dias)"],
+          },
+          {
             id: "internacao-cmp-proporcao",
-            titulo: "Comparação da proporção de internados em cada tipo",
-            tipo: "comparacao-proporcao",
-            indicadorNomes: [],
+            titulo: "Porcentagem de registros de pacientes internados por especialidade clínica",
+            tipo: "distribuicao",
+            indicadorNomes: ["Porcentagem de registros de pacientes internados por especialidade clínica"],
           },
           {
             id: "internacao-cmp-tempo",
@@ -758,10 +844,16 @@ const MODULOS: ModuloSpec[] = [
     dataKey: "cirurgias",
     submodulos: [
       {
-        id: "cirurgia-realizacao",
-        titulo: "Realização de cirurgia",
+        id: "cirurgia-especialidade",
+        titulo: "Indicadores da especialidade correspondente",
+        descricao: "Métricas de cirurgia filtradas pela especialidade atual.",
+        graficos: [], // ainda não existe filtragem por especialidade no back-end
+      },
+      {
+        id: "cirurgia-geral",
+        titulo: "Indicadores gerais",
         descricao:
-          "Proporção de pacientes operados e tempo médio de cirurgia por especialidade.",
+          "Proporção de pacientes operados e tempo médio de cirurgia, por especialidade.",
         graficos: [
           {
             id: "cirurgia-proporcao-especialidade",
@@ -845,21 +937,50 @@ type GraficoResolvido = {
   indisponivel: boolean;
 };
 
+// Quando o backend retorna um único indicador cujo valor já é um dicionário
+// de categorias fixas somando 100% (ex.: { Ambulatoriais: "45.2%",
+// "Pré-operatórios e Emergenciais": "54.8%" }), essa função "achata" esse
+// indicador em vários indicadores-folha — um por chave — para que os
+// builders de comparação (que esperam 1 indicador por categoria) funcionem
+// sem exigir que o backend mude o formato.
+// Indicadores cujo valor já é number/string passam direto, sem alteração.
+const expandirIndicadorProporcao = (indicador: Indicador): Indicador[] => {
+  const valor = indicador.valor;
+  if (valor && typeof valor === "object" && !Array.isArray(valor)) {
+    return Object.entries(valor).map(([subNome, subValor]) => ({
+      nome: subNome,
+      valor: subValor as number | string,
+    }));
+  }
+  return [indicador];
+};
+
 const graficosResolvidos = computed<GraficoResolvido[]>(() => {
   const lista = indicadoresDoBloco.value;
   const sub = submoduloSelecionado.value;
   if (!sub) return [];
 
   return sub.graficos.map((spec) => {
-    const indicadores: Indicador[] = [];
+    const indicadoresBrutos: Indicador[] = [];
     const faltando: string[] = [];
     for (const nome of spec.indicadorNomes) {
       const encontrado = lista.find((i) => i.nome === nome);
-      if (encontrado) indicadores.push(encontrado);
+      if (encontrado) indicadoresBrutos.push(encontrado);
       else faltando.push(nome);
     }
     const indisponivel =
       spec.indicadorNomes.length === 0 || faltando.length > 0;
+
+    // A expansão só se aplica aos tipos de comparação (que esperam 1
+    // indicador por categoria/barra). "distribuicao" continua recebendo o
+    // dicionário bruto, pois seus builders já sabem lidar com ele.
+    const deveExpandir =
+      !indisponivel &&
+      (spec.tipo === "comparacao-proporcao" || spec.tipo === "comparacao-dias");
+    const indicadores = deveExpandir
+      ? indicadoresBrutos.flatMap(expandirIndicadorProporcao)
+      : indicadoresBrutos;
+
     return { spec, indicadores, faltando, indisponivel };
   });
 });
@@ -868,25 +989,17 @@ const graficosResolvidos = computed<GraficoResolvido[]>(() => {
 // Helpers de formatação/render
 // -------------------------------------------------------------------------
 
-const PALETA = [
-  "rgba(59, 130, 246, 0.85)",
-  "rgba(16, 185, 129, 0.85)",
-  "rgba(245, 158, 11, 0.85)",
-  "rgba(236, 72, 153, 0.85)",
-  "rgba(139, 92, 246, 0.85)",
-  "rgba(148, 163, 184, 0.6)", // "Outros" costuma vir por último -> cinza neutro
-];
-
 const rotuloTipo = (tipo: TipoGrafico) => {
   switch (tipo) {
     case "comparacao-proporcao":
-      return "Comparação";
     case "comparacao-dias":
-      return "Comparação";
     case "comparacao-mista":
       return "Comparação";
     case "distribuicao":
       return "Distribuição";
+    case "serie-temporal":
+    case "serie-temporal-percentual":
+      return "Série temporal";
     default:
       return "Valor";
   }
@@ -916,12 +1029,13 @@ const formatarValor = (valor: Indicador["valor"] | undefined): string => {
 };
 
 // Configuração base do datalabels, reaproveitada em todos os gráficos de barra.
-// Texto sempre visível, sem precisar passar o mouse por cima.
+// Contorno mais discreto que um contorno preto opaco — só o suficiente para
+// garantir leitura sobre qualquer tom da paleta do módulo.
 const DATALABELS_BASE = {
-  color: "#f8fafc",
-  font: { weight: "bold" as const, size: 12 },
-  textStrokeColor: "rgba(15, 23, 42, 0.55)",
-  textStrokeWidth: 3,
+  color: "#f4f1ea",
+  font: { weight: 600 as const, size: 11.5, family: "'IBM Plex Mono', monospace" },
+  textStrokeColor: "rgba(10, 12, 16, 0.4)",
+  textStrokeWidth: 1.5,
 };
 
 // --- comparação de proporções (0-100%), com "Outros" residual opcional ---
@@ -940,16 +1054,18 @@ const buildComparacaoProporcaoData = (item: GraficoResolvido) => {
     valores.push(Math.max(0, 100 - soma));
   }
 
+  const paleta = paletaDoModulo(activeModulo.value);
+
   return {
     labels,
     datasets: [
       {
         data: valores,
-        backgroundColor: labels.map((_, i) => PALETA[i % PALETA.length]),
-        borderColor: "#0f172a",
+        backgroundColor: labels.map((_, i) => paleta[i % paleta.length]),
+        borderColor: "#12151c",
         borderWidth: 1,
-        borderRadius: 6,
-        maxBarThickness: 64,
+        borderRadius: 3,
+        maxBarThickness: 56,
       },
     ],
   };
@@ -972,35 +1088,43 @@ const chartOptionsComparacaoProporcao = {
     },
   },
   scales: {
-    x: { ticks: { color: "#cbd5e1" }, grid: { display: false } },
+    x: {
+      ticks: { color: "#8b8f9c", font: { family: "'IBM Plex Mono', monospace", size: 11 } },
+      grid: { display: false },
+    },
     y: {
       beginAtZero: true,
       max: 100,
-      ticks: { color: "#94a3b8", callback: (v: string | number) => `${v}%` },
-      grid: { color: "rgba(148, 163, 184, 0.15)" },
+      ticks: {
+        color: "#767c8a",
+        font: { family: "'IBM Plex Mono', monospace", size: 11 },
+        callback: (v: string | number) => `${v}%`,
+      },
+      grid: { color: "rgba(140, 148, 163, 0.08)" },
     },
   },
 };
 
 // --- comparação de valores na mesma unidade (dias/horas) ---
 
-const buildComparacaoValorData = (item: GraficoResolvido) => ({
-  labels: item.indicadores.map((i) => rotuloIndicador(item.spec, i.nome)),
-  datasets: [
-    {
-      data: item.indicadores.map((i) =>
-        numeroDoValor(i.valor as number | string),
-      ),
-      backgroundColor: item.indicadores.map(
-        (_, i) => PALETA[i % PALETA.length],
-      ),
-      borderColor: "#0f172a",
-      borderWidth: 1,
-      borderRadius: 6,
-      maxBarThickness: 64,
-    },
-  ],
-});
+const buildComparacaoValorData = (item: GraficoResolvido) => {
+  const paleta = paletaDoModulo(activeModulo.value);
+  return {
+    labels: item.indicadores.map((i) => rotuloIndicador(item.spec, i.nome)),
+    datasets: [
+      {
+        data: item.indicadores.map((i) =>
+          numeroDoValor(i.valor as number | string),
+        ),
+        backgroundColor: item.indicadores.map((_, i) => paleta[i % paleta.length]),
+        borderColor: "#12151c",
+        borderWidth: 1,
+        borderRadius: 3,
+        maxBarThickness: 56,
+      },
+    ],
+  };
+};
 
 const chartOptionsComparacaoValor = (unidade?: string) => ({
   responsive: true,
@@ -1021,11 +1145,14 @@ const chartOptionsComparacaoValor = (unidade?: string) => ({
     },
   },
   scales: {
-    x: { ticks: { color: "#cbd5e1" }, grid: { display: false } },
+    x: {
+      ticks: { color: "#8b8f9c", font: { family: "'IBM Plex Mono', monospace", size: 11 } },
+      grid: { display: false },
+    },
     y: {
       beginAtZero: true,
-      ticks: { color: "#94a3b8" },
-      grid: { color: "rgba(148, 163, 184, 0.15)" },
+      ticks: { color: "#767c8a", font: { family: "'IBM Plex Mono', monospace", size: 11 } },
+      grid: { color: "rgba(140, 148, 163, 0.08)" },
     },
   },
 });
@@ -1055,13 +1182,8 @@ const alturaBarraDistribuicao = (indicador?: Indicador): number => {
 
 const buildDistribuicaoData = (indicador: Indicador) => {
   const dist = indicador.valor as IndicadorDistribuicao;
-
-  console.log(indicador.nome);
-  console.log(dist);
-
   const entradas = categoriasAgrupadas(dist);
-
-  console.log(entradas);
+  const paleta = paletaDoModulo(activeModulo.value);
 
   return {
     labels: entradas.map(([nome]) => nome),
@@ -1069,7 +1191,8 @@ const buildDistribuicaoData = (indicador: Indicador) => {
       {
         label: indicador.nome,
         data: entradas.map(([, valor]) => valor),
-        backgroundColor: entradas.map((_, i) => PALETA[i % PALETA.length]),
+        backgroundColor: entradas.map((_, i) => paleta[i % paleta.length]),
+        borderRadius: 3,
       },
     ],
   };
@@ -1107,14 +1230,26 @@ const buildDistribuicaoOptions = (indicador: Indicador) => {
     scales: {
       x: {
         beginAtZero: true,
-        ticks: { color: "#94a3b8", precision: 0 },
-        grid: { color: "rgba(148, 163, 184, 0.15)" },
+        ticks: { color: "#767c8a", precision: 0, font: { family: "'IBM Plex Mono', monospace", size: 11 } },
+        grid: { color: "rgba(140, 148, 163, 0.08)" },
       },
       y: {
-        ticks: { color: "#cbd5e1" },
+        ticks: { color: "#8b8f9c", font: { size: 12 } },
         grid: { display: false },
       },
     },
   };
 };
 </script>
+
+<style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=IBM+Plex+Mono:wght@400;600&display=swap");
+
+.font-serif {
+  font-family: "Source Serif 4", Georgia, serif;
+}
+
+.font-mono {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+}
+</style>

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 GRUPOS_ESPECIALIDADE = {
     "acupuntura": "ACUPUNTURA",
     "alergia": "ALERGIA",
@@ -20,15 +22,20 @@ GRUPOS_ESPECIALIDADE = {
     "enfermagem": "ENFERMAGEM",
 }
 
-def filtrar_eventos(evento: str, dados, especialidade):
-    campos = {
-        "consulta": "especialidade",
-        "internacao": "especialidade",
-        "cirurgia": "especialidade",
-        "exame": "especialidade_solicitante_nome",
-    }
+_CAMPOS_ESPECIALIDADE = {
+    "consulta": "especialidade",
+    "internacao": "especialidade",
+    "cirurgia": "especialidade",
+    "exame": "especialidade_solicitante_nome",
+}
 
-    campo = campos[evento]
+# formato usado internamente por 'data_hora_realizacao' nos eventos e pelas
+# datas de borda já formatadas por _formatar_data_iso_para_padrao
+_DATE_FMT = "%d/%m/%Y, %H:%M"
+
+
+def filtrar_eventos(evento: str, dados, especialidade):
+    campo = _CAMPOS_ESPECIALIDADE[evento]
 
     palavra = GRUPOS_ESPECIALIDADE.get(
         especialidade.lower(),
@@ -41,45 +48,4 @@ def filtrar_eventos(evento: str, dados, especialidade):
         if palavra in d[campo].upper()
     ]
 
-from datetime import datetime
-from .jornada_utils import dias_entre
 
-
-def _formatar_data_iso_para_padrao(data_iso: str, fim_do_dia: bool = False) -> str:
-    """
-    Converte uma data ISO 'YYYY-MM-DD' (recebida via query params da API)
-    para o formato 'DD/MM/YYYY, HH:MM' usado pelos helpers de jornada.
-    """
-    data = datetime.strptime(data_iso, "%Y-%m-%d")
-    hora = "23:59" if fim_do_dia else "00:00"
-    return f"{data.strftime('%d/%m/%Y')}, {hora}"
-
-
-def filtrar_eventos_por_periodo(eventos: list[dict], data_inicio: str, data_fim: str) -> list[dict]:
-    """
-    Filtra uma lista de eventos (consultas, exames, internações, cirurgias)
-    mantendo apenas os que possuem 'data_hora_realizacao' dentro do período
-    [data_inicio, data_fim].
-
-    data_inicio e data_fim: strings no formato ISO 'YYYY-MM-DD',
-    como recebidas via query params (ex: '2024-01-01').
-    """
-    inicio_formatado = _formatar_data_iso_para_padrao(data_inicio, fim_do_dia=False)
-    fim_formatado = _formatar_data_iso_para_padrao(data_fim, fim_do_dia=True)
-
-    eventos_filtrados = []
-    for evento in eventos:
-        data_evento = evento.get("data_hora_realizacao")
-        if not data_evento:
-            continue
-        try:
-            dias_desde_inicio = dias_entre(inicio_formatado, data_evento)
-            dias_ate_fim = dias_entre(data_evento, fim_formatado)
-        except ValueError:
-            # data do evento em formato inválido/inesperado -> ignora o evento
-            continue
-        
-        if dias_desde_inicio >= 0 and dias_ate_fim >= 0:
-            eventos_filtrados.append(evento)
-
-    return eventos_filtrados

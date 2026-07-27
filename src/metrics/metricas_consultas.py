@@ -1,13 +1,12 @@
 # Formato de data esperado: 'dd/m/yyyy, HH:MM'  (ex: '13/1/2025, 09:51')
 
-from __future__ import annotations
 from functools import lru_cache
 from ..helpers.jornada_utils import calcular_diferenca_horas, dias_entre
 from ..helpers.math_utils import divisao_segura
+from .helpers.filtrar_eventos import filtrar_eventos, filtrar_eventos_por_periodo
 from datetime import datetime
 from collections import defaultdict
 from typing import Any
-
 RETORNO_ATENDIDO             = "PACIENTE ATENDIDO"
 RETORNO_PACIENTE_FALTOU      = "PACIENTE FALTOU"
 RETORNO_PROFISSIONAL_FALTOU  = "PROFISSIONAL FALTOU"
@@ -39,12 +38,6 @@ def _parse_dt_cached(s: str) -> datetime | None:
 
 
 def _parse_dt(s: str) -> datetime | None:
-    """
-    Wrapper público mantido por compatibilidade com o restante do código
-    (e possíveis chamadas externas). Usa cache internamente porque as
-    mesmas strings de data/hora aparecem repetidas vezes na base
-    (ex: mesmo horário de criação para vários registros de um lote).
-    """
     if not s:
         return None
     return _parse_dt_cached(s.strip())
@@ -130,21 +123,78 @@ def _pacientes_com_intercon(agg: dict) -> set[str]:
     return set(agg["interconsultas_por_paciente"].keys())
 
 
-# ---------------------------------------------------------------------------
-# métricas simples — mantidas como funções públicas independentes
-# (continuam funcionando se chamadas isoladamente, mas quando usadas em
-# conjunto via `dicionario_metricas_consultas` é a versão agregada que roda)
-# ---------------------------------------------------------------------------
 
-def concentracao_consultas_paciente_ativo(consultas):
-    pacientes = set()
-    for c in consultas:
-        prontuario = c["prontuario"]
-        if prontuario:
-            pacientes.add(prontuario)
+def concentracao_consultas_paciente_ativo(
+    consultas: list[dict],
+    data_inicio: str,
+    data_fim: str
+) -> dict[str, float]:
 
-    return divisao_segura(len(consultas), len(pacientes))
+    formato_consulta = "%d/%m/%Y, %H:%M"
+    formato_api = "%Y-%m-%d"
 
+    inicio = datetime.strptime(data_inicio, formato_api)
+    fim = datetime.strptime(data_fim, formato_api)
+
+    consultas_por_mes = defaultdict(int)
+    pacientes_por_mes = defaultdict(set)
+
+    # agrupa consultas que estiverem dentro do intervalo
+    for consulta in consultas:
+        data_str = consulta.get("data_hora_realizacao")
+        prontuario = consulta.get("prontuario")
+
+        if not data_str or not prontuario:
+            continue
+
+        try:
+            data = datetime.strptime(data_str, formato_consulta)
+        except ValueError:
+            continue
+
+        if not (inicio <= data <= fim):
+            continue
+
+        chave_mes = data.strftime("%m/%Y")
+
+        consultas_por_mes[chave_mes] += 1
+        pacientes_por_mes[chave_mes].add(prontuario)
+
+    meses = []
+
+    ano = fim.year
+    mes = fim.month
+
+    while True:
+        primeiro_dia_mes = datetime(ano, mes, 1)
+
+        if primeiro_dia_mes < datetime(inicio.year, inicio.month, 1):
+            break
+
+        meses.append(f"{mes:02d}/{ano}")
+
+        if len(meses) == 5:
+            break
+
+        mes -= 1
+        if mes == 0:
+            mes = 12
+            ano -= 1
+
+    meses.reverse()
+
+    resultado = {}
+
+    for mes in meses:
+        resultado[mes] = round(
+            divisao_segura(
+                consultas_por_mes.get(mes, 0),
+                len(pacientes_por_mes.get(mes, set()))
+            ),
+            2
+        )
+
+    return resultado
 
 def consultas_primeira_vez(consultas):
     return [c for c in consultas if CONDICAO_PRIMEIRA in c["condicao"]]
@@ -356,11 +406,6 @@ def intervalo_medio_retornos_consecutivos(consultas: list[dict[str, Any]]) -> di
 
 
 def tempo_medio_criacao_prontuario_primeiro_agendamento(pacientes, consultas):
-    """
-    Calcula o tempo médio (em horas) entre a criação do prontuário
-    (data_cadastro do paciente) e a realização da primeira consulta
-    associada a esse prontuário.
-    """
     primeira_consulta_por_prontuario: dict[str, dict] = {}
 
     for consulta in consultas:
@@ -393,7 +438,8 @@ def tempo_medio_criacao_prontuario_primeiro_agendamento(pacientes, consultas):
 
     if quantidade == 0:
         return 0
-    return round(tempo_total / quantidade, 2)
+    media = round(tempo_total / quantidade, 2) 
+    return f"{media} dias"
 
 
 def encaminhamentos_por_consulta_regulada(consultas: list[dict[str, Any]]) -> dict:
@@ -443,20 +489,24 @@ def porcentagem_pacientes_com_interconsulta(consultas: list[dict[str, Any]]) -> 
     return f"{proporcao}%"
 
 
-# ---------------------------------------------------------------------------
-# versão otimizada: uma única varredura via _agregar_consultas alimenta as
-# métricas puramente contáveis; as que dependem de ordenação temporal por
-# paciente (intervalos) continuam usando suas rotinas dedicadas, mas agora
-# se beneficiam do cache de _parse_dt.
-# ---------------------------------------------------------------------------
 
-def dicionario_metricas_consultas(consultas: list[dict[str, Any]], pacientes: list[dict[str, Any]]) -> dict:
-    """
-    Executa todas as métricas e retorna um dicionário consolidado.
-    Faz uma única varredura agregada de `consultas` para as métricas
-    contáveis, em vez de uma varredura por métrica.
-    """
-    agg = _agregar_consultas(consultas)
+def filtrar_consultas(consultas, especialidade, data_inicio, data_fim):
+    return filtrar_eventos_por_periodo(
+        filtrar_eventos(evento="consulta", dados=consultas, especialidade=especialidade),
+        data_inicio,
+        data_fim,
+    )
+
+
+def dicionario_metricas_consultas(
+    consultas: list[dict[str, Any]],
+    pacientes: list[dict[str, Any]],
+    especialidade: str,
+    data_inicio: str,
+    data_fim: str,
+) -> dict:
+    consultas_filtradas = filtrar_consultas(consultas, especialidade, data_inicio, data_fim)
+    agg = _agregar_consultas(consultas_filtradas)
     total = agg["total"]
     n_pacientes = len(agg["pacientes"])
 
@@ -484,18 +534,18 @@ def dicionario_metricas_consultas(consultas: list[dict[str, Any]], pacientes: li
     )
 
     return {
-        "concentracao_consultas_paciente_ativo": divisao_segura(total, n_pacientes),
+        "concentracao_consultas_paciente_ativo": concentracao_consultas_paciente_ativo(consultas=consultas_filtradas, data_inicio=data_inicio, data_fim=data_fim),
         "porcentagem_consultas_concluidas": f"{porcentagem_concluidas}%",
         "porcentagem_consultas_reguladas": f"{porcentagem_reguladas}%",
-        "intervalo_medio_regulada_primeiro_retorno": intervalo_medio_regulada_primeiro_retorno(consultas),
-        "intervalo_medio_retornos_consecutivos": intervalo_medio_retornos_consecutivos(consultas),
+        "intervalo_medio_regulada_primeiro_retorno": intervalo_medio_regulada_primeiro_retorno(consultas=consultas_filtradas),
+        "intervalo_medio_retornos_consecutivos": intervalo_medio_retornos_consecutivos(consultas=consultas_filtradas),
         "media_reguladas_por_paciente": media_reguladas,
         "media_retornos_por_paciente": media_retornos,
         "media_interconsultas_por_paciente": media_intercon,
         "proporcao_consultas_sem_prontuario": f"{porcentagem_sem_prontuario}%",
-        "tempo_medio_criacao_prontuario_primeiro_agendamento": tempo_medio_criacao_prontuario_primeiro_agendamento(pacientes, consultas),
+        "tempo_medio_criacao_prontuario_primeiro_agendamento_global": tempo_medio_criacao_prontuario_primeiro_agendamento(pacientes=pacientes, consultas=consultas),
         "porcentagem_faltas_profissionais": f"{porcentagem_falta_prof}%",
-        "encaminhamentos_por_consulta_regulada": encaminhamentos_por_consulta_regulada(consultas),
+        "encaminhamentos_por_consulta_regulada": encaminhamentos_por_consulta_regulada(consultas=consultas_filtradas),
         "porcentagem_faltas_pacientes": f"{porcentagem_falta_pac}%",
         "tempo_medio_agendamento_realizacao": tempo_medio_agendamento_realizacao(consultas),
         "porcentagem_consultas_retorno": f"{porcentagem_retorno}%",
@@ -516,7 +566,6 @@ _METRICAS_INDICADORES: list[tuple[str, str]] = [
     ("media_reguladas_por_paciente", "Consultas reguladas por paciente"),
     ("media_retornos_por_paciente", "Consultas retorno por paciente"),
     ("media_interconsultas_por_paciente", "Interconsultas por paciente"),
-    ("tempo_medio_criacao_prontuario_primeiro_agendamento", "Tempo medio entre a criação de prontuário e o primeiro agendamento"),
     ("encaminhamentos_por_consulta_regulada", "Encaminhamento frequente por consulta regulada"),
     ("intervalo_medio_regulada_primeiro_retorno", "Intervalo médio da consulta regulada ao primeiro retorno"),
     ("intervalo_medio_retornos_consecutivos", "Intervalo médio de retornos consecutivos"),
@@ -525,6 +574,7 @@ _METRICAS_INDICADORES: list[tuple[str, str]] = [
     ("tempo_medio_agendamento_realizacao", "Tempo médio de agendamento até realização (horas)"),
     ("porcentagem_pacientes_com_interconsulta", "Porcentagem de pacientes com pelo menos uma interconsulta"),
     ("proporcao_consultas_sem_prontuario", "Porcentagem de consultas sem prontuário registrado"),
+    ("tempo_medio_criacao_prontuario_primeiro_agendamento_global", "Tempo medio global entre a criação de prontuário e o primeiro agendamento")
 ]
 
 _METRICAS_EVENTOS: list[tuple[str, str]] = [
@@ -555,8 +605,14 @@ def eventos_consultas(consultas):
     return indicadores
 
 
-def metricas_consultas_como_indicadores(consultas: list[dict[str, Any]], pacientes: list) -> list[dict]:
-    metricas = dicionario_metricas_consultas(consultas, pacientes)
+def metricas_consultas_como_indicadores(consultas: list[dict[str, Any]], pacientes: list, data_inicio: str, data_fim: str, especialidade: str) -> list[dict]:
+    metricas = dicionario_metricas_consultas(
+        consultas=consultas,
+        pacientes=pacientes,
+        especialidade=especialidade,
+        data_inicio=data_inicio,
+        data_fim=data_fim
+    )
 
     indicadores = []
     for metrica_key, nome in _METRICAS_INDICADORES:

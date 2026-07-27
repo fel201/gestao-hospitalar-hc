@@ -4,7 +4,7 @@
     <transition name="fade">
       <div 
         v-if="show" 
-        class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-40 transition-opacity" 
+        class="fixed inset-0 bg-[#0d0f14]/80 backdrop-blur-sm z-40 transition-opacity" 
         @click="close"
       ></div>
     </transition>
@@ -16,29 +16,29 @@
         class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
       >
         <div 
-          class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all"
+          class="rounded-lg border border-[#2c3140] bg-[#181c25] shadow-2xl w-full max-w-lg overflow-hidden transform transition-all"
           @click.stop
         >
           <!-- Header -->
-          <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-            <h2 class="text-xl font-bold text-gray-800">
+          <div class="px-6 py-4 border-b border-[#2c3140] flex justify-between items-center bg-[#15181f]">
+            <h2 class="text-xl font-roboto font-medium text-[#ece8df]">
               <slot name="header">Título do Modal</slot>
             </h2>
             <button 
               @click="close" 
-              class="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              class="p-2 rounded-full text-[#8b8f9c] hover:text-[#ece8df] hover:bg-[#1b1f29] transition-colors"
             >
               <XMarkIcon class="h-6 w-6" />
             </button>
           </div>
 
           <!-- Body -->
-          <div class="px-6 py-6 text-gray-600 leading-relaxed">
+          <div class="px-6 py-6 text-[#8b8f9c] font-roboto leading-relaxed">
             <slot></slot>
           </div>
 
           <!-- Footer -->
-          <div v-if="$slots.footer" class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end space-x-3">
+          <div v-if="$slots.footer" class="px-6 py-4 border-t border-[#2c3140] bg-[#15181f] flex justify-end space-x-3">
             <slot name="footer"></slot>
           </div>
         </div>
@@ -79,11 +79,47 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap");
 
-.modal-scale-enter-active { transition: all 0.3s ease-out; }
-.modal-scale-leave-active { transition: all 0.2s ease-in; }
-.modal-scale-enter-from { opacity: 0; transform: scale(0.95) translateY(-10px); }
-.modal-scale-leave-to { opacity: 0; transform: scale(0.95) translateY(10px); }
+.font-roboto {
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Animações de transição */
+.fade-enter-active, 
+.fade-leave-active { 
+  transition: opacity 0.2s ease; 
+}
+
+.fade-enter-from, 
+.fade-leave-to { 
+  opacity: 0; 
+}
+
+.modal-scale-enter-active { 
+  transition: all 0.3s ease-out; 
+}
+
+.modal-scale-leave-active { 
+  transition: all 0.2s ease-in; 
+}
+
+.modal-scale-enter-from { 
+  opacity: 0; 
+  transform: scale(0.95) translateY(-10px); 
+}
+
+.modal-scale-leave-to { 
+  opacity: 0; 
+  transform: scale(0.95) translateY(10px); 
+}
+
+/* Hover effects */
+.hover\:bg-\[\#1b1f29\]:hover {
+  background-color: #1b1f29;
+}
+
+.hover\:text-\[\#ece8df\]:hover {
+  color: #ece8df;
+}
 </style>
