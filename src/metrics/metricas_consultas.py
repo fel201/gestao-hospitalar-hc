@@ -3,7 +3,7 @@
 from functools import lru_cache
 from ..helpers.jornada_utils import calcular_diferenca_horas, dias_entre
 from ..helpers.math_utils import divisao_segura
-from .helpers.filtrar_eventos import filtrar_eventos, filtrar_eventos_por_periodo
+from .helpers.filtrar_eventos import filtrar_eventos
 from datetime import datetime
 from collections import defaultdict
 from typing import Any
@@ -43,12 +43,10 @@ def _parse_dt(s: str) -> datetime | None:
     return _parse_dt_cached(s.strip())
 
 
-# agregação única, evita N passagens separadas sobre consultas
-
 
 def _agregar_consultas(consultas: list[dict[str, Any]]) -> dict[str, Any]:
     """
-    Uma única varredura de `consultas` que acumula todos os contadores e
+    Uma única varredura de consultas que acumula todos os contadores e
     agrupamentos usados pelas métricas abaixo. As funções de métrica passam
     a ler diretamente desse agregado em vez de re-percorrer a lista.
     """
@@ -80,6 +78,7 @@ def _agregar_consultas(consultas: list[dict[str, Any]]) -> dict[str, Any]:
             faltas_paciente += 1
         if RETORNO_PROFISSIONAL_FALTOU in retorno:
             faltas_profissional += 1
+            
         if CONDICAO_REGULADA in condicao:
             reguladas += 1
         if CONDICAO_RETORNO in condicao:
@@ -117,11 +116,6 @@ def _agregar_consultas(consultas: list[dict[str, Any]]) -> dict[str, Any]:
         "reguladas_por_paciente": reguladas_por_paciente,
         "eventos_por_prontuario": eventos_por_prontuario,
     }
-
-
-def _pacientes_com_intercon(agg: dict) -> set[str]:
-    return set(agg["interconsultas_por_paciente"].keys())
-
 
 
 def concentracao_consultas_paciente_ativo(
@@ -195,40 +189,6 @@ def concentracao_consultas_paciente_ativo(
         )
 
     return resultado
-
-def consultas_primeira_vez(consultas):
-    return [c for c in consultas if CONDICAO_PRIMEIRA in c["condicao"]]
-
-
-def consultas_concluidas(consultas):
-    return [c for c in consultas if RETORNO_ATENDIDO in c["retorno"]]
-
-
-def porcentagem_consultas_concluidas(consultas):
-    consultas_con = consultas_concluidas(consultas=consultas)
-    taxa = round(divisao_segura(len(consultas_con), len(consultas)) * 100, 2)
-    return f"{taxa}%"
-
-
-def porcentagem_consultas_reguladas(consultas: list[dict[str, Any]]) -> str:
-    total = len(consultas)
-    reguladas = sum(1 for c in consultas if CONDICAO_REGULADA in c.get("condicao", ""))
-    proporcao = round(divisao_segura(reguladas, total) * 100, 2)
-    return f"{proporcao}%"
-
-
-def porcentagem_faltas_pacientes(consultas: list[dict[str, Any]]) -> str:
-    total = len(consultas)
-    faltas = sum(1 for c in consultas if RETORNO_PACIENTE_FALTOU in c.get("retorno", ""))
-    porcentagem = round(divisao_segura(faltas, total) * 100, 2)
-    return f"{porcentagem}%"
-
-
-def porcentagem_faltas_profissional(consultas: list[dict[str, Any]]) -> str:
-    total = len(consultas)
-    faltas = sum(1 for c in consultas if RETORNO_PROFISSIONAL_FALTOU in c.get("retorno", ""))
-    porcentagem = round(divisao_segura(faltas, total) * 100, 2)
-    return f"{porcentagem}%"
 
 
 def tempo_medio_agendamento_realizacao(consultas: list[dict[str, Any]]) -> dict:
@@ -490,12 +450,7 @@ def porcentagem_pacientes_com_interconsulta(consultas: list[dict[str, Any]]) -> 
 
 
 
-def filtrar_consultas(consultas, especialidade, data_inicio, data_fim):
-    return filtrar_eventos_por_periodo(
-        filtrar_eventos(evento="consulta", dados=consultas, especialidade=especialidade),
-        data_inicio,
-        data_fim,
-    )
+
 
 
 def dicionario_metricas_consultas(
@@ -503,9 +458,9 @@ def dicionario_metricas_consultas(
     pacientes: list[dict[str, Any]],
     especialidade: str,
     data_inicio: str,
-    data_fim: str,
+    data_fim: str
 ) -> dict:
-    consultas_filtradas = filtrar_consultas(consultas, especialidade, data_inicio, data_fim)
+    consultas_filtradas = filtrar_eventos(evento="consulta", dados=consultas, especialidade=especialidade)
     agg = _agregar_consultas(consultas_filtradas)
     total = agg["total"]
     n_pacientes = len(agg["pacientes"])
@@ -536,41 +491,43 @@ def dicionario_metricas_consultas(
     return {
         "concentracao_consultas_paciente_ativo": concentracao_consultas_paciente_ativo(consultas=consultas_filtradas, data_inicio=data_inicio, data_fim=data_fim),
         "porcentagem_consultas_concluidas": f"{porcentagem_concluidas}%",
-        "porcentagem_consultas_reguladas": f"{porcentagem_reguladas}%",
         "intervalo_medio_regulada_primeiro_retorno": intervalo_medio_regulada_primeiro_retorno(consultas=consultas_filtradas),
         "intervalo_medio_retornos_consecutivos": intervalo_medio_retornos_consecutivos(consultas=consultas_filtradas),
-        "media_reguladas_por_paciente": media_reguladas,
-        "media_retornos_por_paciente": media_retornos,
-        "media_interconsultas_por_paciente": media_intercon,
+        "media_consultas_por_paciente": {
+            "Reguladas": media_reguladas,
+            "Retornos": media_retornos,
+            "Interconsultasa": media_intercon,
+        },
         "proporcao_consultas_sem_prontuario": f"{porcentagem_sem_prontuario}%",
         "tempo_medio_criacao_prontuario_primeiro_agendamento_global": tempo_medio_criacao_prontuario_primeiro_agendamento(pacientes=pacientes, consultas=consultas),
-        "porcentagem_faltas_profissionais": f"{porcentagem_falta_prof}%",
+        
         "encaminhamentos_por_consulta_regulada": encaminhamentos_por_consulta_regulada(consultas=consultas_filtradas),
-        "porcentagem_faltas_pacientes": f"{porcentagem_falta_pac}%",
+        "porcentagem_faltas": {
+            "Por paciente": f"{porcentagem_falta_pac}%",
+            "Por profissional": f"{porcentagem_falta_prof}%",    
+        },
         "tempo_medio_agendamento_realizacao": tempo_medio_agendamento_realizacao(consultas),
-        "porcentagem_consultas_retorno": f"{porcentagem_retorno}%",
-        "porcentagem_interconsultas": f"{porcentagem_intercon}%",
+        "porcentagem_tipos_consulta": {
+            "Reguladas": f"{porcentagem_reguladas}%",
+            "Retornos": f"{porcentagem_retorno}%",
+            "Interconsultas": f"{porcentagem_intercon}%",
+        },
         "porcentagem_pacientes_com_interconsulta": f"{porcentagem_pac_com_intercon}%",
     }
 
 
 
 # flatten: converte o dict de métricas em lista de {nome, valor}
-
+# [metrica, nome_display]
 _METRICAS_INDICADORES: list[tuple[str, str]] = [
     ("concentracao_consultas_paciente_ativo", "Concentração de consultas por paciente ativo"),
     ("porcentagem_consultas_concluidas", "Porcentagem de consultas concluídas em relação ao total"),
-    ("porcentagem_consultas_reguladas", "Porcentagem de consultas reguladas"),
-    ("porcentagem_interconsultas", "Porcentagem de interconsultas"),
-    ("porcentagem_consultas_retorno", "Porcentagem de consultas de retorno"),
-    ("media_reguladas_por_paciente", "Consultas reguladas por paciente"),
-    ("media_retornos_por_paciente", "Consultas retorno por paciente"),
-    ("media_interconsultas_por_paciente", "Interconsultas por paciente"),
+    ("porcentagem_tipos_consulta", "Porcentagem dos tipos de consultas"),
+    ("media_consultas_por_paciente", "Média de consultas de cada tipo por paciente"),
     ("encaminhamentos_por_consulta_regulada", "Encaminhamento frequente por consulta regulada"),
     ("intervalo_medio_regulada_primeiro_retorno", "Intervalo médio da consulta regulada ao primeiro retorno"),
     ("intervalo_medio_retornos_consecutivos", "Intervalo médio de retornos consecutivos"),
-    ("porcentagem_faltas_profissionais", "Porcentagem de faltas por parte do profissional"),
-    ("porcentagem_faltas_pacientes", "Porcentagem de faltas por parte do paciente"),
+    ("porcentagem_faltas", "Porcentagem de faltas"),
     ("tempo_medio_agendamento_realizacao", "Tempo médio de agendamento até realização (horas)"),
     ("porcentagem_pacientes_com_interconsulta", "Porcentagem de pacientes com pelo menos uma interconsulta"),
     ("proporcao_consultas_sem_prontuario", "Porcentagem de consultas sem prontuário registrado"),

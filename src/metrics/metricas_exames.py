@@ -1,8 +1,9 @@
 from ..helpers.jornada_utils import calcular_diferenca_horas, _mes_anterior
-from .helpers.filtrar_eventos import filtrar_eventos, filtrar_eventos_por_periodo
+from .helpers.filtrar_eventos import filtrar_eventos
 from ..helpers.formatacao import remover_acentos, padronizar_casas_decimais
 from datetime import datetime
 from typing import Any
+import re
 
 ESPECIALIDADE_AMBULATORIAL = "AMBULATORIO"
 ESPECIALIDADE_UTI = "UTI"
@@ -13,10 +14,124 @@ SITUACAO_CANCELADO = "CANCELADO"
 SITUACAO_LIBERADO = "LIBERADO"
 SITUACAO_A_COLETAR = "A COLETAR"
 
+GRUPO_NAO_CLASSIFICADO = "Não classificado"
+
+# Classificação dos exames por grupo de executor (unidade_executora_nome),
+# conforme "HC4 T3 Exames - classificação". Bem mais granular que o antigo
+# corte binário ambulatorial/emergencial-preoperatório, que olhava para a
+# especialidade solicitante em vez de quem efetivamente executa o exame.
+_TABELA_GRUPOS_EXECUTORES: dict[str, list[str]] = {
+    "Análises Clínicas": [
+        "UAC: BIOQUÍMICA",
+        "UAC: SOROLOGIA",
+        "UAC: HEMATOLOGIA",
+        "UAC: BACTERIOLOGIA",
+        "UAC: HEMOSTASIA",
+        "UAC: UROANÁLISE",
+        "UAC: GASOMETRIA",
+        "UAC: EXAMES EXTERNOS",
+        "UAC: EXAMES DA REDE",
+    ],
+    "Diagnóstico por Imagem": [
+        "UDI: ULTRASSONOGRAFIA",
+        "UDI: RADIOLOGIA CONVENCIONAL",
+        "UDI: TOMOGRAFIA COMPUTADORIZADA",
+        "UDI: DENSITOMETRIA ÓSSEA",
+        "UDI: RESSONÂNCIA MAGNÉTICA",
+        "UDI: MEDICINA NUCLEAR",
+        "UDI: MAMOGRAFIA",
+        "UNIDADE DE DIAGNÓSTICO POR IMAGEM",
+    ],
+    "Anatomia Patológica": [
+        "UAP: HISTOPATOLÓGICO",
+        "UAP: CITOLOGIA CÉRVICO-VAGINAL",
+        "UAP: CITOLOGIA GERAL",
+        "UAP: IMUNOHISTOQUÍMICA",
+        "UAP: CONGELAÇÃO",
+    ],
+    "Procedimental": [
+        "AGÊNCIA TRANSFUSIONAL",
+        "ENDOSCOPIA",
+        "HEMODINÂMICA-PDT",
+        "BLOCO DERMATO",
+        "NEFROLOGIA - PROCEDIMENTOS",
+        "CENTRO OBSTÉTRICO",
+    ],
+    "Ambulatorial": [
+        "OBSTETRÍCIA (AMBULATÓRIO)",
+        "CARDIOLOGIA (AMBULATÓRIO)",
+        "PNEUMOLOGIA (AMBULATÓRIO)",
+        "GINECOLOGIA (AMBULATÓRIO)",
+        "GASTROENTEROLOGIA (AMBULATÓRIO)",
+        "NEUROLOGIA (AMBULATÓRIO)",
+        "UROLOGIA (AMBULATÓRIO)",
+        "INFECTOLOGIA (AMBULATÓRIO)",
+        "HEMATOLOGIA (AMBULATÓRIO)",
+        "OFTALMO GERAL",
+        "OFTALMO ESPECIALIZADOS",
+        "FONOAUDIOLOGIA",
+    ],
+    "Internação": [
+        "8º SUL",
+    ],
+}
+
+
+def _normalizar_executor(valor: str) -> str:
+    """
+    Normaliza o nome da unidade executora para comparação: remove acentos,
+    coloca em maiúsculas e substitui pontuação (":", "(", ")", "-") por
+    espaço, para casar "UAC: Bioquímica" com "UAC BIOQUIMICA" etc.
+    """
+    texto = remover_acentos(valor).upper()
+    texto = re.sub(r"[():\-]", " ", texto)
+    texto = re.sub(r"\s+", " ", texto).strip()
+    return texto
+
+
+_MAPA_EXECUTOR_GRUPO: dict[str, str] = {
+    _normalizar_executor(nome): grupo
+    for grupo, nomes in _TABELA_GRUPOS_EXECUTORES.items()
+    for nome in nomes
+}
+
+
+def classificar_grupo_executor(unidade_executora_nome: str) -> str:
+    """
+    Classifica o exame em um dos grupos de executor (Análises Clínicas,
+    Diagnóstico por Imagem, Anatomia Patológica, Procedimental, Ambulatorial,
+    Internação), a partir do campo `unidade_executora_nome`. Valores que não
+    batem com a tabela caem em GRUPO_NAO_CLASSIFICADO — útil para detectar
+    unidades novas/não mapeadas que apareçam na base.
+    """
+    chave = _normalizar_executor(unidade_executora_nome)
+    return _MAPA_EXECUTOR_GRUPO.get(chave, GRUPO_NAO_CLASSIFICADO)
+
+
+def distribuicao_exames_por_grupo_executor(exames: list[dict]) -> dict[str, str]:
+    """
+    Retorna a porcentagem de exames por grupo de executor em relação ao
+    total, ordenado do grupo com mais exames para o com menos. Retorna {} se
+    não houver exames.
+    """
+    if not exames:
+        return {}
+
+    contagem: dict[str, int] = {}
+    for e in exames:
+        grupo = classificar_grupo_executor(e["unidade_executora_nome"])
+        contagem[grupo] = contagem.get(grupo, 0) + 1
+
+    total = len(exames)
+    ordenado = sorted(contagem.items(), key=lambda item: item[1], reverse=True)
+
+    return {grupo: _formatar_percentual(qtd, total) for grupo, qtd in ordenado}
+
+
 _METRICAS_INDICADORES: list[tuple[str, str]] = [
     ("tempo_medio_solicitacao_realizacao_mensal", "Tempo médio de solicitação até a realização do exame por mês"),
-    ("porcentagem_exames_ambulatoriais_emergenciais", "Porcentagem de exames ambulatoriais e emergenciais/pré-operatórios"),
-    ("porcentagem_exames_ambulatoriais_emergenciais_global", "Porcentagem de exames ambulatoriais e emergenciais/pré-operatórios global"),
+    ("distribuicao_exames_por_grupo_executor", "Distribuição de exames por grupo de executor"),
+    ("distribuicao_exames_por_grupo_executor_global", "Distribuição de exames por grupo de executor (global)"),
     ("porcentagem_exames_regulados", "Porcentagem de exames regulados"),
     ("porcentagem_global_exames_regulados", "Porcentagem global de exames regulados"),
     ("porcentagem_exames_concluidos", "Porcentagem de exames concluídos"),
@@ -108,28 +223,6 @@ def porcentagem_exames_do_tipo(exames: list[dict], tipo: str):
     qtd_exames = qtd_exames_tipo(exames=exames, tipo=tipo)
     proporcao = round((qtd_exames / total_exames) * 100, 2)
     return f"{proporcao}%"
-
-
-def porcentagem_exames_ambulatoriais_emergenciais(exames: list[dict]) -> dict:
-    """
-    Retorna a porcentagem de exames ambulatoriais e, por complemento (100 - x),
-    a porcentagem de exames emergenciais/pré-operatórios, já que as duas
-    categorias são mutuamente exclusivas e cobrem o total de exames.
-    """
-    if not exames:
-        return {
-            "Ambulatoriais": "0%",
-            "Pré-operatórios e Emergenciais": "0%",
-        }
-
-    qtd_ambulatorial = qtd_exames_tipo(exames=exames, tipo="ambulatorial")
-    pct_ambulatorial = round((qtd_ambulatorial / len(exames)) * 100, 2)
-    pct_emergencial = round(100 - pct_ambulatorial, 2)
-
-    return {
-        "Ambulatoriais": f"{pct_ambulatorial}%",
-        "Pré-operatórios e Emergenciais": f"{pct_emergencial}%",
-    }
 
 
 # total de exames realizados / numero de pacientes atendidos
@@ -260,15 +353,8 @@ def concentracao_exames_por_paciente_ativo_mensal(
     return resultado
 
 
-def filtrar_exames(exames, especialidade, data_inicio, data_fim):
-    return filtrar_eventos_por_periodo(
-        filtrar_eventos(evento="exame", dados=exames, especialidade=especialidade),
-        data_inicio,
-        data_fim,
-    )
-
 def dicionario_metricas_exames(exames, especialidade, data_inicio, data_fim):
-    exames_filtrados = filtrar_exames(exames, especialidade, data_inicio, data_fim)
+    exames_filtrados = filtrar_eventos(evento="exame", dados=exames, especialidade=especialidade)
     meses_alvo = _calcular_meses_alvo(data_inicio=data_inicio, data_fim=data_fim)
     grupos = _agrupar_exames_por_mes(exames=exames_filtrados, meses_alvo=meses_alvo)
     contadores = _contadores_globais(exames=exames_filtrados)
@@ -277,10 +363,10 @@ def dicionario_metricas_exames(exames, especialidade, data_inicio, data_fim):
         "tempo_medio_solicitacao_realizacao_mensal": tempo_medio_solicitacao_realizacao_mensal(
             exames=exames, data_inicio=data_inicio, data_fim=data_fim, _grupos=grupos
         ),
-        "porcentagem_exames_ambulatoriais_emergenciais": porcentagem_exames_ambulatoriais_emergenciais(
+        "distribuicao_exames_por_grupo_executor": distribuicao_exames_por_grupo_executor(
             exames=exames_filtrados
         ),
-        "porcentagem_exames_ambulatoriais_emergenciais_global": porcentagem_exames_ambulatoriais_emergenciais(
+        "distribuicao_exames_por_grupo_executor_global": distribuicao_exames_por_grupo_executor(
             exames=exames
         ),
         "porcentagem_exames_regulados": _formatar_percentual(contadores["regulados"], contadores["total"]),

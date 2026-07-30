@@ -1,8 +1,7 @@
 from collections import defaultdict
-from .helpers.filtrar_eventos import filtrar_eventos, filtrar_eventos_por_periodo
+from .helpers.filtrar_eventos import filtrar_eventos
 SUMARIO_ALTA_INFORMATIZADO = "INFORMATIZADO"
 from ..helpers.formatacao import remover_acentos
-from .metricas_consultas import _parse_dt
 from datetime import datetime
 DESCRICAO_ALTA = "ALTA"
 DESCRICAO_OBITO = "OBITO" # retira o acento de descricao_tipo_alta_medica
@@ -52,12 +51,7 @@ _METRICAS_INDICADORES: list[tuple[str, str]] = [
 ]
 
 
-def filtrar_internacoes(internacoes, especialidade, data_inicio, data_fim):
-    return filtrar_eventos_por_periodo(
-        filtrar_eventos(evento="internacao", dados=internacoes, especialidade=especialidade),
-        data_inicio,
-        data_fim,
-    )
+
 
 
 def internacoes_concluidas(internacoes):
@@ -293,7 +287,7 @@ def porcentagem_pacientes_internados_especialidade_clinica(internacoes):
     return top5
     
 def dicionario_metricas_internacoes(internacoes, especialidade, data_inicio, data_fim):
-    internacoes_filtradas = filtrar_internacoes(internacoes, especialidade, data_inicio, data_fim)
+    internacoes_filtradas = filtrar_eventos(evento="internacao", dados=internacoes, especialidade=especialidade)
     return {
         "tempo_medio_permanencia_internacao": (
             tempo_medio_permanencia_internacao(
