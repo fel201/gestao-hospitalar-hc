@@ -5,10 +5,13 @@ import os
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
+
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
 
+
 from .resources.database import DatabaseManager, Base
+from .models import metrica_historico  # <-- adicionar; registra a tabela no Base.metadata
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
