@@ -1,6 +1,5 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from fastapi import HTTPException, status
-
 from ..csv_file_provider import CsvFileProvider
 
 
@@ -35,8 +34,8 @@ class ConsultasCsvProvider:
             'condicao': row.get('Condição do Atendimento', ''),
         }
 
-    async def listar_consultas(self) -> List[Dict[str, Any]]:
-        return await self._csv_data.get_rows()
+    async def listar_consultas(self, data_inicio: Optional[str] = None, data_fim: Optional[str] = None) -> List[Dict[str, Any]]:
+        return await self._csv_data.get_rows(data_inicio, data_fim)
 
     async def obter_consulta_por_id(self, consulta_id: int) -> Dict[str, Any]:
         consultas = await self._csv_data.get_rows()
