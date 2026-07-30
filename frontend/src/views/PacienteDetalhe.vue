@@ -8,15 +8,12 @@
       
       <!-- Logo/Ícone animado -->
       <div class="relative">
-        <div class="w-24 h-24 rounded-full bg-blue-500/10 border-4 border-blue-500/30 flex items-center justify-center animate-pulse">
-          <svg class="w-12 h-12 text-blue-400 animate-spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        <div class="w-24 h-24 rounded-full bg-blue-500/10 flex items-center justify-center">
+          <svg class="w-10 h-10 text-blue-400 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+            <path class="opacity-90" fill="currentColor" d="M12 2a10 10 0 0110 10h-3a7 7 0 00-7-7V2z"></path>
           </svg>
         </div>
-        
-        <!-- Anel de carregamento externo -->
-        <div class="absolute inset-0 rounded-full border-t-4 border-blue-400 animate-spin"></div>
-        <div class="absolute inset-0 rounded-full border-r-4 border-purple-400 animate-spin-reverse"></div>
       </div>
 
       <!-- Texto de carregamento -->
@@ -222,23 +219,27 @@
         <div class="flex bg-slate-800 rounded-lg p-1 mt-2">
           <button
             @click="abaAtiva = 'linha-do-tempo'"
-            :class="abaAtiva === 'linha-do-tempo' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'"
+            :class="abaAtiva === 'linha-do-tempo' ? 'bg-blue-600' : 'hover:bg-slate-700/50'"
             class="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-md font-medium transition-colors"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-            Linha do Tempo
+            <span :class="abaAtiva === 'linha-do-tempo' ? 'text-white' : 'text-slate-300 hover:text-white'" class="flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+              Linha do Tempo
+            </span>
           </button>
           <button
             @click="abaAtiva = 'analises'"
-            :class="abaAtiva === 'analises' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'"
+            :class="abaAtiva === 'analises' ? 'bg-blue-600' : 'hover:bg-slate-700/50'"
             class="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-md font-medium transition-colors"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Análises e Histórico
+            <span :class="abaAtiva === 'analises' ? 'text-white' : 'text-slate-300 hover:text-white'" class="flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Análises e Histórico
+            </span>
           </button>
         </div>
 
@@ -738,32 +739,14 @@ onMounted(loadJornada);
 }
 
 /* Animações de carregamento */
-.animate-spin-slow {
-  animation: spin 3s linear infinite;
-}
-
-.animate-spin-reverse {
-  animation: spin 2s linear infinite reverse;
-}
-
 .animate-progress {
   animation: progress 2s ease-in-out infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 @keyframes progress {
   0% { transform: translateX(-100%); }
   50% { transform: translateX(100%); }
   100% { transform: translateX(-100%); }
-}
-
-/* Efeito de brilho no anel de carregamento */
-.animate-pulse {
-  animation: pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes pulse {

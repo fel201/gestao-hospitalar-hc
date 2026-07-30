@@ -1,3 +1,5 @@
+from datetime import datetime
+
 GRUPOS_ESPECIALIDADE = {
     "acupuntura": "ACUPUNTURA",
     "alergia": "ALERGIA",
@@ -20,15 +22,20 @@ GRUPOS_ESPECIALIDADE = {
     "enfermagem": "ENFERMAGEM",
 }
 
-def filtrar_eventos(evento: str, dados, especialidade):
-    campos = {
-        "consulta": "especialidade",
-        "internacao": "especialidade",
-        "cirurgia": "especialidade",
-        "exame": "especialidade_solicitante_nome",
-    }
+_CAMPOS_ESPECIALIDADE = {
+    "consulta": "especialidade",
+    "internacao": "especialidade",
+    "cirurgia": "especialidade",
+    "exame": "especialidade_solicitante_nome",
+}
 
-    campo = campos[evento]
+# formato usado internamente por 'data_hora_realizacao' nos eventos e pelas
+# datas de borda já formatadas por _formatar_data_iso_para_padrao
+_DATE_FMT = "%d/%m/%Y, %H:%M"
+
+
+def filtrar_eventos(evento: str, dados, especialidade):
+    campo = _CAMPOS_ESPECIALIDADE[evento]
 
     palavra = GRUPOS_ESPECIALIDADE.get(
         especialidade.lower(),
@@ -40,3 +47,5 @@ def filtrar_eventos(evento: str, dados, especialidade):
         for d in dados
         if palavra in d[campo].upper()
     ]
+
+

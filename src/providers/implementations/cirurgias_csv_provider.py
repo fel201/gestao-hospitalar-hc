@@ -1,6 +1,5 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from fastapi import HTTPException, status
-
 from ..csv_file_provider import CsvFileProvider
 
 
@@ -16,19 +15,23 @@ class CirurgiasCsvProvider:
             cirurgia_id = 0
 
         return {
+            "atendimento": row.get("Atendimento", ""),
             "cid": row.get("CID", ""),
+            "prontuario": row.get("Prontuário", ""),
             "id": cirurgia_id,
             "paciente_id": row.get("Codigo do Paciente", ""),
             "especialidade": row.get("Especialidade", ""),
             "duracao_cirurgia": row.get("duracao_cirurgia", ""),
-            "data_inicio_cirurgia": row.get("data_inicio_cirurgia", ""),
+            "data_hora_realizacao": row.get("data_inicio_cirurgia", ""),
             "data_fim_cirurgia": row.get("data_fim_cirurgia", ""),
             "cancelada": row.get("cancelada", ""),
             "situacao": row.get("situacao", ""),
+            "origem": row.get("origem", ""),
+            "duracao_cirurgia": row.get("duracao_cirurgia", "")
         }
 
-    async def listar_cirurgias(self) -> List[Dict[str, Any]]:
-        return await self._csv_data.get_rows()
+    async def listar_cirurgias(self, data_inicio: Optional[str] = None, data_fim: Optional[str] = None) -> List[Dict[str, Any]]:
+        return await self._csv_data.get_rows(data_inicio, data_fim)
 
     async def obter_cirurgia_por_id(
         self, cirurgia_id: int

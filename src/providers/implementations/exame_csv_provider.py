@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from fastapi import HTTPException, status
 
 from ..csv_file_provider import CsvFileProvider
@@ -13,7 +13,7 @@ class ExameCsvProvider:
         return {
             'exame_id': row.get('exame_id', ''),
             'paciente_id': row.get('paciente_id', ''),
-            'paciente_prontuario': row.get('paciente_prontuario', ''),
+            'prontuario': row.get('paciente_prontuario', ''),
             'nome_exame': row.get('nome_exame', ''),
             'tipo_exame': row.get('tipo_exame', ''),
             'data_hora_solicitacao': row.get('data_hora_solicitacao', ''),
@@ -24,10 +24,11 @@ class ExameCsvProvider:
             'especialidade_solicitante_nome': row.get('especialidade_solicitante_nome', ''),
             'retorno': row.get('retorno', ''),
             'condicao': row.get('condicao_exame', ''),
+            "unidade_executora_nome": row.get("unidade_executora_nome", "")
         }
 
-    async def listar_exames(self) -> List[Dict[str, Any]]:
-        return await self._csv_data.get_rows()
+    async def listar_exames(self, data_inicio: Optional[str] = None, data_fim: Optional[str] = None) -> List[Dict[str, Any]]:
+        return await self._csv_data.get_rows(data_inicio, data_fim)
 
     async def obter_exame_por_id(self, exame_id: str) -> Dict[str, Any]:
         exames = await self._csv_data.get_rows()

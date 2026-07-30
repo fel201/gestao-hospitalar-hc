@@ -60,3 +60,25 @@ def calcular_diferenca_horas(data_inicio: str, data_fim: str) -> int:
     
     except ValueError:
         raise ValueError("Formato de data inválido. Esperado: 'DD/MM/YYYY, HH:MM' (ex: 13/1/2026, 08:56)")
+
+def dias_entre(inicio: str, fim: str) -> float | None:
+    """
+    Calcula a diferença em dias (com casas decimais) entre duas datas
+    no formato 'DD/MM/YYYY, HH:MM'.
+    """
+    formato = "%d/%m/%Y, %H:%M"
+    try:
+        inicio = datetime.strptime(inicio, formato)
+        fim = datetime.strptime(fim, formato)
+        diferenca = fim - inicio
+        dias = diferenca.total_seconds() / 86400
+        return round(dias, 2)
+    except ValueError:
+        raise ValueError("Formato de data inválido. Esperado: 'DD/MM/YYYY, HH:MM' (ex: 13/1/2026, 08:56)")
+
+
+def _mes_anterior(ano: int, mes: int) -> tuple[int, int]:
+    """Retorna (ano, mes) do mês anterior."""
+    if mes == 1:
+        return ano - 1, 12
+    return ano, mes - 1

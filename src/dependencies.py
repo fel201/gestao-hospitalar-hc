@@ -3,6 +3,10 @@ from typing import Callable
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .providers.interfaces.metrica_provider_interface import MetricaProviderInterface
+from .providers.implementations.metricas_sql_provider import MetricaSqliteProvider
+from .resources.database import get_app_db_session
+
 from .providers.interfaces.paciente_provider_interface import PacienteProviderInterface
 from .providers.implementations.paciente_postgres_provider import PacientePostgresProvider
 from .providers.implementations.paciente_csv_provider import PacienteCsvProvider
@@ -17,6 +21,14 @@ def _get_paciente_postgres_provider(
 def _get_paciente_csv_provider() -> PacienteProviderInterface:
     csv_path = os.getenv("PACIENTE_CSV_PATH", "data/pacientes.csv")
     return PacienteCsvProvider(csv_path=csv_path)
+
+
+
+def get_metrica_provider(
+    session: AsyncSession = Depends(get_app_db_session)
+) -> MetricaProviderInterface:
+    return MetricaSqliteProvider(session=session)
+
 
 # 2. A FÁBRICA: A única função que o roteador vai conhecer.
 def get_paciente_provider(strategy: str) -> Callable[..., PacienteProviderInterface]:
