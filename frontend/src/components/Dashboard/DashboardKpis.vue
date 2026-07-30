@@ -58,12 +58,6 @@ const kpisResolvidos = computed(() => [
     icone: "M13 10V3L4 14h7v7l9-11h-7z",
   },
   {
-    label: "Tempo Médio de Jornada",
-    valor: `${props.kpis.tempo_medio_jornada} dias`,
-    cor: "#a2653a",
-    icone: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
-  },
-  {
     label: "Taxa de Conclusão",
     valor: `${(props.kpis.taxa_conclusao * 100).toFixed(0)}%`,
     cor: "#5a7599",

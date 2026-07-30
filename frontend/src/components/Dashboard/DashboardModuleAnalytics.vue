@@ -85,17 +85,27 @@
             class="rounded-md border border-[#252a35] bg-[#1b1f29] p-4"
             :class="{ 'xl:col-span-2': item.spec.tipo === 'distribuicao' }"
           >
-            <div class="flex items-start justify-between gap-3">
-              <h4 class="font-serif text-[15px] font-medium leading-snug text-[#ece8df]">
-                {{ item.spec.titulo }}
-              </h4>
+          <div class="flex items-start justify-between gap-3">
+            <h4 class="font-serif text-[15px] font-medium leading-snug text-[#ece8df]">
+              {{ item.spec.titulo }}
+            </h4>
+            <div class="flex shrink-0 items-center gap-2">
+              <button
+                v-if="!item.indisponivel"
+                @click="abrirDocumentacao(item)"
+                title="Como essa métrica é calculada"
+                class="text-[#767c8a] transition-colors hover:text-[#ece8df]"
+              >
+                <InformationCircleIcon class="h-4 w-4" />
+              </button>
               <span
-                class="shrink-0 rounded-sm border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-[#8b8f9c]"
+                class="rounded-sm border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-[#8b8f9c]"
                 style="border-color: #313847"
               >
                 {{ rotuloTipo(item.spec.tipo) }}
               </span>
             </div>
+          </div>
 
             <!-- Gráfico ainda não implementado no backend, ou faltam indicadores -->
             <div
@@ -223,7 +233,16 @@ import {
 } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import type { DashboardInterface } from "../../interfaces/dashboard";
+import { useRouter } from "vue-router";
+import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 
+const router = useRouter();
+
+const abrirDocumentacao = (item: GraficoResolvido) => {
+  const nomeIndicador = item.spec.indicadorNomes[0];
+  if (!nomeIndicador) return;
+  router.push({ path: "/docs", query: { indicador: nomeIndicador } });
+};
 // Registrado globalmente para que Tooltip/Legend continuem funcionando,
 // mas cada <Bar> também recebe o plugin explicitamente via :plugins="[ChartDataLabels]"
 // (necessário no vue-chartjs para habilitar os rótulos por gráfico).
@@ -384,9 +403,21 @@ const buildSerieTemporalData = (indicador: Indicador) => {
   };
 };
 
+// NOTA sobre o fix de clipping: quando uma barra chega perto do topo da área
+// do gráfico, o datalabel (anchor "end" / align "top") é desenhado acima da
+// própria barra — e se não houver espaço reservado ali, ele fica cortado
+// pela borda do canvas, só aparecendo no hover do tooltip. Duas mudanças
+// resolvem isso:
+//  1. `layout.padding.top` reserva uma faixa fixa acima da área do gráfico
+//     para os labels "estourarem" sem serem cortados.
+//  2. `grace` na escala Y adiciona uma folga percentual acima do maior valor
+//     dos dados, então a barra mais alta nunca encosta no teto da área
+//     plotada (isso também ajuda mesmo com o padding, pois evita que a barra
+//     e o label disputem o mesmo pixel).
 const buildSerieTemporalOptions = (unidade?: string) => ({
   responsive: true,
   maintainAspectRatio: false,
+  layout: { padding: { top: 28 } },
 
   plugins: {
     legend: {
@@ -405,6 +436,8 @@ const buildSerieTemporalOptions = (unidade?: string) => ({
 
       anchor: "end" as const,
       align: "top" as const,
+      offset: 4,
+      clamp: true,
 
       formatter: (value: number) =>
         value === 0
@@ -426,6 +459,7 @@ const buildSerieTemporalOptions = (unidade?: string) => ({
 
     y: {
       beginAtZero: true,
+      grace: "10%",
 
       ticks: {
         color: "#767c8a",
@@ -461,9 +495,16 @@ const buildSerieTemporalPercentualData = (indicador: Indicador) => {
   };
 };
 
+// Mesmo fix de clipping do builder acima: padding no topo do layout +
+// datalabel "clampado" dentro da área desenhável. Como o eixo aqui tem
+// `max: 100` fixo (não dá pra usar `grace` para abrir folga acima de 100%),
+// o padding + `clamp: true` são o que garante que uma barra em 100% ainda
+// mostre o rótulo, empurrando-o para dentro da área reservada em vez de
+// cortá-lo na borda do canvas.
 const buildSerieTemporalPercentualOptions = () => ({
   responsive: true,
   maintainAspectRatio: false,
+  layout: { padding: { top: 28 } },
 
   plugins: {
     legend: {
@@ -481,6 +522,8 @@ const buildSerieTemporalPercentualOptions = () => ({
 
       anchor: "end" as const,
       align: "top" as const,
+      offset: 4,
+      clamp: true,
 
       formatter: (value: number) => `${value}%`,
     },
@@ -559,31 +602,17 @@ const MODULOS: ModuloSpec[] = [
             id: "consultas-proporcao-tipos",
             titulo:
             "Proporção de consultas reguladas, de retorno e interconsultas",
-            tipo: "comparacao-proporcao",
-            indicadorNomes: [
-              "Porcentagem de consultas reguladas",
-              "Porcentagem de consultas de retorno",
-              "Porcentagem de interconsultas",
-            ],
+            tipo: "serie-temporal-percentual",
+            indicadorNomes: ["Porcentagem dos tipos de consultas"],
             incluirOutros: true,
-            rotulos: {
-              "Porcentagem de consultas reguladas": "Reguladas",
-              "Porcentagem de consultas de retorno": "Retornos",
-              "Porcentagem de interconsultas": "Interconsultas",
-            },
           },
           {
             id: "consultas-faltas",
             titulo: "Comparação de faltas",
-            tipo: "comparacao-proporcao",
+            tipo: "serie-temporal-percentual",
             indicadorNomes: [
-              "Porcentagem de faltas por parte do profissional",
-              "Porcentagem de faltas por parte do paciente",
+              "Porcentagem de faltas",
             ],
-            rotulos: {
-              "Porcentagem de faltas por parte do profissional": "Por parte do profissional",
-              "Porcentagem de faltas por parte do paciente": "Por parte do paciente"
-            }
           },
           {
             id: "consultas-encaminhamentos",
@@ -593,18 +622,9 @@ const MODULOS: ModuloSpec[] = [
           },
           {
             id: "consultas-retorno-interconsulta-paciente",
-            titulo: "Comparação de consultas por pacientes",
+            titulo: "Comparação do número de consultas (de cada tipo) por paciente ativo",
             tipo: "comparacao-dias",
-            indicadorNomes: [
-              "Consultas reguladas por paciente",
-              "Consultas retorno por paciente",
-              "Interconsultas por paciente",
-            ],
-            rotulos: {
-              "Consultas reguladas por paciente": "Consultas Reguladas",
-              "Consultas retorno por paciente": "Consultas de Retorno",
-              "Interconsultas por paciente": "Interconsultas"
-            }
+            indicadorNomes: ["Média de consultas de cada tipo por paciente"],
           },
           {
             id: "consultas-intervalo-retornos",
@@ -689,7 +709,7 @@ const MODULOS: ModuloSpec[] = [
             titulo: "Comparação dos tipos de exames nos últimos 5 meses",
             tipo: "comparacao-proporcao",
             indicadorNomes: [
-              "Porcentagem de exames ambulatoriais e emergenciais/pré-operatórios",
+              "Distribuição de exames por grupo de executor",
             ],
             rotulos: {
               "Porcentagem de exames ambulatoriais": "Exames Ambulatoriais",
@@ -719,7 +739,7 @@ const MODULOS: ModuloSpec[] = [
             titulo: "Comparação dos tipos de exames nos últimos 5 meses",
             tipo: "comparacao-proporcao",
             indicadorNomes: [
-              "Porcentagem de exames ambulatoriais e emergenciais/pré-operatórios global",
+              "Distribuição de exames por grupo de executor (global)",
             ],
             rotulos: {
               "Ambulatoriais": "Exames Ambulatoriais",
@@ -789,6 +809,7 @@ const MODULOS: ModuloSpec[] = [
               "Tempo médio de internação por especialidade clínica",
             tipo: "serie-temporal",
             indicadorNomes: ["Tempo médio de permanência por especialidade"],
+            unidade: "min"
           },
           {
             id: "internacao-sumario-alta-mes",
@@ -1099,6 +1120,8 @@ const chartOptionsComparacaoProporcao = {
       ...DATALABELS_BASE,
       anchor: "end" as const,
       align: "end" as const,
+      offset: 4,
+      clamp: true,
       formatter: (value: number) => `${value}%`,
     },
   },
@@ -1156,6 +1179,8 @@ const chartOptionsComparacaoValor = (unidade?: string) => ({
       ...DATALABELS_BASE,
       anchor: "end" as const,
       align: "end" as const,
+      offset: 4,
+      clamp: true,
       formatter: (value: number) => `${value}${unidade ? " " + unidade : ""}`,
     },
   },
@@ -1166,6 +1191,7 @@ const chartOptionsComparacaoValor = (unidade?: string) => ({
     },
     y: {
       beginAtZero: true,
+      grace: "10%",
       ticks: { color: "#767c8a", font: { family: "'IBM Plex Mono', monospace", size: 11 } },
       grid: { color: "rgba(140, 148, 163, 0.08)" },
     },
@@ -1236,6 +1262,8 @@ const buildDistribuicaoOptions = (indicador: Indicador) => {
         ...DATALABELS_BASE,
         anchor: "end" as const,
         align: "end" as const,
+        offset: 4,
+        clamp: true,
         formatter: (value: number) => {
           const pct = total > 0 ? Math.round((value / total) * 100) : 0;
           return `${value} (${pct}%)`;
@@ -1245,6 +1273,7 @@ const buildDistribuicaoOptions = (indicador: Indicador) => {
     scales: {
       x: {
         beginAtZero: true,
+        grace: "8%",
         ticks: { color: "#767c8a", precision: 0, font: { family: "'IBM Plex Mono', monospace", size: 11 } },
         grid: { color: "rgba(140, 148, 163, 0.08)" },
       },

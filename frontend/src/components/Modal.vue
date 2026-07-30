@@ -21,7 +21,7 @@
         >
           <!-- Header -->
           <div class="px-6 py-4 border-b border-[#2c3140] flex justify-between items-center bg-[#15181f]">
-            <h2 class="text-xl font-roboto font-medium text-[#ece8df]">
+            <h2 class="text-xl font-heading font-medium text-[#ece8df]">
               <slot name="header">Título do Modal</slot>
             </h2>
             <button 
@@ -33,7 +33,7 @@
           </div>
 
           <!-- Body -->
-          <div class="px-6 py-6 text-[#8b8f9c] font-roboto leading-relaxed">
+          <div class="px-6 py-6 text-[#8b8f9c] font-body leading-relaxed">
             <slot></slot>
           </div>
 
@@ -79,10 +79,14 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Hanken+Grotesk:wght@300;400;500;700&display=swap");
 
-.font-roboto {
-  font-family: 'Roboto', sans-serif;
+.font-heading {
+  font-family: 'Bricolage Grotesque', sans-serif;
+}
+
+.font-body {
+  font-family: 'Hanken Grotesk', sans-serif;
 }
 
 /* Animações de transição */

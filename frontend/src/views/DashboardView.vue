@@ -24,7 +24,7 @@ const loadingMessages = [
   "Buscando indicadores...",
   "Processando métricas...",
   "Organizando informações...",
-  "Quase pronto..."
+  "Quase pronto...",
 ];
 
 let progressInterval: number | null = null;
@@ -40,7 +40,7 @@ const loadDashboard = async () => {
       const incremento = Math.random() * 10 + 5;
       loadingProgress.value = Math.min(loadingProgress.value + incremento, 90);
     }
-    
+
     // Muda a mensagem a cada 2 segundos
     if (messageIndex < loadingMessages.length) {
       loadingMessage.value = loadingMessages[messageIndex];
@@ -60,10 +60,9 @@ const loadDashboard = async () => {
     dashboard.value = response.data;
     loadingProgress.value = 100;
     loadingMessage.value = "Carregamento concluído!";
-    
+
     // Pequeno delay para mostrar o 100%
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
+    await new Promise((resolve) => setTimeout(resolve, 300));
   } catch (error) {
     console.error(error);
     loadingMessage.value = "Erro ao carregar dados";
@@ -96,15 +95,15 @@ onBeforeUnmount(cleanup);
 
 <template>
   <div class="min-h-screen bg-[#0d0f14] w-full text-slate-200">
-    <main class="w-full px-10 py-8">
+    <main class="w-full">
       <!-- Tela de carregamento -->
-      <div 
-        v-if="loading" 
+      <div
+        v-if="loading"
         class="mt-10 rounded-lg border border-[#2c3140] bg-[#181c25] p-6 relative overflow-hidden"
       >
         <!-- Barra de progresso superior -->
         <div class="absolute top-0 left-0 right-0 h-1 bg-[#2c3140]">
-          <div 
+          <div
             class="h-full bg-[#4f8a8b] transition-all duration-500 ease-out"
             :style="{ width: loadingProgress + '%' }"
           ></div>
@@ -113,23 +112,43 @@ onBeforeUnmount(cleanup);
         <div class="flex flex-col items-center justify-center py-12 space-y-6">
           <!-- Spinner -->
           <div class="relative">
-            <div class="w-16 h-16 rounded-full border-4 border-[#2c3140] border-t-[#4f8a8b] animate-spin"></div>
+            <div
+              class="w-16 h-16 rounded-full border-4 border-[#2c3140] border-t-[#4f8a8b] animate-spin"
+            ></div>
             <div class="absolute inset-0 flex items-center justify-center">
-              <svg class="w-6 h-6 text-[#4f8a8b] animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              <svg
+                class="w-6 h-6 text-[#4f8a8b] animate-pulse"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
               </svg>
             </div>
           </div>
 
           <div class="text-center space-y-3">
-            <p class="font-roboto text-[11px] uppercase tracking-[0.16em] text-[#8b8f9c]">{{ loadingMessage }}</p>
-            <p class="font-roboto text-[11px] uppercase tracking-[0.16em] text-[#8b8f9c]">{{ Math.round(loadingProgress) }}% completo</p>
+            <p
+              class="font-body text-[11px] uppercase tracking-[0.16em] text-[#8b8f9c]"
+            >
+              {{ loadingMessage }}
+            </p>
+            <p
+              class="font-body text-[11px] uppercase tracking-[0.16em] text-[#8b8f9c]"
+            >
+              {{ Math.round(loadingProgress) }}% completo
+            </p>
           </div>
 
           <!-- Barra de progresso detalhada -->
           <div class="w-full max-w-md">
             <div class="h-2 bg-[#2c3140] rounded-full overflow-hidden">
-              <div 
+              <div
                 class="h-full bg-[#4f8a8b] rounded-full transition-all duration-500"
                 :style="{ width: loadingProgress + '%' }"
               ></div>
@@ -138,11 +157,13 @@ onBeforeUnmount(cleanup);
 
           <!-- Indicadores de progresso -->
           <div class="flex gap-3 mt-2">
-            <div 
-              v-for="i in 5" 
+            <div
+              v-for="i in 5"
               :key="i"
               class="w-2 h-2 rounded-full transition-all duration-300"
-              :class="loadingProgress >= (i * 20) ? 'bg-[#4f8a8b]' : 'bg-[#2c3140]'"
+              :class="
+                loadingProgress >= i * 20 ? 'bg-[#4f8a8b]' : 'bg-[#2c3140]'
+              "
             ></div>
           </div>
         </div>
@@ -150,53 +171,74 @@ onBeforeUnmount(cleanup);
 
       <!-- Conteúdo principal -->
       <template v-if="!loading">
-        <!-- Filtros -->
-        <DashboardFilters
+        <!-- Filtros (fixos ao rolar a página) -->
+        <div
           v-if="dashboard"
-          :specialty="specialty"
-          :start-date="startDate"
-          :end-date="endDate"
-          @update:specialty="specialty = $event"
-          @update:start-date="startDate = $event"
-          @update:end-date="endDate = $event"
-          @search="loadDashboard"
-        />
+          class="sticky top-0 z-50 bg-[#0d0f14]/95 backdrop-blur-md border-b border-[#2c3140] py-4"
+        >
+          <DashboardFilters
+            :specialty="specialty"
+            :start-date="startDate"
+            :end-date="endDate"
+            @update:specialty="specialty = $event"
+            @update:start-date="startDate = $event"
+            @update:end-date="endDate = $event"
+            @search="loadDashboard"
+          />
+        </div>
 
         <!-- KPIs -->
         <DashboardKpis v-if="dashboard" :kpis="dashboard!.kpis" />
 
         <!-- Jornada Assistencial -->
-        <section v-if="dashboard" class="mt-10 rounded-lg border border-[#2c3140] bg-[#181c25] p-6">
+        <section
+          v-if="dashboard"
+          class="mt-10 rounded-lg border border-[#2c3140] bg-[#181c25] p-6"
+        >
           <div
             class="flex flex-col gap-3 border-b border-[#2c3140] pb-5 md:flex-row md:items-end md:justify-between"
           >
             <div>
-              <p class="font-roboto text-[11px] uppercase tracking-[0.16em] text-[#8b8f9c]">
+              <p
+                class="font-body text-[11px] uppercase tracking-[0.16em] text-[#8b8f9c]"
+              >
                 Jornada Assistencial
               </p>
-              <h2 class="mt-1 font-roboto text-2xl font-medium text-[#ece8df]">
+              <h2 class="mt-1 font-body text-2xl font-medium text-[#ece8df]">
                 6 etapas - {{ specialty }}
               </h2>
               <p class="mt-2 max-w-2xl text-sm leading-relaxed text-[#9096a3]">
-                Visualize a jornada completa do paciente, desde a entrada até a cirurgia e internação.
+                Visualize a jornada completa do paciente, desde a entrada até a
+                cirurgia e internação.
               </p>
             </div>
           </div>
 
           <div class="mt-6 flex flex-row gap-6 overflow-x-auto pb-6 snap-x">
-            <div 
+            <div
               v-for="(stage, index) in [
                 dashboard.entrada,
                 dashboard.consultas,
                 dashboard.exames,
                 dashboard.cirurgias,
-                dashboard.internacao
-              ]" 
+                dashboard.internacao,
+              ]"
               :key="index"
               class="min-w-[320px] max-w-[320px] snap-start"
             >
               <div class="rounded-lg border border-[#252a35] bg-[#1b1f29] p-5">
-                <DashboardJourney :stage="stage" :tipo="['entrada', 'consultas', 'exames', 'procedimentos', 'internacao'][index]" />
+                <DashboardJourney
+                  :stage="stage"  
+                  :tipo="
+                    [
+                      'entrada',
+                      'consultas',
+                      'exames',
+                      'procedimentos',
+                      'internacao',
+                    ][index]
+                  "
+                />
               </div>
             </div>
           </div>
@@ -210,10 +252,10 @@ onBeforeUnmount(cleanup);
 </template>
 
 <style scoped>
-@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;700&display=swap");
 
-.font-roboto {
-  font-family: 'Roboto', sans-serif;
+.font-body {
+  font-family: "Hanken Grotesk", sans-serif;
 }
 
 /* Animações */
@@ -222,8 +264,12 @@ onBeforeUnmount(cleanup);
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .animate-pulse {
@@ -231,8 +277,13 @@ onBeforeUnmount(cleanup);
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* Transição suave */

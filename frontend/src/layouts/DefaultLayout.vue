@@ -65,6 +65,16 @@
           <LayoutDashboard class="h-5 w-5 text-[#8b8f9c]" />
           <span>Dashboard</span>
         </router-link>
+        <router-link
+          v-if="authStore.isAuthenticated"
+          to="/docs"
+          class="flex items-center gap-3 py-2.5 px-3 rounded-md font-medium text-sm transition-colors hover:bg-[#1b1f29] hover:text-[#ece8df]"
+          active-class="bg-[#1b1f29] text-[#ece8df] border-l-2 border-[#4f8a8b]"
+        >
+          <LayoutDashboard class="h-5 w-5 text-[#8b8f9c]" />
+          <span>Documentação</span>
+        </router-link>
+        
       </nav>
     </aside>
 
@@ -72,7 +82,7 @@
     <div class="flex-1 flex flex-col bg-[#12151c] overflow-y-auto h-full">
       <!-- Header -->
       <header
-        class="flex justify-between items-center px-8 py-5 bg-[#181c25] border-b border-[#2c3140] sticky top-0 z-10"
+        class="flex justify-between items-center px-8 py-5 bg-[#181c25] border-b border-[#2c3140] sticky top-0 z-30"
       >
         <div>
           <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-[#8b8f9c]">

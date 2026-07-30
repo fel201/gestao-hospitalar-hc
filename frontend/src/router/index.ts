@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, NavigationGuardNext } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import DocsView from "../views/DocsView.vue"
 import Login from '../views/Login.vue';
 import DashboardView from '../views/DashboardView.vue';
 import Pacientes from '../views/Pacientes.vue';
@@ -30,7 +31,12 @@ const routes = [
     component: PacienteDetalhe,
     meta: { requiresAuth: true },
   },
-  
+  {
+  path: '/docs',
+  name: 'Documentação',
+  component: DocsView,
+  meta: { requiresAuth: false }, 
+  },
 ];
 
 const router = createRouter({
