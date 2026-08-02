@@ -1,8 +1,8 @@
 <template>
-  <div class="relative h-screen overflow-hidden md:flex bg-[#12151c] text-[#ece8df]">
+  <div class="relative h-screen overflow-hidden md:flex bg-[#15181f] text-[#ece8df]">
     <!-- Mobile Menu -->
     <div
-      class="bg-[#181c25] text-[#ece8df] flex justify-between md:hidden border-b border-[#2c3140] shrink-0"
+      class="bg-[#15181f] text-[#ece8df] flex justify-between md:hidden border-b border-[#2c3140] shrink-0"
     >
       <router-link
         to="/"
@@ -79,10 +79,10 @@
     </aside>
 
     <!-- Conteúdo Principal -->
-    <div class="flex-1 flex flex-col bg-[#12151c] overflow-y-auto h-full">
+    <div class="flex-1 flex flex-col bg-[#15181f] overflow-y-auto h-full">
       <!-- Header -->
       <header
-        class="flex justify-between items-center px-8 py-5 bg-[#181c25] border-b border-[#2c3140] sticky top-0 z-30"
+        class="flex justify-between items-center px-8 py-5 bg-[#15181f] border-b border-[#2c3140] sticky top-0 z-30"
       >
         <div>
           <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-[#8b8f9c]">

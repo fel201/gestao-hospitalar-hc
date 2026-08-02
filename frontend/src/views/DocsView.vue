@@ -123,7 +123,7 @@
         
         <div>
           <label class="mb-1 block font-mono text-[10px] uppercase tracking-wider text-[#767c8a]">
-            Descrição detalhada (opcional)
+            Observações (opcional)
           </label>
           <textarea
             v-model="form.observacoes"
@@ -188,7 +188,7 @@
       </div>
 
       <div v-if="docAtual.observacoes">
-        <h2 class="font-serif text-[17px] font-medium text-[#ece8df]">Descrição detalhada</h2>
+        <h2 class="font-serif text-[17px] font-medium text-[#ece8df]">Observações</h2>
         <p class="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-[#9096a3]">
           {{ docAtual.observacoes }}
         </p>

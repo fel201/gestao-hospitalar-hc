@@ -110,7 +110,7 @@
             <!-- Gráfico ainda não implementado no backend, ou faltam indicadores -->
             <div
               v-if="item.indisponivel"
-              class="mt-4 flex h-40 items-center justify-center rounded-md border border-dashed border-[#2c3140] bg-[#151820] p-4 text-center"
+              class="mt-6 flex h-40 items-center justify-center rounded-md border border-dashed border-[#2c3140] bg-[#151820] p-4 text-center"
             >
               <p class="font-mono text-xs text-[#666c79]">
                 Ainda não disponível no backend{{
@@ -122,11 +122,12 @@
             <!-- Comparação de proporções (2-4 categorias em %) -->
             <div
               v-else-if="item.spec.tipo === 'comparacao-proporcao'"
-              class="mt-4 h-56"
+              class="mt-6"
+              :style="{ height: alturaComparacao(item) + 'px' }"
             >
               <Bar
                 :data="buildComparacaoProporcaoData(item)"
-                :options="chartOptionsComparacaoProporcao"
+                :options="chartOptionsComparacaoProporcao(item)"
                 :plugins="[ChartDataLabels]"
               />
             </div>
@@ -134,7 +135,8 @@
             <!-- Comparação de valores em dias/horas (mesma unidade) -->
             <div
               v-else-if="item.spec.tipo === 'comparacao-dias'"
-              class="mt-4 h-56"
+              class="mt-6"
+              :style="{ height: alturaComparacao(item) + 'px' }"
             >
               <Bar
                 :data="buildComparacaoValorData(item)"
@@ -146,7 +148,7 @@
             <!-- Comparação mista: unidades diferentes -> dois cards de estatística lado a lado -->
             <div
               v-else-if="item.spec.tipo === 'comparacao-mista'"
-              class="mt-4 grid h-40 grid-cols-2 gap-3"
+              class="mt-6 grid h-40 grid-cols-2 gap-3"
             >
               <div
                 v-for="ind in item.indicadores"
@@ -165,7 +167,7 @@
             <!-- Distribuição (dict {categoria: contagem}) -> gráfico de barras horizontal -->
             <div
               v-else-if="item.spec.tipo === 'distribuicao'"
-              class="mt-4"
+              class="mt-6"
               :style="{
                 height: alturaBarraDistribuicao(item.indicadores[0]) + 'px',
               }"
@@ -180,7 +182,8 @@
             <!-- Serie temporal (horas) -->
             <div
               v-else-if="item.spec.tipo === 'serie-temporal'"
-              class="mt-4 h-72"
+              class="mt-6"
+              :style="{ height: alturaSerieTemporal(item.indicadores[0]) + 'px' }"
             >
               <Bar
                 :data="buildSerieTemporalData(item.indicadores[0])"
@@ -192,7 +195,8 @@
             <!-- Serie temporal percentual (0-100%) -->
             <div
               v-else-if="item.spec.tipo === 'serie-temporal-percentual'"
-              class="mt-4 h-72"
+              class="mt-6"
+              :style="{ height: alturaSerieTemporal(item.indicadores[0]) + 'px' }"
             >
               <Bar
                 :data="buildSerieTemporalPercentualData(item.indicadores[0])"
@@ -201,9 +205,9 @@
               />
             </div>
             <!-- Valor simples (número, string, dias, horas etc) -->
-            <div v-else class="mt-4 flex h-40 flex-col items-center justify-center gap-1">
+            <div v-else class="mt-6 flex h-40 flex-col items-center justify-center gap-1">
               <p class="font-mono text-3xl font-semibold" :style="{ color: corAtiva }">
-                {{ formatarValor(item.indicadores[0]?.valor) }}
+                {{ formatarValorSimples(item) }}
               </p>
             </div>
           </div>
@@ -414,66 +418,89 @@ const buildSerieTemporalData = (indicador: Indicador) => {
 //     dos dados, então a barra mais alta nunca encosta no teto da área
 //     plotada (isso também ajuda mesmo com o padding, pois evita que a barra
 //     e o label disputem o mesmo pixel).
-const buildSerieTemporalOptions = (unidade?: string) => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  layout: { padding: { top: 28 } },
+const buildSerieTemporalOptions = (unidade?: string) => {
+  // Para indicadores em minutos, o tooltip (mais espaço, um de cada vez)
+  // mostra o par completo "120 min / 2 horas". Já o rótulo fixo acima da
+  // barra usa uma versão compacta ("120min/2h") — o texto completo em cada
+  // uma das barras lado a lado não cabia e ficava sobrepondo a barra
+  // vizinha. O eixo Y continua só em minutos, para não duplicar a mesma
+  // informação em dois formatos ao lado um do outro.
+  const formatarTooltip = (value: number): string =>
+    unidade === "min"
+      ? formatarMinutosComHoras(value)
+      : `${value}${unidade ? " " + unidade : ""}`;
 
-  plugins: {
-    legend: {
-      display: false,
-    },
+  const formatarRotulo = (value: number): string =>
+    unidade === "min"
+      ? formatarMinutosCompacto(value)
+      : `${value}${unidade ? " " + unidade : ""}`;
 
-    tooltip: {
-      callbacks: {
-        label: (ctx: any) =>
-          `${ctx.raw}${unidade ? " " + unidade : ""}`,
-      },
-    },
+  const formatarEixo = (value: number): string =>
+    unidade === "min" ? `${value} min` : `${value}${unidade ? " " + unidade : ""}`;
 
-    datalabels: {
-      ...DATALABELS_BASE,
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 28 } },
 
-      anchor: "end" as const,
-      align: "top" as const,
-      offset: 4,
-      clamp: true,
-
-      formatter: (value: number) =>
-        value === 0
-          ? "0"
-          : `${value}${unidade ? " " + unidade : ""}`,
-    },
-  },
-
-  scales: {
-    x: {
-      ticks: {
-        color: "#8b8f9c",
-        font: { family: "'IBM Plex Mono', monospace", size: 11 },
-      },
-      grid: {
+    plugins: {
+      legend: {
         display: false,
       },
-    },
 
-    y: {
-      beginAtZero: true,
-      grace: "10%",
-
-      ticks: {
-        color: "#767c8a",
-        font: { family: "'IBM Plex Mono', monospace", size: 11 },
-        callback: (v: any) =>
-          `${v}${unidade ? " " + unidade : ""}`,
+      tooltip: {
+        callbacks: {
+          label: (ctx: any) => formatarTooltip(ctx.raw),
+        },
       },
 
-      grid: {
-        color: "rgba(140, 148, 163, 0.08)",
+      datalabels: {
+        ...DATALABELS_BASE,
+
+        anchor: "end" as const,
+        align: "top" as const,
+        offset: 4,
+        clamp: true,
+
+        formatter: (value: number) =>
+          value === 0 ? "0" : formatarRotulo(value),
       },
     },
-  },
-});
+
+    scales: {
+      x: {
+        ticks: {
+          color: "#8b8f9c",
+          font: { family: "'IBM Plex Mono', monospace", size: 11 },
+          autoSkip: false,
+          maxRotation: 0,
+          minRotation: 0,
+          callback: function (this: any, value: number) {
+            return quebrarLabel(this.getLabelForValue(value));
+          },
+        },
+        grid: {
+          display: false,
+        },
+      },
+
+      y: {
+        beginAtZero: true,
+        grace: "10%",
+
+        ticks: {
+          color: "#767c8a",
+          font: { family: "'IBM Plex Mono', monospace", size: 11 },
+          callback: (v: any) => formatarEixo(Number(v)),
+        },
+
+        grid: {
+          color: "rgba(140, 148, 163, 0.08)",
+        },
+      },
+    },
+  };
+};
 
 // Série temporal em percentual (0-100%): mesmo espírito da série temporal em
 // horas, mas com escala travada em 0-100 e rótulos com "%" em vez de "h" —
@@ -534,6 +561,12 @@ const buildSerieTemporalPercentualOptions = () => ({
       ticks: {
         color: "#8b8f9c",
         font: { family: "'IBM Plex Mono', monospace", size: 11 },
+        autoSkip: false,
+        maxRotation: 0,
+        minRotation: 0,
+        callback: function (this: any, value: number) {
+          return quebrarLabel(this.getLabelForValue(value));
+        },
       },
       grid: {
         display: false,
@@ -578,12 +611,6 @@ const MODULOS: ModuloSpec[] = [
               "Tempo médio da data de cadastro até o primeiro evento",
             ],
           },
-          {
-            id: "entrada-prontuarios-inertes",
-            titulo: "Taxa de prontuários inertes (sem evento subsequente)",
-            tipo: "valor-simples",
-            indicadorNomes: ["Taxa de prontuários inertes"],
-          },
         ],
       },
     ],
@@ -601,15 +628,15 @@ const MODULOS: ModuloSpec[] = [
           {
             id: "consultas-proporcao-tipos",
             titulo:
-            "Proporção de consultas reguladas, de retorno e interconsultas",
-            tipo: "serie-temporal-percentual",
+            "Porcentagem de cada tipo de consulta",
+            tipo: "comparacao-proporcao",
             indicadorNomes: ["Porcentagem dos tipos de consultas"],
             incluirOutros: true,
           },
           {
             id: "consultas-faltas",
             titulo: "Comparação de faltas",
-            tipo: "serie-temporal-percentual",
+            tipo: "comparacao-proporcao",
             indicadorNomes: [
               "Porcentagem de faltas",
             ],
@@ -629,15 +656,8 @@ const MODULOS: ModuloSpec[] = [
           {
             id: "consultas-intervalo-retornos",
             titulo: "Intervalo médio entre consultas",
-            tipo: "comparacao-dias",
-            indicadorNomes: [
-              "Intervalo médio da consulta regulada ao primeiro retorno",
-              "Intervalo médio de retornos consecutivos",
-            ],
-            rotulos: {
-              "Intervalo médio da consulta regulada ao primeiro retorno": "Consulta regulada ao primeiro retorno",
-              "Intervalo médio de retornos consecutivos": "Retornos consecutivos"
-            },
+            tipo: "serie-temporal",
+            indicadorNomes: ["Intervalo médio entre consultas",],
             unidade: "dias",
           },
         ], 
@@ -649,14 +669,21 @@ const MODULOS: ModuloSpec[] = [
           "Reguladas, retornos e interconsultas: proporções, encaminhamentos, faltas e intervalos, considerando todas as especialidades.",
         graficos: [
           {
+            id: "consultas-porcentagem-global",
+            titulo: "Porcentagem global dos tipos de consultas",
+            tipo: "comparacao-proporcao",
+            indicadorNomes: [
+              "Porcentagem global dos tipos de consultas"
+            ],
+          },
+          {
             id: "consultas-tempo-prontuario-agendamento",
             titulo:
-              "Tempo médio entre a criação do prontuário e o agendamento da consulta",
+            "Tempo médio entre a criação do prontuário e o agendamento da consulta",
             tipo: "valor-simples",
             indicadorNomes: [
               "Tempo medio global entre a criação de prontuário e o primeiro agendamento",
             ], 
-            unidade: "horas",
           },
           {
             id: "consultas-tempo-agendamento-realizacao",
@@ -665,6 +692,32 @@ const MODULOS: ModuloSpec[] = [
             indicadorNomes: [
               "Tempo médio de agendamento até realização (horas)",
             ],
+            unidade: "horas"
+          },
+          {
+            id: "consultas-faltas-global",
+            titulo: "Porcentagem global de faltas",
+            tipo: "comparacao-proporcao",
+            indicadorNomes: [
+              "Porcentagem global de faltas"
+            ],
+          },
+          {
+            id: "consultas-encaminhamento-global",
+            titulo: "Encaminhamento global frequente após uma consulta regulada",
+            tipo: "distribuicao",
+            indicadorNomes: [
+              "Encaminhamento global frequente por consulta regulada"
+            ],
+          },
+          {
+            id: "consultas-intervalo",
+            titulo: "Intervalo médio entre consultas",
+            tipo: "comparacao-dias",
+            indicadorNomes: [
+              "Intervalo médio global entre consultas"
+            ],
+            unidade: "dias"
           },
         ],
       },
@@ -725,6 +778,7 @@ const MODULOS: ModuloSpec[] = [
             indicadorNomes: [
               "Tempo médio de solicitação até a realização do exame por mês",
             ],
+            unidade: "horas"
           },
         ],
       },
@@ -745,12 +799,6 @@ const MODULOS: ModuloSpec[] = [
               "Ambulatoriais": "Exames Ambulatoriais",
               "Pré-operatórios e Emergenciais": "Emergenciais e Pré-Operatórios",
             },
-          },
-          {
-            id: "exames-cmp-tempo-agendamento",
-            titulo: "Porcentagem global de exames marcados como pendentes",
-            tipo: "valor-simples",
-            indicadorNomes: ["Porcentagem global de exames marcados como pendentes"],
           },
           {
             id: "exames-cmp-tempo-realizacao",
@@ -777,14 +825,14 @@ const MODULOS: ModuloSpec[] = [
             id: "internacao-pre-especialidade",
             titulo:
               "Porcentagem de internações concluídas com sumário de alta informatizado",
-            tipo: "serie-temporal-percentual",
+            tipo: "comparacao-proporcao",
             indicadorNomes: ["Porcentagem de sumários de alta informatizados"],
           },
           {
             id: "internacao-pos-uti",
             titulo:
               "Porcentagem dos desfechos mais comuns de uma internação",
-            tipo: "serie-temporal-percentual",
+            tipo: "comparacao-proporcao",
             indicadorNomes: ["Porcentagem dos desfechos mais comuns"],
           },
           {
@@ -814,25 +862,25 @@ const MODULOS: ModuloSpec[] = [
           {
             id: "internacao-sumario-alta-mes",
             titulo: "Porcentagem de sumários de alta informatizados por mês",
-            tipo: "serie-temporal-percentual",
+            tipo: "comparacao-proporcao",
             indicadorNomes: ["Porcentagem de sumários de alta informatizados"],
           },
           {
             id: "internacao-cmp-proporcao",
             titulo: "Porcentagem de registros de pacientes internados por especialidade clínica",
-            tipo: "distribuicao",
+            tipo: "comparacao-proporcao",
             indicadorNomes: ["Porcentagem de registros de pacientes internados por especialidade clínica"],
           },
           {
             id: "internacao-cmp-tempo",
             titulo: "Especialidades com maior número de internações",
-            tipo: "serie-temporal-percentual",
+            tipo: "comparacao-proporcao",
             indicadorNomes: ["Especialidades com maior percentual de internações"],
           },
           {
             id: "internacao-cmp-participacao",
             titulo: "Porcentagem geral dos desfechos mais comuns",
-            tipo: "serie-temporal-percentual",
+            tipo: "comparacao-proporcao",
             indicadorNomes: ["Porcentagem geral dos desfechos mais comuns"],
           },
           {
@@ -861,11 +909,12 @@ const MODULOS: ModuloSpec[] = [
             titulo: "Tempo médio de cirurgia",
             tipo: "valor-simples",
             indicadorNomes: ["Tempo médio de cirurgia"],
+            unidade: "min",
           },
           {
             id: "cirurgia-porcentagem-origem",
             titulo: "Porcentagem de cirurgias por origem",
-            tipo: "serie-temporal-percentual",
+            tipo: "comparacao-proporcao",
             indicadorNomes: ["Porcentagem de cirurgias por origem"]
           }
         ],
@@ -895,7 +944,7 @@ const MODULOS: ModuloSpec[] = [
             id: "cirurgia-por-especialidade",
             titulo:
               "Cirurgias por especialidade",
-            tipo: "serie-temporal-percentual",
+            tipo: "comparacao-proporcao",
             indicadorNomes: ["Cirurgias por especialidade"],
           },
           {
@@ -1025,6 +1074,55 @@ const graficosResolvidos = computed<GraficoResolvido[]>(() => {
 // Helpers de formatação/render
 // -------------------------------------------------------------------------
 
+// --- quebra de rótulos longos no eixo X (comparações) -----------------
+
+// Nomes de especialidade/categoria podem ser bem longos (ex.: "HEMODINÂMICA
+// E CARDIOLOGIA INTERVENCIONISTA") e não cabem numa linha só sem cortar ou
+// se sobrepor à barra vizinha. Em vez de rotacionar o texto, quebramos em
+// várias linhas curtas — o Chart.js aceita um array de strings como rótulo
+// de tick e desenha cada item numa linha.
+const LARGURA_MAX_LABEL = 14;
+
+const quebrarLabel = (texto: string): string[] => {
+  const palavras = texto.split(" ");
+  const linhas: string[] = [];
+  let linhaAtual = "";
+
+  for (const palavra of palavras) {
+    const tentativa = linhaAtual ? `${linhaAtual} ${palavra}` : palavra;
+    if (tentativa.length > LARGURA_MAX_LABEL && linhaAtual) {
+      linhas.push(linhaAtual);
+      linhaAtual = palavra;
+    } else {
+      linhaAtual = tentativa;
+    }
+  }
+  if (linhaAtual) linhas.push(linhaAtual);
+  return linhas;
+};
+
+// Altura do container do gráfico, em px: parte de uma base confortável
+// (a mesma altura que os cards já usavam, h-56 = 224px) e cresce um pouco
+// para cada linha extra que o rótulo mais longo precisar, para que a
+// quebra de linha calculada acima sempre tenha espaço reservado abaixo
+// do eixo X.
+// Mesma lógica de alturaComparacao, mas para os gráficos de série temporal,
+// cujos rótulos vêm de Object.keys(indicador.valor) em vez de uma lista de
+// indicadores. Base de 288px (equivalente ao h-72 usado antes no template).
+const alturaSerieTemporal = (indicador: Indicador | undefined, baseAltura = 288): number => {
+  if (!indicador) return baseAltura;
+  const dados = indicador.valor as Record<string, number>;
+  const labels = Object.keys(dados ?? {});
+  const maxLinhas = Math.max(1, ...labels.map((l) => quebrarLabel(l).length));
+  return baseAltura + (maxLinhas - 1) * 20;
+};
+
+const alturaComparacao = (item: GraficoResolvido): number => {
+  const labels = item.indicadores.map((i) => rotuloIndicador(item.spec, i.nome));
+  const maxLinhas = Math.max(1, ...labels.map((l) => quebrarLabel(l).length));
+  return 224 + (maxLinhas - 1) * 20;
+};
+
 const rotuloTipo = (tipo: TipoGrafico) => {
   switch (tipo) {
     case "comparacao-proporcao":
@@ -1058,10 +1156,59 @@ const numeroDoValor = (valor: number | string): number => {
   return Number.isNaN(n) ? 0 : n;
 };
 
+// Formata um valor em minutos mostrando também o equivalente em horas,
+// ex.: 120 -> "120 min / 2 horas", 90 -> "90 min / 1.5 horas".
+// O número de horas é arredondado em até 2 casas decimais, sem zeros à
+// direita (2.00 -> "2", 1.50 -> "1.5"), e o singular "hora" é usado só
+// quando o valor arredondado é exatamente 1.
+const formatarMinutosComHoras = (minutos: number): string => {
+  if (!Number.isFinite(minutos)) return `${minutos} min`;
+  const horas = Number((minutos / 60).toFixed(2));
+  const horasLabel = horas === 1 ? "hora" : "horas";
+  return `${minutos} min / ${horas} ${horasLabel}`;
+};
+
+// Versão curta do mesmo conteúdo, para caber como rótulo fixo em cima de
+// cada barra (sem espaços, "min"/"h" abreviados e só 1 casa decimal na
+// hora) — ex.: 260 -> "260min/4.3h". Usada nos gráficos de série temporal
+// e comparação; o formato completo com "horas" por extenso fica reservado
+// para o tooltip, onde há espaço de sobra.
+const formatarMinutosCompacto = (minutos: number): string => {
+  if (!Number.isFinite(minutos)) return `${minutos}min`;
+  const horas = Number((minutos / 60).toFixed(1));
+  return `${minutos}min/${horas}h`;
+};
+
 const formatarValor = (valor: Indicador["valor"] | undefined): string => {
   if (valor === undefined) return "—";
   if (typeof valor === "object") return "";
   return String(valor);
+};
+
+// Mesma ideia do formatarValor, mas ciente da unidade declarada na spec do
+// gráfico:
+//  - unidade "min" (caso da etapa de Cirurgia) mostra o equivalente em horas
+//    ao lado do valor bruto em minutos ("120 min / 2 horas");
+//  - unidade "%" cola o símbolo direto no número, sem espaço ("50%");
+//  - qualquer outra unidade declarada (ex.: "horas", "dias") é exibida logo
+//    depois do valor, com espaço ("10 horas");
+//  - sem unidade declarada, mantém o comportamento antigo (valor cru).
+const formatarValorSimples = (item: GraficoResolvido): string => {
+  const bruto = item.indicadores[0]?.valor;
+  if (bruto === undefined) return "—";
+  if (typeof bruto === "object") return "";
+
+  const unidade = item.spec.unidade;
+  if (unidade === "min") {
+    return formatarMinutosComHoras(numeroDoValor(bruto));
+  }
+  if (unidade === "%") {
+    return `${bruto}%`;
+  }
+  if (unidade) {
+    return `${bruto} ${unidade}`;
+  }
+  return String(bruto);
 };
 
 // Configuração base do datalabels, reaproveitada em todos os gráficos de barra.
@@ -1076,6 +1223,18 @@ const DATALABELS_BASE = {
 
 // --- comparação de proporções (0-100%), com "Outros" residual opcional ---
 
+// Calcula um teto "arredondado" para o eixo Y a partir do maior valor da
+// série, em vez de travar sempre em 100%. Adiciona ~15% de folga acima da
+// maior barra (espaço para o datalabel) e arredonda para o múltiplo de 10
+// mais próximo acima disso, sempre entre 10 e 100.
+const calcularMaxEixoY = (valores: number[]): number => {
+  const maxValor = Math.max(0, ...valores);
+  if (maxValor <= 0) return 10;
+  const comFolga = maxValor * 1.15;
+  const arredondado = Math.ceil(comFolga / 10) * 10;
+  return Math.min(100, Math.max(10, arredondado));
+};
+
 const buildComparacaoProporcaoData = (item: GraficoResolvido) => {
   const labels = item.indicadores.map((i) =>
     rotuloIndicador(item.spec, i.nome),
@@ -1084,11 +1243,6 @@ const buildComparacaoProporcaoData = (item: GraficoResolvido) => {
     numeroDoValor(i.valor as number | string),
   );
 
-  if (item.spec.incluirOutros) {
-    const soma = valores.reduce((a, b) => a + b, 0);
-    labels.push("Outros");
-    valores.push(Math.max(0, 100 - soma));
-  }
 
   const paleta = paletaDoModulo(activeModulo.value);
 
@@ -1107,40 +1261,63 @@ const buildComparacaoProporcaoData = (item: GraficoResolvido) => {
   };
 };
 
-const chartOptionsComparacaoProporcao = {
-  responsive: true,
-  maintainAspectRatio: false,
-  layout: { padding: { top: 24 } },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      callbacks: { label: (ctx: any) => `${ctx.raw}%` },
-    },
-    datalabels: {
-      ...DATALABELS_BASE,
-      anchor: "end" as const,
-      align: "end" as const,
-      offset: 4,
-      clamp: true,
-      formatter: (value: number) => `${value}%`,
-    },
-  },
-  scales: {
-    x: {
-      ticks: { color: "#8b8f9c", font: { family: "'IBM Plex Mono', monospace", size: 11 } },
-      grid: { display: false },
-    },
-    y: {
-      beginAtZero: true,
-      max: 100,
-      ticks: {
-        color: "#767c8a",
-        font: { family: "'IBM Plex Mono', monospace", size: 11 },
-        callback: (v: string | number) => `${v}%`,
+// Agora é uma função de `item`: o teto do eixo Y (`max`) é calculado a partir
+// dos valores efetivamente exibidos nesse gráfico específico (incluindo
+// "Outros", quando presente), em vez de um `max: 100` fixo para todo mundo.
+const chartOptionsComparacaoProporcao = (item: GraficoResolvido) => {
+  const valores = item.indicadores.map((i) =>
+    numeroDoValor(i.valor as number | string),
+  );
+  if (item.spec.incluirOutros) {
+    const soma = valores.reduce((a, b) => a + b, 0);
+    valores.push(Math.max(0, 100 - soma));
+  }
+  const maxEixo = calcularMaxEixoY(valores);
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 32 } },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: { label: (ctx: any) => `${ctx.raw}%` },
       },
-      grid: { color: "rgba(140, 148, 163, 0.08)" },
+      datalabels: {
+        ...DATALABELS_BASE,
+        anchor: "end" as const,
+        align: "end" as const,
+        offset: 4,
+        clamp: true,
+        formatter: (value: number) => `${value}%`,
+      },
     },
-  },
+    scales: {
+      x: {
+        ticks: {
+          color: "#8b8f9c",
+          font: { family: "'IBM Plex Mono', monospace", size: 11 },
+          autoSkip: false,
+          maxRotation: 0,
+          minRotation: 0,
+          callback: function (this: any, value: number) {
+            return quebrarLabel(this.getLabelForValue(value));
+          },
+        },
+        grid: { display: false },
+      },
+      y: {
+        beginAtZero: true,
+        max: maxEixo,
+        ticks: {
+          color: "#767c8a",
+          font: { family: "'IBM Plex Mono', monospace", size: 11 },
+          callback: (v: string | number) => `${v}%`,
+        },
+        grid: { color: "rgba(140, 148, 163, 0.08)" },
+      },
+    },
+  };
 };
 
 // --- comparação de valores na mesma unidade (dias/horas) ---
@@ -1164,39 +1341,60 @@ const buildComparacaoValorData = (item: GraficoResolvido) => {
   };
 };
 
-const chartOptionsComparacaoValor = (unidade?: string) => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  layout: { padding: { top: 24 } },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      callbacks: {
-        label: (ctx: any) => `${ctx.raw}${unidade ? " " + unidade : ""}`,
+const chartOptionsComparacaoValor = (unidade?: string) => {
+  const formatarTooltip = (value: number): string =>
+    unidade === "min"
+      ? formatarMinutosComHoras(value)
+      : `${value}${unidade ? " " + unidade : ""}`;
+
+  const formatarRotulo = (value: number): string =>
+    unidade === "min"
+      ? formatarMinutosCompacto(value)
+      : `${value}${unidade ? " " + unidade : ""}`;
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 32 } },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (ctx: any) => formatarTooltip(ctx.raw),
+        },
+      },
+      datalabels: {
+        ...DATALABELS_BASE,
+        anchor: "end" as const,
+        align: "end" as const,
+        offset: 4,
+        clamp: true,
+        formatter: (value: number) => formatarRotulo(value),
       },
     },
-    datalabels: {
-      ...DATALABELS_BASE,
-      anchor: "end" as const,
-      align: "end" as const,
-      offset: 4,
-      clamp: true,
-      formatter: (value: number) => `${value}${unidade ? " " + unidade : ""}`,
+    scales: {
+      x: {
+        ticks: {
+          color: "#8b8f9c",
+          font: { family: "'IBM Plex Mono', monospace", size: 11 },
+          autoSkip: false,
+          maxRotation: 0,
+          minRotation: 0,
+          callback: function (this: any, value: number) {
+            return quebrarLabel(this.getLabelForValue(value));
+          },
+        },
+        grid: { display: false },
+      },
+      y: {
+        beginAtZero: true,
+        grace: "10%",
+        ticks: { color: "#767c8a", font: { family: "'IBM Plex Mono', monospace", size: 11 } },
+        grid: { color: "rgba(140, 148, 163, 0.08)" },
+      },
     },
-  },
-  scales: {
-    x: {
-      ticks: { color: "#8b8f9c", font: { family: "'IBM Plex Mono', monospace", size: 11 } },
-      grid: { display: false },
-    },
-    y: {
-      beginAtZero: true,
-      grace: "10%",
-      ticks: { color: "#767c8a", font: { family: "'IBM Plex Mono', monospace", size: 11 } },
-      grid: { color: "rgba(140, 148, 163, 0.08)" },
-    },
-  },
-});
+  };
+};
 
 // --- distribuição (dict {categoria: contagem}) -> barra horizontal ---
 

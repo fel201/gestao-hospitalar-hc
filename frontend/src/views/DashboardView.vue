@@ -94,7 +94,7 @@ onBeforeUnmount(cleanup);
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#0d0f14] w-full text-slate-200">
+  <div class="min-h-screen bg-[#15181f] w-full text-slate-200">
     <main class="w-full">
       <!-- Tela de carregamento -->
       <div
@@ -174,7 +174,7 @@ onBeforeUnmount(cleanup);
         <!-- Filtros (fixos ao rolar a página) -->
         <div
           v-if="dashboard"
-          class="sticky top-0 z-50 bg-[#0d0f14]/95 backdrop-blur-md border-b border-[#2c3140] py-4"
+          class="sticky top-0 z-50 bg-[#15181f]/95 backdrop-blur-md border-b border-[#2c3140] py-4"
         >
           <DashboardFilters
             :specialty="specialty"

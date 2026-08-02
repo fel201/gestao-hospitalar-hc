@@ -1,5 +1,5 @@
 <template>
-  <section class="mb-10 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+  <section class="mb-10 grid grid-cols-1 gap-5 md:grid-cols-3">
     <div
       v-for="kpi in kpisResolvidos"
       :key="kpi.label"
