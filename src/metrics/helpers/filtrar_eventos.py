@@ -64,8 +64,15 @@ def filtrar_eventos(evento: str, dados, especialidade):
     return [
         d
         for d in dados
-        if palavra in d[campo].upper()
+        if _deve_incluir_evento(d, campo, palavra)
     ]
+
+
+def _deve_incluir_evento(dados_evento: dict, campo: str, palavra: str) -> bool:
+    valor = dados_evento.get(campo)
+    if valor is None:
+        return True
+    return palavra in str(valor).upper()
     
     
 def filtrar_eventos_por_periodo(eventos: list[dict], data_inicio: str, data_fim: str) -> list[dict]:

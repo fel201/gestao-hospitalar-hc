@@ -39,3 +39,13 @@ class PacientePostgresProvider(PacienteProviderInterface):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paciente não encontrado")
             
         return dict(paciente)
+
+    async def obter_paciente_por_prontuario(self, prontuario: str) -> Dict[str, Any]:
+        query = text("SELECT * FROM paciente WHERE prontuario = :prontuario LIMIT 1")
+        result = await self.session.execute(query, {"prontuario": prontuario})
+        paciente = result.mappings().first()
+
+        if not paciente:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paciente não encontrado")
+
+        return dict(paciente)

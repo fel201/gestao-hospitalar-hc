@@ -8,6 +8,7 @@ def juntar_consultas(eventos, consultas_raw, pac_id):
     for item in consultas_raw:
         if _normalize_id(item.get('paciente_id')) != pac_id:
             continue
+        if not item.get("data_hora_consulta"): continue
         eventos.append({
             'tipo': 'consulta',
             'consulta_id': item.get('id'),

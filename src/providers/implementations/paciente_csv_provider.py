@@ -44,3 +44,11 @@ class PacienteCsvProvider:
 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paciente não encontrado no CSV")
 
+    async def obter_paciente_por_prontuario(self, prontuario: str) -> Dict[str, Any]:
+        pacientes = await self._csv_data.get_rows()
+        for paciente in pacientes:
+            if str(paciente.get('prontuario', '')).strip() == prontuario.strip():
+                return paciente
+
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paciente não encontrado no CSV")
+

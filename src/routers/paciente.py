@@ -53,3 +53,11 @@ async def obter_paciente(
 ):
     """Obtém um paciente pelo código a partir da fonte de dados configurada no roteador."""
     return await paciente_controller.obter_paciente_por_codigo(codigo, provider)
+
+@router.get("/prontuario/{prontuario}", response_model=dict)
+async def obter_paciente_por_prontuario(
+    prontuario: str,
+    provider: PacienteProviderInterface = Depends(get_paciente_provider(STRATEGY))
+):
+    """Obtém um paciente pelo prontuário a partir da fonte de dados configurada no roteador."""
+    return await paciente_controller.obter_paciente_por_prontuario(prontuario, provider)

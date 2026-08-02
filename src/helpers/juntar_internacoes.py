@@ -9,6 +9,8 @@ def juntar_internacoes(eventos, internacoes_raw, pac_id):
     for item in internacoes_raw:
         if _normalize_id(item.get('codigo_paciente')) != pac_id:
             continue
+        
+        if not item.get("dthr_inicio"): continue
         eventos.append({
             'tipo': 'internacao',
             'internacao_id': item.get('id_internacao'),
@@ -23,4 +25,5 @@ def juntar_internacoes(eventos, internacoes_raw, pac_id):
             'especialidade': item.get('esp_nome_especialidade')
         })
         numero_internacoes += 1
+    
     return numero_internacoes

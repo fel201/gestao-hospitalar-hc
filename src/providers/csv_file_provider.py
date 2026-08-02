@@ -13,10 +13,21 @@ class CsvFileProvider:
     _CAMPO_DATA = "data_hora_realizacao"  # nome já normalizado por todos os _parse_row
     _FORMATO_DATA = "%d/%m/%Y, %H:%M"
 
-    def __init__(self, csv_path: str, parser: Callable[[Dict[str, Any]], Dict[str, Any]]):
+    def __init__(
+        self,
+        csv_path: str,
+        parser: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None,
+        *,
+        primary_key: Optional[str] = None,
+        rename: Optional[Dict[str, str]] = None,
+        integer_columns: Optional[List[str]] = None,
+    ):
         self.csv_path = resolve_csv_path(csv_path)
-        self._parser = parser
+        self._parser = parser or (lambda row: row)
         self._parser_name = getattr(self._parser, "__name__", "parser")
+        self._primary_key = primary_key
+        self._rename = rename or {}
+        self._integer_columns = set(integer_columns or [])
 
     def _get_file_mtime_ns(self) -> int:
         try:
@@ -68,16 +79,42 @@ class CsvFileProvider:
         except ValueError:
             return self._parse_data(valor)  # tenta o formato do CSV como fallback
 
+    def _normalize_row(self, row: Dict[str, Any]) -> Dict[str, Any]:
+        parsed = self._parser(row)
+        if not isinstance(parsed, dict):
+            return {}
+
+        normalized: Dict[str, Any] = {}
+        for key, value in parsed.items():
+            output_key = self._rename.get(key, key)
+            normalized[output_key] = value
+
+        for column in self._integer_columns:
+            output_key = self._rename.get(column, column)
+            if output_key in normalized and normalized[output_key] not in (None, ""):
+                try:
+                    normalized[output_key] = int(normalized[output_key])
+                except (TypeError, ValueError):
+                    continue
+
+        return normalized
+
     def _load_rows_from_disk(
         self, data_inicio: Optional[str], data_fim: Optional[str]
     ) -> List[Dict[str, Any]]:
         rows = []
+        seen_keys: set[Any] = set()
         try:
             with open(self.csv_path, mode="r", encoding="utf-8", newline="") as handle:
                 reader = csv.DictReader(handle)
                 for row in reader:
-                    parsed = self._parser(row)
+                    parsed = self._normalize_row(row)
                     if self._dentro_do_periodo(parsed, data_inicio, data_fim):
+                        if self._primary_key:
+                            key = parsed.get(self._primary_key)
+                            if key in seen_keys:
+                                continue
+                            seen_keys.add(key)
                         rows.append(parsed)
             return rows
         except FileNotFoundError:
@@ -99,3 +136,15 @@ class CsvFileProvider:
         rows = await asyncio.to_thread(self._load_rows_from_disk, data_inicio, data_fim)
         self._shared_cache[cache_key] = (current_mtime, rows)
         return rows
+
+    async def get_by_id(self, value: Any) -> Optional[Dict[str, Any]]:
+        if not self._primary_key:
+            return None
+
+        rows = await self.get_rows()
+        target = str(value)
+        for row in rows:
+            row_value = row.get(self._primary_key)
+            if row_value is not None and str(row_value) == target:
+                return row
+        return None
