@@ -475,8 +475,8 @@ const buildSerieTemporalOptions = (unidade?: string) => {
           autoSkip: false,
           maxRotation: 0,
           minRotation: 0,
-          callback: function (this: any, value: number) {
-            return quebrarLabel(this.getLabelForValue(value));
+          callback: function (this: any, value: string | number) {
+            return quebrarLabel(this.getLabelForValue(value as number));
           },
         },
         grid: {
@@ -564,8 +564,8 @@ const buildSerieTemporalPercentualOptions = () => ({
         autoSkip: false,
         maxRotation: 0,
         minRotation: 0,
-        callback: function (this: any, value: number) {
-          return quebrarLabel(this.getLabelForValue(value));
+        callback: function (this: any, value: string | number) {
+          return quebrarLabel(this.getLabelForValue(value as number));
         },
       },
       grid: {
@@ -1300,8 +1300,8 @@ const chartOptionsComparacaoProporcao = (item: GraficoResolvido) => {
           autoSkip: false,
           maxRotation: 0,
           minRotation: 0,
-          callback: function (this: any, value: number) {
-            return quebrarLabel(this.getLabelForValue(value));
+          callback: function (this: any, value: string | number) {
+            return quebrarLabel(this.getLabelForValue(value as number));
           },
         },
         grid: { display: false },
@@ -1380,8 +1380,8 @@ const chartOptionsComparacaoValor = (unidade?: string) => {
           autoSkip: false,
           maxRotation: 0,
           minRotation: 0,
-          callback: function (this: any, value: number) {
-            return quebrarLabel(this.getLabelForValue(value));
+          callback: function (this: any, value: string | number) {
+            return quebrarLabel(this.getLabelForValue(value as number));
           },
         },
         grid: { display: false },

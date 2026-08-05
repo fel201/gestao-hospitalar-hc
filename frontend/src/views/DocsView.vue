@@ -266,6 +266,13 @@ const route = useRoute();
 const router = useRouter();
 const { listar, obter, salvar, temRascunhos, exportarComoCodigo } = useMetricasDocs();
 
+// Tipo do item de lista, inferido diretamente do retorno de `listar()` em
+// vez de reconstruído manualmente. `listar()`/`obter()` na composable
+// incluem campos extras (como `origem: 'rascunho' | 'salvo'`) que não fazem
+// parte de `MetricaDoc` — reescrever o tipo à mão aqui desalinha assim que a
+// composable muda. `ReturnType` mantém os dois sempre em sincronia.
+type DocItem = ReturnType<typeof listar>[number];
+
 const indicadorSolicitado = computed(() => {
   const q = route.query.indicador;
   return typeof q === "string" ? q : Array.isArray(q) ? q[0] : null;
@@ -282,7 +289,7 @@ const docs = computed(() => listar());
 // informação real: "esses indicadores pertencem a esse módulo") em vez de
 // um selo repetido em cada linha.
 const docsPorModulo = computed(() => {
-  const grupos = new Map<string, (MetricaDoc & { nome: string })[]>();
+  const grupos = new Map<string, DocItem[]>();
   for (const item of docs.value) {
     const lista = grupos.get(item.modulo) ?? [];
     lista.push(item);
@@ -334,7 +341,7 @@ const iniciarCriacao = (nomeSugerido?: string | null) => {
   editando.value = true;
 };
 
-const iniciarEdicao = (doc: MetricaDoc & { nome: string }) => {
+const iniciarEdicao = (doc: DocItem) => {
   resetForm();
   Object.assign(form, doc);
   criandoNovo.value = false;
