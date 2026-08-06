@@ -4,6 +4,7 @@ from ..helpers.formatacao import remover_acentos, padronizar_casas_decimais
 from datetime import datetime
 from typing import Any
 import re
+from collections import defaultdict
 
 ESPECIALIDADE_AMBULATORIAL = "AMBULATORIO"
 ESPECIALIDADE_UTI = "UTI"
@@ -78,11 +79,6 @@ _TABELA_GRUPOS_EXECUTORES: dict[str, list[str]] = {
 
 
 def _normalizar_executor(valor: str) -> str:
-    """
-    Normaliza o nome da unidade executora para comparação: remove acentos,
-    coloca em maiúsculas e substitui pontuação (":", "(", ")", "-") por
-    espaço, para casar "UAC: Bioquímica" com "UAC BIOQUIMICA" etc.
-    """
     texto = remover_acentos(valor).upper()
     texto = re.sub(r"[():\-]", " ", texto)
     texto = re.sub(r"\s+", " ", texto).strip()
@@ -97,13 +93,6 @@ _MAPA_EXECUTOR_GRUPO: dict[str, str] = {
 
 
 def classificar_grupo_executor(unidade_executora_nome: str) -> str:
-    """
-    Classifica o exame em um dos grupos de executor (Análises Clínicas,
-    Diagnóstico por Imagem, Anatomia Patológica, Procedimental, Ambulatorial,
-    Internação), a partir do campo `unidade_executora_nome`. Valores que não
-    batem com a tabela caem em GRUPO_NAO_CLASSIFICADO — útil para detectar
-    unidades novas/não mapeadas que apareçam na base.
-    """
     chave = _normalizar_executor(unidade_executora_nome)
     return _MAPA_EXECUTOR_GRUPO.get(chave, GRUPO_NAO_CLASSIFICADO)
 
@@ -128,20 +117,6 @@ def distribuicao_exames_por_grupo_executor(exames: list[dict]) -> dict[str, str]
     return {grupo: _formatar_percentual(qtd, total) for grupo, qtd in ordenado}
 
 
-_METRICAS_INDICADORES: list[tuple[str, str]] = [
-    ("tempo_medio_solicitacao_realizacao_mensal", "Tempo médio de solicitação até a realização do exame por mês"),
-    ("distribuicao_exames_por_grupo_executor", "Distribuição de exames por grupo de executor"),
-    ("distribuicao_exames_por_grupo_executor_global", "Distribuição de exames por grupo de executor (global)"),
-    ("porcentagem_exames_regulados", "Porcentagem de exames regulados"),
-    ("porcentagem_global_exames_regulados", "Porcentagem global de exames regulados"),
-    ("porcentagem_exames_concluidos", "Porcentagem de exames concluídos"),
-    ("porcentagem_global_exames_concluidos", "Porcentagem global de exames concluídos"),
-    ("porcentagem_exames_cancelados", "Porcentagem de exames marcados como pendentes"),
-    ("porcentagem_global_exames_cancelados", "Porcentagem global de exames marcados como pendentes"),
-]
-
-# exames com umas das maiores taxas de conclusão
-#
 
 
 def qtd_exames_tipo(exames, tipo):
@@ -241,6 +216,19 @@ def concentracao_exames_por_paciente_ativo(exames: list[dict], tipo: str):
     return exames_amb_por_pac
 
 
+_METRICAS_INDICADORES: list[tuple[str, str]] = [
+    ("tempo_medio_solicitacao_realizacao_mensal", "Tempo médio de solicitação até a realização do exame por mês"),
+    ("distribuicao_exames_por_grupo_executor", "Distribuição de exames por grupo de executor"),
+    ("distribuicao_exames_por_grupo_executor_global", "Distribuição de exames por grupo de executor (global)"),
+    ("porcentagem_exames_regulados", "Porcentagem de exames regulados"),
+    ("porcentagem_global_exames_regulados", "Porcentagem global de exames regulados"),
+    ("porcentagem_exames_concluidos", "Porcentagem de exames concluídos"),
+    ("porcentagem_global_exames_concluidos", "Porcentagem global de exames concluídos"),
+    ("porcentagem_exames_cancelados", "Porcentagem de exames marcados como pendentes"),
+    ("porcentagem_global_exames_cancelados", "Porcentagem global de exames marcados como pendentes"),
+    ("distribuicao_situacao_exames", "Distribuição da situação de exames registrados"),
+    ("distribuicao_global_situacao_exames", "Distribuição global da situação de exames registrados")
+]
 def _contadores_globais(exames: list[dict]) -> dict[str, int]:
     contadores = {
         "total": len(exames),
@@ -316,10 +304,6 @@ def tempo_medio_solicitacao_realizacao_mensal(
     data_fim: str,
     _grupos: dict[tuple[int, int], list[dict]] | None = None,
 ) -> dict:
-    """
-    Calcula o tempo médio entre solicitação e realização, mês a mês, olhando
-    para os últimos 5 meses (ou menos, se o intervalo for menor).
-    """
     meses_alvo = _calcular_meses_alvo(data_inicio, data_fim)
     grupos = _grupos if _grupos is not None else _agrupar_exames_por_mes(exames, meses_alvo)
 
@@ -352,6 +336,14 @@ def concentracao_exames_por_paciente_ativo_mensal(
 
     return resultado
 
+def situacao_exames(exames):
+    situacao = defaultdict(int)
+    for e in exames:
+        tmp = e["situacao"]
+        situacao[tmp] += 1
+    
+    return situacao
+        
 
 def dicionario_metricas_exames(exames, especialidade, data_inicio, data_fim):
     exames_filtrados = filtrar_eventos(evento="exame", dados=exames, especialidade=especialidade)
@@ -369,12 +361,14 @@ def dicionario_metricas_exames(exames, especialidade, data_inicio, data_fim):
         "distribuicao_exames_por_grupo_executor_global": distribuicao_exames_por_grupo_executor(
             exames=exames
         ),
+        "distribuicao_situacao_exames": situacao_exames(exames=exames_filtrados),
+        "distribuicao_global_situacao_exames": situacao_exames(exames=exames),
         "porcentagem_exames_regulados": _formatar_percentual(contadores["regulados"], contadores["total"]),
         "porcentagem_global_exames_regulados": _formatar_percentual(contadores_sem_filtro["regulados"], contadores_sem_filtro["total"]),
         "porcentagem_exames_concluidos": _formatar_percentual(contadores["concluidos"], contadores["total"]),
         "porcentagem_global_exames_concluidos": _formatar_percentual(contadores_sem_filtro["concluidos"], contadores_sem_filtro["total"]),
         "porcentagem_exames_cancelados": _formatar_percentual(contadores["cancelados"], contadores["total"]),
-        "porcentagem_global_exames_cancelados": _formatar_percentual(contadores_sem_filtro["cancelados"], contadores_sem_filtro["total"])
+        "porcentagem_global_exames_cancelados": _formatar_percentual(contadores_sem_filtro["cancelados"], contadores_sem_filtro["total"]),
     }
 
 def metricas_exames(exames, especialidade, data_inicio, data_fim):
@@ -392,3 +386,4 @@ def metricas_exames(exames, especialidade, data_inicio, data_fim):
         })
 
     return indicadores
+
