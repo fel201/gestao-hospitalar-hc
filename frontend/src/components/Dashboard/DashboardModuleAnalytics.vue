@@ -842,10 +842,10 @@ const MODULOS: ModuloSpec[] = [
           {
             id: "internacao-especialidade-clinica",
             titulo:
-              "Tempo médio de internação por especialidade clínica",
+              "Especialidades clínicas com os maiores tempos médios de internação",
             tipo: "serie-temporal",
             indicadorNomes: ["Tempo médio de permanência por especialidade"],
-            unidade: "min"
+            unidade: "dias"
           },
           {
             id: "internacao-sumario-alta-mes",
