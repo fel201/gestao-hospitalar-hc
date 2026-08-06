@@ -25,7 +25,7 @@
     </div>
 
     <!-- EVENTOS -->
-    <div class="mb-6">
+    <div>
       <p class="mb-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#767c8a]">Eventos</p>
 
       <div class="space-y-3.5">
@@ -49,12 +49,17 @@
     </div>
 
     <!-- INDICADORES -->
-    <div>
+    <!-- Este card serve apenas para dar noção do volume de dados de cada
+         etapa (via "eventos"); os indicadores detalhados ficam só no
+         Módulo de Análise abaixo. Por isso a seção inteira é omitida
+         quando "indicadores" vier vazio, em vez de mostrar um estado
+         vazio ("Nenhum indicador disponível") que não agrega nada aqui. -->
+    <div v-if="stage?.indicadores && stage.indicadores.length > 0" class="mt-6">
       <p class="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#767c8a]">Indicadores</p>
 
       <div class="divide-y divide-[#252a35]">
         <div
-          v-for="(indicador, index) in stage?.indicadores"
+          v-for="(indicador, index) in stage.indicadores"
           :key="index"
           class="flex items-start justify-between gap-3 py-2.5 first:pt-1"
         >
@@ -90,10 +95,6 @@
               </div>
             </div>
           </div>
-        </div>
-
-        <div v-if="!stage?.indicadores || stage?.indicadores.length === 0" class="py-2 text-sm italic text-[#5c6270]">
-          Nenhum indicador disponível.
         </div>
       </div>
     </div>

@@ -648,12 +648,6 @@ const MODULOS: ModuloSpec[] = [
             indicadorNomes: ["Encaminhamento frequente por consulta regulada"],
           },
           {
-            id: "consultas-retorno-interconsulta-paciente",
-            titulo: "Comparação do número de consultas (de cada tipo) por paciente ativo",
-            tipo: "comparacao-dias",
-            indicadorNomes: ["Média de consultas de cada tipo por paciente"],
-          },
-          {
             id: "consultas-intervalo-retornos",
             titulo: "Intervalo médio entre consultas",
             tipo: "serie-temporal",
@@ -734,12 +728,12 @@ const MODULOS: ModuloSpec[] = [
         descricao: "Tudo sobre a especialidade atual.",
         graficos: [
           {
-            id: "exames-amb-proporcao",
-            titulo: "Porcentagem de exames concluídos",
-            tipo: "valor-simples",
+            id: "exames-distribuicao-situacao",
+            titulo: "Distribuição da situação de exames registrados",
+            tipo: "distribuicao",
             indicadorNomes: [
-              "Porcentagem de exames concluídos",
-            ],
+              "Distribuição da situação de exames registrados"
+            ]
           },
           {
             id: "exames-amb-proporcao",
@@ -747,14 +741,6 @@ const MODULOS: ModuloSpec[] = [
             tipo: "valor-simples",
             indicadorNomes: [
               "Porcentagem de exames regulados",
-            ],
-          },
-          {
-            id: "exames-amb-proporcao",
-            titulo: "Porcentagem de exames marcados como pendentes",
-            tipo: "valor-simples",
-            indicadorNomes: [
-              "Porcentagem de exames marcados como pendentes",
             ],
           },
           {
@@ -789,8 +775,16 @@ const MODULOS: ModuloSpec[] = [
           "Métricas gerais sobre exames, agregando todas as especialidades.",
         graficos: [
           {
+            id: "exames-distribuicao-situacao",
+            titulo: "Distribuição global da situação de exames registrados",
+            tipo: "distribuicao",
+            indicadorNomes: [
+              "Distribuição global da situação de exames registrados"              
+            ]
+          },
+          {
             id: "exames-amb-proporcao",
-            titulo: "Comparação dos tipos de exames nos últimos 5 meses",
+            titulo: "Comparação global dos tipos de exames nos últimos 5 meses",
             tipo: "comparacao-proporcao",
             indicadorNomes: [
               "Distribuição de exames por grupo de executor (global)",
@@ -799,12 +793,6 @@ const MODULOS: ModuloSpec[] = [
               "Ambulatoriais": "Exames Ambulatoriais",
               "Pré-operatórios e Emergenciais": "Emergenciais e Pré-Operatórios",
             },
-          },
-          {
-            id: "exames-cmp-tempo-realizacao",
-            titulo: "Porcentagem global de exames concluídos",
-            tipo: "valor-simples",
-            indicadorNomes: ["Porcentagem global de exames concluídos"],
           },
         ],
       },
@@ -1398,12 +1386,17 @@ const chartOptionsComparacaoValor = (unidade?: string) => {
 
 // --- distribuição (dict {categoria: contagem}) -> barra horizontal ---
 
-const MAX_CATEGORIAS = 5;
+const MAX_CATEGORIAS = 10;
 
 const categoriasAgrupadas = (
   dist: IndicadorDistribuicao,
 ): [string, number][] => {
-  const entradas = Object.entries(dist);
+
+  // Ordena por valor decrescente antes de qualquer agrupamento, para que
+  // o corte do "Outros" e a ordem final das barras reflitam a maior
+  // contagem primeiro (o backend não garante essa ordem).
+  const entradas = Object.entries(dist).sort(([, a], [, b]) => b - a);
+
   if (entradas.length <= MAX_CATEGORIAS + 1) return entradas;
   const principais = entradas.slice(0, MAX_CATEGORIAS);
   const restante = entradas

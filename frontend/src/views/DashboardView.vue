@@ -29,6 +29,18 @@ const loadingMessages = [
 
 let progressInterval: number | null = null;
 
+// Este módulo (Jornada Assistencial) serve só para dar uma visão rápida do
+// volume de dados de cada etapa — os indicadores detalhados já aparecem no
+// Módulo de Análise mais abaixo. Por isso zeramos "indicadores" aqui,
+// mantendo apenas "eventos" (as contagens/barrinhas de progresso).
+const removerIndicadores = (stage: any) => {
+  if (!stage) return stage;
+  return {
+    ...stage,
+    indicadores: [],
+  };
+};
+
 const loadDashboard = async () => {
   loading.value = true;
   loadingProgress.value = 0;
@@ -222,7 +234,7 @@ onBeforeUnmount(cleanup);
                 dashboard.exames,
                 dashboard.cirurgias,
                 dashboard.internacao,
-              ]"
+              ].map(removerIndicadores)"
               :key="index"
               class="min-w-[320px] max-w-[320px] snap-start"
             >
