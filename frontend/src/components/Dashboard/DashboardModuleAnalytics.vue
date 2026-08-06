@@ -682,7 +682,7 @@ const MODULOS: ModuloSpec[] = [
           {
             id: "consultas-tempo-agendamento-realizacao",
             titulo: "Tempo médio global do agendamento até realização da consulta",
-            tipo: "valor-simples",
+            tipo: "comparacao-dias",
             indicadorNomes: [
               "Tempo médio de agendamento até realização (horas)",
             ],

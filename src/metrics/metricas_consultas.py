@@ -201,28 +201,41 @@ def concentracao_consultas_paciente_ativo(
 def tempo_medio_agendamento_realizacao(consultas: list[dict[str, Any]]) -> dict:
     """
     Tempo médio (em horas) entre o horário agendado da consulta
-    e o momento em que ela foi finalizada.
+    e o momento em que ela foi finalizada, separado por condição
+    (Retorno / Consulta regulada).
     """
-    deltas = []
+    condicoes = {
+        CONDICAO_RETORNO: "Consulta de Retorno",
+        CONDICAO_REGULADA: "Consulta regulada",
+    }
+    deltas: dict[str, list[float]] = {rotulo: [] for rotulo in condicoes.values()}
+
     for c in consultas:
         if RETORNO_ATENDIDO not in c.get("retorno", ""):
             continue
-        if CONDICAO_REGULADA in c.get("condicao", ""):
-            try:
-                h = calcular_diferenca_horas(
-                    c.get("data_hora_criacao", ""),
-                    c.get("data_hora_realizacao", ""),
-                )
-            except ValueError:
-                continue
-            if h is not None and h >= 0:
-                deltas.append(h)
 
-    if not deltas:
-        return 0
+        condicao = c.get("condicao", "")
+        rotulo = next(
+            (r for chave, r in condicoes.items() if chave in condicao), None
+        )
+        if rotulo is None:
+            continue
 
-    media = sum(deltas) / len(deltas)
-    return round(media, 4)
+        try:
+            h = calcular_diferenca_horas(
+                c.get("data_hora_criacao", ""),
+                c.get("data_hora_realizacao", ""),
+            )
+        except ValueError:
+            continue
+
+        if h is not None and h >= 0:
+            deltas[rotulo].append(h)
+
+    return {
+        rotulo: round(sum(valores) / len(valores), 1) if valores else 0
+        for rotulo, valores in deltas.items()
+    }
 
 
 def porcentagem_consultas_sem_prontuario(consultas: list[dict[str, Any]]) -> str:
@@ -570,7 +583,7 @@ def dicionario_metricas_consultas(
             "Por paciente": f"{porcentagem_falta_pac_global}%",
             "Por profissional": f"{porcentagem_falta_prof_global}%",
         },
-        "tempo_medio_agendamento_realizacao": tempo_medio_agendamento_realizacao(consultas),
+        "tempo_medio_agendamento_realizacao": tempo_medio_agendamento_realizacao(consultas=consultas),
         "porcentagem_tipos_consulta": {
             "Primeira consulta": f"{porcentagem_primeira_consulta}%",
             "Reguladas": f"{porcentagem_reguladas}%",
