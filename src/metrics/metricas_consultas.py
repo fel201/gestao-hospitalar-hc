@@ -614,7 +614,6 @@ _METRICAS_INDICADORES: list[tuple[str, str]] = [
 ]
 
 _METRICAS_EVENTOS: list[tuple[str, str]] = [
-    ("consultas_registradas", "Consultas registradas"),
     ("consultas_concluidas", "Consultas concluídas"),
     ("consultas_primeira_vez", "Consultas pela primeira vez"),
 ]
@@ -623,7 +622,6 @@ _METRICAS_EVENTOS: list[tuple[str, str]] = [
 def dicionario_eventos(consultas):
     agg = _agregar_consultas(consultas)
     return {
-        "consultas_registradas": agg["total"],
         "consultas_concluidas": agg["atendidas"],
         "consultas_primeira_vez": agg["primeira_vez"],
     }

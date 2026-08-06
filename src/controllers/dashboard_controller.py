@@ -87,7 +87,6 @@ class DashboardController:
             "entrada": {
                 "titulo": "Entrada",
                 "total_eventos": totais["total_pacientes"],
-                "eventos": eventos["entrada"],
                 "indicadores": m_entradas,
             },
             "consultas": {

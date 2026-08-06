@@ -45,20 +45,15 @@ def calcular_kpis_e_eventos(
     }
 
     eventos_por_secao = {
-        "entrada": [
-            {"nome": "Pacientes cadastrados", "valor": total_pacientes},
-        ],
         "consultas": eventos_consultas(consultas=consultas),
         "exames": [
-            {"nome": "Exames registrados", "valor": total_exames},
             {"nome": "Exames concluídos", "valor": exames_concluidos},
         ],
         "internacao": [
-            {"nome": "Internações registradas", "valor": total_internacoes},
             {"nome": "Internações concluidas", "valor": internacoes_concluidas},
         ],
         "cirurgias": [
-            {"nome": "Cirurgias registradas", "valor": total_cirurgias},
+            {"nome": "Cirurgias concluídas", "valor": cirurgias_concluidas},
         ],
     }
 

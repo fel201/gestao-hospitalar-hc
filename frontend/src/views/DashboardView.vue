@@ -217,12 +217,8 @@ onBeforeUnmount(cleanup);
                 Jornada Assistencial
               </p>
               <h2 class="mt-1 font-body text-2xl font-medium text-[#ece8df]">
-                6 etapas - {{ specialty }}
+                5 etapas - {{ specialty }}
               </h2>
-              <p class="mt-2 max-w-2xl text-sm leading-relaxed text-[#9096a3]">
-                Visualize a jornada completa do paciente, desde a entrada até a
-                cirurgia e internação.
-              </p>
             </div>
           </div>
 
